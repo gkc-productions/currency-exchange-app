@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 
 const grotesk = Space_Grotesk({
@@ -31,54 +31,153 @@ const formatNumber = (value: number, digits = 2) =>
     maximumFractionDigits: digits,
   }).format(value);
 
+type Quote = {
+  id: string;
+  from: string;
+  to: string;
+  sendAmount: number;
+  marketRate: number;
+  fxMarginPct: number;
+  feeFixed: number;
+  feePct: number;
+  totalFee: number;
+  appliedRate: number;
+  recipientGets: number;
+  expiresAt: string;
+  createdAt: string;
+};
+
 export default function Home() {
   const [sendAmount, setSendAmount] = useState("250");
   const [marketRate, setMarketRate] = useState(String(MARKET_RATE));
   const [fxMargin, setFxMargin] = useState(String(FX_MARGIN_PCT));
   const [fixedFee, setFixedFee] = useState(String(FIXED_FEE_USD));
   const [percentFee, setPercentFee] = useState(String(PERCENT_FEE_PCT));
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [isExpired, setIsExpired] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const hasQuote = Boolean(quote);
+
+  const expiresAtLabel = useMemo(() => {
+    if (!quote?.expiresAt) {
+      return "—";
+    }
+    return new Date(quote.expiresAt).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }, [quote?.expiresAt]);
 
   const {
     numericSend,
-    percentFeeAmount,
-    totalFee,
-    appliedRate,
-    recipientGets,
     netConverted,
     effectiveRate,
     numericMarketRate,
     numericFxMargin,
     numericFixedFee,
     numericPercentFee,
+    totalFee,
+    appliedRate,
+    recipientGets,
+    percentFeeAmount,
   } = useMemo(() => {
-    const parsedSend = Number.parseFloat(sendAmount);
-    const parsedMarket = Number.parseFloat(marketRate);
-    const parsedMargin = Number.parseFloat(fxMargin);
-    const parsedFixed = Number.parseFloat(fixedFee);
-    const parsedPercent = Number.parseFloat(percentFee);
-    const safeSend = Number.isFinite(parsedSend) ? parsedSend : 0;
-    const safeMarket = Number.isFinite(parsedMarket) ? parsedMarket : 0;
-    const safeMargin = Number.isFinite(parsedMargin) ? parsedMargin : 0;
-    const safeFixed = Number.isFinite(parsedFixed) ? parsedFixed : 0;
-    const safePercent = Number.isFinite(parsedPercent) ? parsedPercent : 0;
-    const percentFeeValue = (safeSend * safePercent) / 100;
-    const feeTotal = safeFixed + percentFeeValue;
-    const rate = safeMarket * (1 - safeMargin / 100);
-    const netSend = Math.max(safeSend - feeTotal, 0);
+    if (!quote) {
+      return {
+        numericSend: 0,
+        percentFeeAmount: 0,
+        totalFee: 0,
+        appliedRate: 0,
+        recipientGets: 0,
+        netConverted: 0,
+        effectiveRate: 0,
+        numericMarketRate: 0,
+        numericFxMargin: 0,
+        numericFixedFee: 0,
+        numericPercentFee: 0,
+      };
+    }
+    const percentFeeValue = (quote.sendAmount * quote.feePct) / 100;
+    const netSend = Math.max(quote.sendAmount - quote.totalFee, 0);
+    const payout = quote.recipientGets;
     return {
-      numericSend: safeSend,
+      numericSend: quote.sendAmount,
       percentFeeAmount: percentFeeValue,
-      totalFee: feeTotal,
-      appliedRate: rate,
-      recipientGets: netSend * rate,
+      totalFee: quote.totalFee,
+      appliedRate: quote.appliedRate,
+      recipientGets: payout,
       netConverted: netSend,
-      effectiveRate: safeSend > 0 ? (netSend * rate) / safeSend : 0,
-      numericMarketRate: safeMarket,
-      numericFxMargin: safeMargin,
-      numericFixedFee: safeFixed,
-      numericPercentFee: safePercent,
+      effectiveRate:
+        quote.sendAmount > 0 ? payout / quote.sendAmount : 0,
+      numericMarketRate: quote.marketRate,
+      numericFxMargin: quote.fxMarginPct,
+      numericFixedFee: quote.feeFixed,
+      numericPercentFee: quote.feePct,
     };
+  }, [quote]);
+
+  const fetchQuote = useCallback(async () => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setIsLoading(true);
+    setQuoteError(null);
+    try {
+      const params = new URLSearchParams({
+        from: "USD",
+        to: "GHS",
+        sendAmount: sendAmount.trim(),
+        marketRate: marketRate.trim(),
+        fxMarginPct: fxMargin.trim(),
+        feeFixed: fixedFee.trim(),
+        feePct: percentFee.trim(),
+      });
+      const res = await fetch(`/api/quote?${params.toString()}`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        throw new Error("Unable to fetch quote");
+      }
+      const data = (await res.json()) as Quote;
+      setQuote(data);
+    } catch (err) {
+      if ((err as { name?: string }).name !== "AbortError") {
+        setQuoteError("Unable to load quote. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }, [sendAmount, marketRate, fxMargin, fixedFee, percentFee]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchQuote();
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [fetchQuote]);
+
+  useEffect(() => {
+    if (!quote?.expiresAt) {
+      setSecondsRemaining(0);
+      setIsExpired(false);
+      return;
+    }
+    const expiresAt = new Date(quote.expiresAt).getTime();
+    const updateCountdown = () => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((expiresAt - Date.now()) / 1000)
+      );
+      setSecondsRemaining(remaining);
+      setIsExpired(remaining === 0);
+    };
+    updateCountdown();
+    const interval = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(interval);
+  }, [quote?.expiresAt]);
 
   return (
     <div
@@ -181,10 +280,14 @@ export default function Home() {
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-xs text-slate-500">
                 <span>
-                  1 USD = {formatNumber(numericMarketRate, 4)} GHS market
+                  {hasQuote
+                    ? `1 USD = ${formatNumber(numericMarketRate, 4)} GHS market`
+                    : "Market rate pending"}
                 </span>
                 <span>
-                  Applied rate: 1 USD = {formatNumber(appliedRate, 4)} GHS
+                  {hasQuote
+                    ? `Applied rate: 1 USD = ${formatNumber(appliedRate, 4)} GHS`
+                    : "Applied rate pending"}
                 </span>
               </div>
             </div>
@@ -197,54 +300,105 @@ export default function Home() {
                   Recipient Gets
                 </p>
                 <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-200">
-                  Quote valid for 30s (demo)
+                  {hasQuote
+                    ? isExpired
+                      ? "Expired"
+                      : `Valid for ${secondsRemaining}s`
+                    : "Fetching quote"}
                 </span>
               </div>
               <div>
                 <p className="font-[var(--font-fraunces)] text-4xl leading-tight sm:text-5xl">
-                  {formatCurrency(recipientGets, "GHS")}
+                  {hasQuote ? formatCurrency(recipientGets, "GHS") : "—"}
                 </p>
                 <p className="mt-2 text-sm text-slate-300">
-                  Based on {formatCurrency(netConverted, "USD")} after fees.
+                  {hasQuote
+                    ? `Based on ${formatCurrency(netConverted, "USD")} after fees.`
+                    : "Waiting for quote response."}
                 </p>
+                {isLoading ? (
+                  <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+                    Refreshing quote...
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-xs leading-5 text-slate-300">
               <p className="font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Quote Breakdown
               </p>
+              <div className="mt-3 flex items-center justify-between text-slate-400">
+                <span>Quote ID</span>
+                <span className="font-medium text-slate-200">
+                  {quote?.id ?? "—"}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-slate-400">
+                <span>Expires at</span>
+                <span className="font-medium text-slate-200">
+                  {expiresAtLabel}
+                </span>
+              </div>
               <div className="mt-3 flex items-center justify-between">
                 <span>Send amount</span>
-                <span>{formatCurrency(numericSend, "USD")}</span>
+                <span>
+                  {hasQuote ? formatCurrency(numericSend, "USD") : "—"}
+                </span>
               </div>
               <div className="mt-2 flex items-center justify-between">
                 <span>Total fee</span>
-                <span>{formatCurrency(totalFee, "USD")}</span>
+                <span>{hasQuote ? formatCurrency(totalFee, "USD") : "—"}</span>
               </div>
               <div className="mt-2 flex items-center justify-between">
                 <span>Net converted</span>
-                <span>{formatCurrency(netConverted, "USD")}</span>
+                <span>
+                  {hasQuote ? formatCurrency(netConverted, "USD") : "—"}
+                </span>
               </div>
               <div className="mt-2 flex items-center justify-between">
                 <span>Applied rate</span>
                 <span>
-                  1 USD = {formatNumber(appliedRate, 4)} GHS
+                  {hasQuote
+                    ? `1 USD = ${formatNumber(appliedRate, 4)} GHS`
+                    : "—"}
                 </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span>FX margin</span>
+                <span>{hasQuote ? `${formatNumber(numericFxMargin, 2)}%` : "—"}</span>
               </div>
               <div className="mt-2 flex items-center justify-between">
                 <span>Effective rate</span>
                 <span>
-                  1 USD = {formatNumber(effectiveRate, 4)} GHS
+                  {hasQuote
+                    ? `1 USD = ${formatNumber(effectiveRate, 4)} GHS`
+                    : "—"}
                 </span>
               </div>
               <div className="mt-4 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[11px] text-slate-200">
-                Fees: {formatCurrency(numericFixedFee, "USD")} fixed +{" "}
-                {formatNumber(numericPercentFee, 2)}% ({formatCurrency(
-                  percentFeeAmount,
-                  "USD"
-                )}
-                )
+                {hasQuote
+                  ? `Fees: ${formatCurrency(
+                      numericFixedFee,
+                      "USD"
+                    )} fixed + ${formatNumber(
+                      numericPercentFee,
+                      2
+                    )}% (${formatCurrency(percentFeeAmount, "USD")})`
+                  : "Fees: —"}
               </div>
+              {quoteError ? (
+                <p className="mt-3 text-xs text-rose-200">{quoteError}</p>
+              ) : null}
+              {hasQuote && isExpired ? (
+                <button
+                  type="button"
+                  onClick={fetchQuote}
+                  disabled={isLoading}
+                  className="mt-4 w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Refresh quote
+                </button>
+              ) : null}
             </div>
           </aside>
         </section>
