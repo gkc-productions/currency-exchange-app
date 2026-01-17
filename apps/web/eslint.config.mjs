@@ -1,18 +1,22 @@
-import { defineConfig, globalIgnores } from "eslint/config";
+import { defineConfig } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
+const TARGET_DIRS = ["app", "src"];
+const DEFAULT_FILES = ["**/*.{js,jsx,ts,tsx}"];
 
-export default eslintConfig;
+const scopeFiles = (patterns = DEFAULT_FILES) =>
+  TARGET_DIRS.flatMap((dir) => patterns.map((pattern) => `${dir}/${pattern}`));
+
+const scopeConfig = (config) => ({
+  ...config,
+  files: scopeFiles(config.files),
+});
+
+export default defineConfig([
+  {
+    ignores: [".next/**", "node_modules/**", "dist/**"],
+  },
+  ...nextVitals.map(scopeConfig),
+  ...nextTs.map(scopeConfig),
+]);
