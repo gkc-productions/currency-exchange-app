@@ -113,5 +113,24 @@ export async function POST(req: Request) {
     );
   }
 
+  console.info(
+    JSON.stringify({
+      event: "crypto_payout_status_changed",
+      transferId,
+      fromStatus: transfer.cryptoPayout.status,
+      toStatus: "PAID",
+      at: new Date().toISOString(),
+    })
+  );
+  console.info(
+    JSON.stringify({
+      event: "transfer_status_changed",
+      transferId,
+      fromStatus: transfer.status,
+      toStatus: "COMPLETED",
+      at: new Date().toISOString(),
+      source: "mock-pay",
+    })
+  );
   return NextResponse.json({ ok: true });
 }

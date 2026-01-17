@@ -153,6 +153,7 @@ export type Messages = {
   viewReceiptButton: string;
   transferReceiptTitle: string;
   referenceCodeLabel: string;
+  trackTransferLinkLabel: string;
   copyReferenceButton: string;
   copyLinkButton: string;
   copiedLabel: string;
@@ -188,6 +189,15 @@ export type Messages = {
   transferPaidEvent: string;
   transferFailedEvent: string;
   transferCanceledEvent: string;
+  trackTitle: string;
+  trackSubtitle: string;
+  trackHelperText: string;
+  trackInputLabel: string;
+  trackInputPlaceholder: string;
+  trackSubmitLabel: string;
+  trackNotFoundLabel: string;
+  trackErrorLabel: string;
+  trackBackHomeButton: string;
   languageToggleLabel: string;
   languageEnLabel: string;
   languageFrLabel: string;
@@ -375,8 +385,9 @@ const EN_MESSAGES: Messages = {
   statusExpiredLabel: "Expired",
   viewReceiptButton: "View receipt",
   transferReceiptTitle: "Transfer receipt",
-  referenceCodeLabel: "Reference code",
-  copyReferenceButton: "Copy code",
+  referenceCodeLabel: "Reference",
+  trackTransferLinkLabel: "Track transfer",
+  copyReferenceButton: "Copy reference",
   copyLinkButton: "Copy link",
   copiedLabel: "Copied",
   timelineLabel: "Timeline",
@@ -411,6 +422,16 @@ const EN_MESSAGES: Messages = {
   transferPaidEvent: "Lightning invoice paid",
   transferFailedEvent: "Transfer failed",
   transferCanceledEvent: "Transfer canceled",
+  trackTitle: "Track transfer",
+  trackSubtitle: "Follow your transfer by reference code.",
+  trackHelperText:
+    "Enter the reference from your receipt to view the live timeline and status.",
+  trackInputLabel: "Reference code",
+  trackInputPlaceholder: "CS-7K9X2A",
+  trackSubmitLabel: "Find transfer",
+  trackNotFoundLabel: "We couldn't find a transfer with that reference.",
+  trackErrorLabel: "Unable to fetch transfer status right now.",
+  trackBackHomeButton: "Back to home",
   languageToggleLabel: "Language",
   languageEnLabel: "EN",
   languageFrLabel: "FR",
@@ -605,8 +626,9 @@ const FR_MESSAGES: Messages = {
   statusExpiredLabel: "Expiré",
   viewReceiptButton: "Voir le reçu",
   transferReceiptTitle: "Reçu de transfert",
-  referenceCodeLabel: "Code de référence",
-  copyReferenceButton: "Copier le code",
+  referenceCodeLabel: "Référence",
+  trackTransferLinkLabel: "Suivre le transfert",
+  copyReferenceButton: "Copier la référence",
   copyLinkButton: "Copier le lien",
   copiedLabel: "Copié",
   timelineLabel: "Chronologie",
@@ -641,6 +663,16 @@ const FR_MESSAGES: Messages = {
   transferPaidEvent: "Facture Lightning payée",
   transferFailedEvent: "Transfert échoué",
   transferCanceledEvent: "Transfert annulé",
+  trackTitle: "Suivre un transfert",
+  trackSubtitle: "Suivez votre transfert avec la référence.",
+  trackHelperText:
+    "Saisissez la référence de votre reçu pour voir la chronologie et le statut.",
+  trackInputLabel: "Code de référence",
+  trackInputPlaceholder: "CS-7K9X2A",
+  trackSubmitLabel: "Trouver le transfert",
+  trackNotFoundLabel: "Aucun transfert trouvé avec cette référence.",
+  trackErrorLabel: "Impossible d’afficher le statut du transfert pour le moment.",
+  trackBackHomeButton: "Retour à l’accueil",
   languageToggleLabel: "Langue",
   languageEnLabel: "EN",
   languageFrLabel: "FR",

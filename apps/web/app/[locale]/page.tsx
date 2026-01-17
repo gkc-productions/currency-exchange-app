@@ -191,6 +191,7 @@ export default function Home() {
   const [transferResult, setTransferResult] = useState<{
     id: string;
     status: string;
+    reference?: string;
   } | null>(null);
   const [transferError, setTransferError] = useState<string | null>(null);
   const [isTransferSubmitting, setIsTransferSubmitting] = useState(false);
@@ -694,7 +695,13 @@ export default function Home() {
       });
 
       const data = (await res.json().catch(() => null)) as
-        | { id?: string; status?: string; error?: string; expired?: boolean }
+        | {
+            id?: string;
+            status?: string;
+            reference?: string;
+            error?: string;
+            expired?: boolean;
+          }
         | null;
 
       if (!res.ok) {
@@ -707,7 +714,11 @@ export default function Home() {
       }
 
       if (data?.id && data?.status) {
-        setTransferResult({ id: data.id, status: data.status });
+        setTransferResult({
+          id: data.id,
+          status: data.status,
+          reference: data.reference,
+        });
       }
     } catch {
       setTransferError(messages.transferCreateError);
@@ -1775,6 +1786,14 @@ export default function Home() {
                             {transferResult.id}
                           </span>
                         </div>
+                        {transferResult.reference ? (
+                          <div className="mt-1 flex items-center justify-between">
+                            <span>{messages.referenceCodeLabel}</span>
+                            <span className="font-medium text-slate-900">
+                              {transferResult.reference}
+                            </span>
+                          </div>
+                        ) : null}
                         <div className="mt-1 flex items-center justify-between">
                           <span>{messages.transferStatusLabel}</span>
                           <span className="font-medium text-slate-900">
@@ -1787,6 +1806,14 @@ export default function Home() {
                         >
                           {messages.viewReceiptButton}
                         </Link>
+                        {transferResult.reference ? (
+                          <Link
+                            href={`/${locale}/track?reference=${transferResult.reference}`}
+                            className="mt-2 inline-flex w-full items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-700 transition hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                          >
+                            {messages.trackTransferLinkLabel}
+                          </Link>
+                        ) : null}
                       </div>
                     ) : null}
                     <p className="mt-2 text-xs text-slate-500">

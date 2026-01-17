@@ -130,7 +130,7 @@ model Route {
 
 model Transfer {
   id                          String         @id @default(cuid())
-  referenceCode               String         @unique
+  reference                   String         @unique @map("referenceCode")
   idempotencyKey              String?        @unique
   quoteId                     String
   status                      TransferStatus @default(DRAFT)
@@ -152,6 +152,17 @@ model Transfer {
 
   @@index([quoteId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model IdempotencyKey {
+  key          String   @id
+  route        String
+  requestHash  String
+  responseJson Json
+  createdAt    DateTime @default(now())
+
+  @@index([route])
   @@index([createdAt])
 }
 

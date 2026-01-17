@@ -98,7 +98,7 @@ export async function GET(
   return NextResponse.json({
     transfer: {
       id: transfer.id,
-      referenceCode: transfer.referenceCode,
+      reference: transfer.reference,
       quoteId: transfer.quoteId,
       status: transfer.status,
       payoutRail: transfer.payoutRail,
@@ -193,6 +193,15 @@ export async function PATCH(
         where: { id: transferId },
         data: { status: "EXPIRED" },
       });
+      console.info(
+        JSON.stringify({
+          event: "transfer_status_changed",
+          transferId,
+          fromStatus: transfer.status,
+          toStatus: "EXPIRED",
+          at: new Date().toISOString(),
+        })
+      );
       return NextResponse.json(
         { error: "Quote expired", expired: true, transfer: updated },
         { status: 410 }
@@ -237,5 +246,14 @@ export async function PATCH(
     );
   }
 
+  console.info(
+    JSON.stringify({
+      event: "transfer_status_changed",
+      transferId,
+      fromStatus: transfer.status,
+      toStatus: nextStatus,
+      at: new Date().toISOString(),
+    })
+  );
   return NextResponse.json(updated);
 }

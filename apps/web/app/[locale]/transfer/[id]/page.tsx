@@ -15,7 +15,7 @@ type TransferEvent = {
 
 type TransferSummary = {
   id: string;
-  referenceCode: string;
+  reference: string;
   quoteId: string;
   status: string;
   payoutRail: string;
@@ -356,7 +356,7 @@ export default function TransferReceiptPage() {
   const statusLabel =
     statusLabels[transfer.status as keyof typeof statusLabels] ??
     transfer.status.replaceAll("_", " ");
-  const referenceCode = transfer.referenceCode;
+  const referenceCode = transfer.reference;
   const shareLink =
     typeof window === "undefined"
       ? `/${locale}/transfer/${transfer.id}`
@@ -403,6 +403,12 @@ export default function TransferReceiptPage() {
                     ? messages.copiedLabel
                     : messages.copyLinkButton}
                 </button>
+                <Link
+                  href={`/${locale}/track?reference=${referenceCode}`}
+                  className="rounded-full border border-emerald-300/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-50 transition hover:bg-emerald-500/30"
+                >
+                  {messages.trackTransferLinkLabel}
+                </Link>
               </div>
             </div>
           </div>

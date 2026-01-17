@@ -43,7 +43,7 @@ function createReferenceCode() {
   for (let index = 0; index < referenceLength; index += 1) {
     suffix += referenceAlphabet[randomInt(referenceAlphabet.length)];
   }
-  return `FX-${suffix}`;
+  return `CS-${suffix}`;
 }
 
 function parsePositiveInt(value: unknown) {
@@ -69,20 +69,20 @@ function createPaymentHash(seed: string) {
 }
 
 function createLightningInvoice({
-  referenceCode,
+  reference,
   amountSats,
 }: {
-  referenceCode: string;
+  reference: string;
   amountSats: number;
 }) {
-  const paymentHash = createPaymentHash(`${referenceCode}:${amountSats}`);
-  const invoice = `lnbc${amountSats}n1${paymentHash.slice(0, 24)}${referenceCode.toLowerCase()}`;
+  const paymentHash = createPaymentHash(`${reference}:${amountSats}`);
+  const invoice = `lnbc${amountSats}n1${paymentHash.slice(0, 24)}${reference.toLowerCase()}`;
   return { invoice, paymentHash };
 }
 
 function buildTransferResponse(transfer: {
   id: string;
-  referenceCode: string;
+  reference: string;
   quoteId: string;
   status: string;
   payoutRail: string;
@@ -99,7 +99,7 @@ function buildTransferResponse(transfer: {
 }) {
   return {
     id: transfer.id,
-    referenceCode: transfer.referenceCode,
+    reference: transfer.reference,
     quoteId: transfer.quoteId,
     status: transfer.status,
     payoutRail: transfer.payoutRail,
@@ -111,8 +111,8 @@ function buildTransferResponse(transfer: {
     recipientMobileMoneyProvider: transfer.recipientMobileMoneyProvider,
     recipientMobileMoneyNumber: transfer.recipientMobileMoneyNumber,
     memo: transfer.memo,
-    createdAt: transfer.createdAt,
-    updatedAt: transfer.updatedAt,
+    createdAt: transfer.createdAt.toISOString(),
+    updatedAt: transfer.updatedAt.toISOString(),
   };
 }
 
@@ -120,20 +120,39 @@ export async function POST(req: Request) {
   const idempotencyKey = readOptionalString(
     req.headers.get("idempotency-key")
   );
-  if (idempotencyKey) {
-    const existing = await prisma.transfer.findUnique({
-      where: { idempotencyKey },
-    });
-    if (existing) {
-      return NextResponse.json(buildTransferResponse(existing));
-    }
-  }
-
   let payload: TransferPayload;
-  try {
-    payload = (await req.json()) as TransferPayload;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  let requestHash: string | null = null;
+
+  if (idempotencyKey) {
+    let rawBody = "";
+    try {
+      rawBody = await req.text();
+      payload = JSON.parse(rawBody) as TransferPayload;
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    requestHash = createHash("sha256")
+      .update(JSON.stringify(payload))
+      .digest("hex");
+
+    const existingKey = await prisma.idempotencyKey.findUnique({
+      where: { key: idempotencyKey },
+    });
+    if (existingKey) {
+      if (existingKey.requestHash !== requestHash) {
+        return NextResponse.json(
+          { error: "Idempotency key conflict" },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(existingKey.responseJson);
+    }
+  } else {
+    try {
+      payload = (await req.json()) as TransferPayload;
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
   }
 
   const quoteId = readRequiredString(payload.quoteId);
@@ -325,10 +344,10 @@ export async function POST(req: Request) {
   let transfer;
   try {
     for (let attempt = 0; attempt < maxReferenceAttempts; attempt += 1) {
-      const referenceCode = createReferenceCode();
+      const reference = createReferenceCode();
       const lightningInvoice =
         payoutRail === "LIGHTNING" && amountSats
-          ? createLightningInvoice({ referenceCode, amountSats })
+          ? createLightningInvoice({ reference, amountSats })
           : null;
       const events = [
         { type: "CREATED", message: messages.transferCreatedEvent },
@@ -357,7 +376,7 @@ export async function POST(req: Request) {
             recipientMobileMoneyProvider,
             recipientMobileMoneyNumber,
             memo,
-            referenceCode,
+            reference,
             idempotencyKey,
             cryptoPayout:
               payoutRail === "LIGHTNING" && amountSats && lightningInvoice
@@ -389,6 +408,18 @@ export async function POST(req: Request) {
             continue;
           }
           if (idempotencyKey && targets.includes("idempotencyKey")) {
+            const existingKey = await prisma.idempotencyKey.findUnique({
+              where: { key: idempotencyKey },
+            });
+            if (existingKey) {
+              if (requestHash && existingKey.requestHash !== requestHash) {
+                return NextResponse.json(
+                  { error: "Idempotency key conflict" },
+                  { status: 409 }
+                );
+              }
+              return NextResponse.json(existingKey.responseJson);
+            }
             transfer = await prisma.transfer.findUnique({
               where: { idempotencyKey },
             });
@@ -398,7 +429,8 @@ export async function POST(req: Request) {
         throw error;
       }
     }
-  } catch {
+  } catch (error) {
+    console.error("Transfer create failed", error);
     return NextResponse.json(
       { error: messages.transferCreateError },
       { status: 500 }
@@ -412,5 +444,36 @@ export async function POST(req: Request) {
     );
   }
 
-  return NextResponse.json(buildTransferResponse(transfer));
+  const responsePayload = buildTransferResponse(transfer);
+
+  if (idempotencyKey && requestHash) {
+    try {
+      await prisma.idempotencyKey.create({
+        data: {
+          key: idempotencyKey,
+          route: "/api/transfers",
+          requestHash,
+          responseJson: responsePayload,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const existingKey = await prisma.idempotencyKey.findUnique({
+          where: { key: idempotencyKey },
+        });
+        if (existingKey?.requestHash === requestHash) {
+          return NextResponse.json(existingKey.responseJson);
+        }
+        return NextResponse.json(
+          { error: "Idempotency key conflict" },
+          { status: 409 }
+        );
+      }
+    }
+  }
+
+  return NextResponse.json(responsePayload);
 }
