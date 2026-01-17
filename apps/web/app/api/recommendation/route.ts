@@ -47,6 +47,24 @@ function compareNumbers(a: number, b: number) {
   return a === b ? 0 : a < b ? -1 : 1;
 }
 
+function pickBetterBestValue(a: ScoredRoute, b: ScoredRoute) {
+  return sortBestValue(a, b) < 0 ? a : b;
+}
+
+function dedupeRoutes(routes: ScoredRoute[]) {
+  const deduped = new Map<string, ScoredRoute>();
+  for (const route of routes) {
+    const key = `${route.rail}:${route.provider}`;
+    const existing = deduped.get(key);
+    if (!existing) {
+      deduped.set(key, route);
+      continue;
+    }
+    deduped.set(key, pickBetterBestValue(route, existing));
+  }
+  return Array.from(deduped.values());
+}
+
 function sortCheapest(a: ScoredRoute, b: ScoredRoute) {
   return (
     compareNumbers(a.totalFee, b.totalFee) ||
@@ -165,7 +183,7 @@ export async function GET(req: Request) {
   }
 
   const sendAmount = sendAmountInput;
-  const routes: ScoredRoute[] = corridor.routes.map((route) => {
+  const scoredRoutes: ScoredRoute[] = corridor.routes.map((route) => {
     const feeFixed = Number(route.feeFixed);
     const feePct = Number(route.feePct);
     const fxMarginPct = Number(route.fxMarginPct);
@@ -195,6 +213,7 @@ export async function GET(req: Request) {
     };
   });
 
+  const routes = dedupeRoutes(scoredRoutes);
   const cheapestOrder = [...routes].sort(sortCheapest);
   const fastestOrder = [...routes].sort(sortFastest);
   const bestValueOrder = [...routes].sort(sortBestValue);
@@ -234,19 +253,19 @@ export async function GET(req: Request) {
       };
     });
 
-  const cheapestRoute = cheapestPick?.route ?? cheapestOrder[0];
-  const fastestRoute = fastestPick?.route ?? fastestOrder[0];
-  const bestValueRoute = bestValuePick?.route ?? bestValueOrder[0];
+  const cheapestRoute = cheapestPick?.route ?? null;
+  const fastestRoute = fastestPick?.route ?? null;
+  const bestValueRoute = bestValuePick?.route ?? null;
 
   const responseRoutes = routes.map((route) => {
     const highlights: string[] = [];
-    if (route.id === cheapestRoute.id) {
+    if (cheapestRoute && route.id === cheapestRoute.id) {
       highlights.push("LOWEST_TOTAL_FEE");
     }
-    if (route.id === fastestRoute.id) {
+    if (fastestRoute && route.id === fastestRoute.id) {
       highlights.push("FASTEST_ETA");
     }
-    if (route.id === bestValueRoute.id) {
+    if (bestValueRoute && route.id === bestValueRoute.id) {
       highlights.push("HIGHEST_PAYOUT");
     }
     const highlightLabels: Record<string, string> = {
@@ -285,9 +304,9 @@ export async function GET(req: Request) {
     marketRate,
     rateSource,
     rateTimestamp,
-    cheapestRouteId: cheapestRoute.id,
-    fastestRouteId: fastestRoute.id,
-    bestValueRouteId: bestValueRoute.id,
+    cheapestRouteId: cheapestRoute?.id ?? null,
+    fastestRouteId: fastestRoute?.id ?? null,
+    bestValueRouteId: bestValueRoute?.id ?? null,
     routes: responseRoutes,
     suggestions,
   });

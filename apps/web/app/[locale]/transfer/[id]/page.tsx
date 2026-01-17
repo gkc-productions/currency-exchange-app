@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { formatDateTime, formatMoney } from "@/src/lib/format";
@@ -40,6 +40,7 @@ type QuoteSummary = {
   appliedRate: number;
   totalFee: number;
   recipientGets: number;
+  rateTimestamp: string;
   expiresAt: string;
   createdAt: string;
 };
@@ -108,6 +109,7 @@ export default function TransferReceiptPage() {
     null
   );
   const [isSimulating, setIsSimulating] = useState(false);
+  const transferCompletedLogged = useRef(false);
 
   const statusLabels = useMemo(
     () => ({
@@ -254,6 +256,19 @@ export default function TransferReceiptPage() {
   const resolvedError = transferId ? error : "not_found";
   const isLoading = Boolean(transferId) && !activeState;
   const isDev = process.env.NODE_ENV !== "production";
+
+  useEffect(() => {
+    if (!data?.transfer || transferCompletedLogged.current) {
+      return;
+    }
+    if (data.transfer.status === "COMPLETED") {
+      transferCompletedLogged.current = true;
+      console.info("TransferCompleted", {
+        transferId: data.transfer.id,
+        status: data.transfer.status,
+      });
+    }
+  }, [data?.transfer]);
 
   if (isLoading) {
     return (
@@ -591,9 +606,23 @@ export default function TransferReceiptPage() {
                   </span>
                 </div>
                 <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                  {messages.rateLockedAtLabel}:{" "}
+                  {formatDateTime(quote.rateTimestamp, locale)}
+                </div>
+                <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
                   {messages.expiresAtLabel}:{" "}
                   {formatDateTime(quote.expiresAt, locale)}
                 </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                {messages.trustSignalsLabel}
+              </p>
+              <div className="mt-4 space-y-2 text-sm text-slate-200">
+                <p>{messages.feeRefundGuaranteeCopy}</p>
+                <p>{messages.complianceCopy}</p>
               </div>
             </div>
           </div>

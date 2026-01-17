@@ -138,9 +138,9 @@ type Recommendation = {
   marketRate: number;
   rateSource: string;
   rateTimestamp: string;
-  cheapestRouteId: string;
-  fastestRouteId: string;
-  bestValueRouteId: string;
+  cheapestRouteId: string | null;
+  fastestRouteId: string | null;
+  bestValueRouteId: string | null;
   suggestions?: RecommendationSuggestion[];
   routes: RecommendationRoute[];
 };
@@ -210,6 +210,7 @@ export default function Home() {
   );
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const recommendationAbortRef = useRef<AbortController | null>(null);
+  const quoteViewedRef = useRef<Set<string>>(new Set());
 
   const expiresAtLabel = useMemo(() => {
     if (!quote?.expiresAt) {
@@ -217,6 +218,13 @@ export default function Home() {
     }
     return formatDateTime(quote.expiresAt, locale);
   }, [quote?.expiresAt, locale]);
+
+  const rateTimestampLabel = useMemo(() => {
+    if (!quote?.rateTimestamp) {
+      return "—";
+    }
+    return formatDateTime(quote.rateTimestamp, locale);
+  }, [quote?.rateTimestamp, locale]);
 
   const assetsList = assets.length > 0 ? assets : DEFAULT_ASSETS;
   const assetMap = useMemo(() => {
@@ -285,15 +293,18 @@ export default function Home() {
     }
     return new Map(recommendation.routes.map((route) => [route.id, route]));
   }, [recommendation?.routes]);
-  const cheapestRoute = recommendation
-    ? recommendationMap.get(recommendation.cheapestRouteId) ?? null
-    : null;
-  const fastestRoute = recommendation
-    ? recommendationMap.get(recommendation.fastestRouteId) ?? null
-    : null;
-  const bestValueRoute = recommendation
-    ? recommendationMap.get(recommendation.bestValueRouteId) ?? null
-    : null;
+  const cheapestRoute =
+    recommendation && recommendation.cheapestRouteId
+      ? recommendationMap.get(recommendation.cheapestRouteId) ?? null
+      : null;
+  const fastestRoute =
+    recommendation && recommendation.fastestRouteId
+      ? recommendationMap.get(recommendation.fastestRouteId) ?? null
+      : null;
+  const bestValueRoute =
+    recommendation && recommendation.bestValueRouteId
+      ? recommendationMap.get(recommendation.bestValueRouteId) ?? null
+      : null;
 
   useEffect(() => {
     let active = true;
@@ -586,6 +597,11 @@ export default function Home() {
       setFxMargin(route.fxMarginPct.toString());
       setLockedQuoteId(null);
       setLockError(null);
+      console.info("RouteSelected", {
+        routeId: route.id,
+        rail: route.rail,
+        provider: route.provider,
+      });
     },
     []
   );
@@ -768,6 +784,20 @@ export default function Home() {
     }
   }, [lockedQuoteId, messages.lockQuoteUpdated, quote?.id]);
 
+  useEffect(() => {
+    if (!quote?.id || quoteViewedRef.current.has(quote.id)) {
+      return;
+    }
+    quoteViewedRef.current.add(quote.id);
+    console.info("QuoteViewed", {
+      quoteId: quote.id,
+      from: quote.from,
+      to: quote.to,
+      sendAmount: quote.sendAmount,
+      rail: quote.rail,
+    });
+  }, [quote?.from, quote?.id, quote?.rail, quote?.sendAmount, quote?.to]);
+
   const statusLabels = useMemo(
     () => ({
       READY: messages.statusReadyLabel,
@@ -881,6 +911,9 @@ export default function Home() {
   );
   const recommendedType: RecommendationSuggestion["type"] =
     recommendedSuggestion?.type ?? "BEST_VALUE";
+  const limitedRoutes =
+    (recommendation?.routes?.length ?? 0) > 0 &&
+    (recommendation?.routes?.length ?? 0) < 3;
 
   const trustItems = [
     messages.trustItemTransparent,
@@ -1093,7 +1126,15 @@ export default function Home() {
                     ) : null}
                   </div>
                   <div className="mt-4">
-                    {recommendedSuggestion ? (
+                    {recommendationLoading ? (
+                      <div className="space-y-3 animate-pulse">
+                        <div className="h-28 rounded-2xl bg-slate-100" />
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="h-20 rounded-2xl bg-slate-100" />
+                          <div className="h-20 rounded-2xl bg-slate-100" />
+                        </div>
+                      </div>
+                    ) : recommendedSuggestion ? (
                       <div
                         className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-4 text-sm text-slate-700"
                         data-testid="recommendation-recommended"
@@ -1128,6 +1169,15 @@ export default function Home() {
                           </span>{" "}
                           {recommendedSuggestion.reason}
                         </p>
+                        <details className="mt-3 rounded-xl border border-emerald-100 bg-white/80 px-3 py-2 text-xs text-slate-600">
+                          <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                            {messages.recommendationWhyRouteLabel}
+                          </summary>
+                          <div className="mt-2 space-y-1">
+                            <p>{recommendedSuggestion.route.explanation}</p>
+                            <p>{recommendedSuggestion.reason}</p>
+                          </div>
+                        </details>
                         <div className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-3">
                           <div className="rounded-xl border border-emerald-100 bg-white/80 px-3 py-2">
                             <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
@@ -1179,12 +1229,12 @@ export default function Home() {
                       {recommendationError}
                     </p>
                   ) : null}
-                  {otherSuggestions.length === 0 && recommendedSuggestion ? (
+                  {!recommendationLoading && limitedRoutes && recommendedSuggestion ? (
                     <p className="mt-3 text-xs text-slate-500">
                       {messages.recommendationSingleLabel}
                     </p>
                   ) : null}
-                  {otherSuggestions.length > 0 ? (
+                  {!recommendationLoading && otherSuggestions.length > 0 ? (
                     <div className="mt-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
                         {messages.recommendationOtherLabel}
@@ -1223,6 +1273,15 @@ export default function Home() {
                                 </span>{" "}
                                 {item.reason}
                               </p>
+                              <details className="mt-2 rounded-xl border border-slate-100 bg-white/80 px-3 py-2 text-xs text-slate-600">
+                                <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                                  {messages.recommendationWhyRouteLabel}
+                                </summary>
+                                <div className="mt-2 space-y-1">
+                                  <p>{item.route.explanation}</p>
+                                  <p>{item.reason}</p>
+                                </div>
+                              </details>
                               <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
                                 <span>{messages.totalFeeRow}</span>
                                 <span>
@@ -1265,6 +1324,12 @@ export default function Home() {
                       <span>{messages.expiresAtLabel}</span>
                       <span className="font-semibold text-slate-900">
                         {expiresAtLabel}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.rateLockedAtLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {rateTimestampLabel}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1370,6 +1435,18 @@ export default function Home() {
                       {messages.refreshQuoteButton}
                     </button>
                   ) : null}
+                </div>
+                <div className={cardClassName}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                    {messages.trustSignalsLabel}
+                  </p>
+                  <div className="mt-3 space-y-2 text-sm text-slate-600">
+                    <p>
+                      {messages.rateLockedAtLabel} {rateTimestampLabel}
+                    </p>
+                    <p>{messages.feeRefundGuaranteeCopy}</p>
+                    <p>{messages.complianceCopy}</p>
+                  </div>
                 </div>
               </div>
 
@@ -1588,6 +1665,14 @@ export default function Home() {
                       </div>
                       {payoutError ? (
                         <p className="mt-2 text-xs text-rose-600">{payoutError}</p>
+                      ) : null}
+                      {payoutRail === "LIGHTNING" ? (
+                        <details className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                          <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            {messages.lightningEducationTitle}
+                          </summary>
+                          <p className="mt-2">{messages.lightningEducationBody}</p>
+                        </details>
                       ) : null}
                     </div>
                     {payoutRail === "BANK" ? (

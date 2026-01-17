@@ -17,6 +17,10 @@ export type Messages = {
   sendToLabel: string;
   sendCtaLabel: string;
   trustTitle: string;
+  trustSignalsLabel: string;
+  rateLockedAtLabel: string;
+  feeRefundGuaranteeCopy: string;
+  complianceCopy: string;
   trustItemTransparent: string;
   trustItemFast: string;
   trustItemSecure: string;
@@ -102,6 +106,7 @@ export type Messages = {
   recommendationOtherLabel: string;
   recommendationSingleLabel: string;
   recommendationReasonLabel: string;
+  recommendationWhyRouteLabel: string;
   recommendationScoreFeeLabel: string;
   recommendationScorePayoutLabel: string;
   recommendationScoreEtaLabel: string;
@@ -131,6 +136,8 @@ export type Messages = {
   mobileMoneyProviderLabel: string;
   mobileMoneyNumberLabel: string;
   memoLabel: string;
+  lightningEducationTitle: string;
+  lightningEducationBody: string;
   createTransferButton: string;
   transferSubmitting: string;
   transferCreatedLabel: string;
@@ -221,6 +228,10 @@ const EN_MESSAGES: Messages = {
   sendToLabel: "Sending to",
   sendCtaLabel: "Start transfer",
   trustTitle: "Trusted for clarity at every step",
+  trustSignalsLabel: "Trust & compliance",
+  rateLockedAtLabel: "Rate locked at",
+  feeRefundGuaranteeCopy: "Fee refund guarantee if we miss the quoted ETA.",
+  complianceCopy: "Non-custodial. Encrypted end-to-end with compliance controls.",
   trustItemTransparent: "Transparent pricing",
   trustItemFast: "Fast delivery",
   trustItemSecure: "Secure & compliant",
@@ -311,12 +322,13 @@ const EN_MESSAGES: Messages = {
   useRouteButton: "Use this route",
   recommendationLoading: "Fetching smart suggestions...",
   recommendationEmpty: "Enter an amount to see tailored routes.",
-  recommendationLoadError: "Suggestions are unavailable right now.",
+  recommendationLoadError: "We couldn't load suggestions right now. Please try again.",
   recommendationRecommendedLabel: "Recommended",
   recommendationOtherLabel: "Other options",
   recommendationSingleLabel:
-    "Only one route available for this corridor right now.",
+    "Only a few routes are available for this corridor right now.",
   recommendationReasonLabel: "Why this route",
+  recommendationWhyRouteLabel: "Why this route?",
   recommendationScoreFeeLabel: "Fee",
   recommendationScorePayoutLabel: "Payout",
   recommendationScoreEtaLabel: "ETA",
@@ -346,6 +358,9 @@ const EN_MESSAGES: Messages = {
   mobileMoneyProviderLabel: "Mobile money provider",
   mobileMoneyNumberLabel: "Mobile money number",
   memoLabel: "Memo (optional)",
+  lightningEducationTitle: "What is Lightning?",
+  lightningEducationBody:
+    "Lightning is a Bitcoin payment network that settles instantly with low fees. It keeps funds non-custodial and final once paid.",
   createTransferButton: "Create transfer",
   transferSubmitting: "Creating transfer...",
   transferCreatedLabel: "Transfer created",
@@ -437,6 +452,12 @@ const FR_MESSAGES: Messages = {
   sendToLabel: "Envoi vers",
   sendCtaLabel: "Démarrer le transfert",
   trustTitle: "La clarté à chaque étape",
+  trustSignalsLabel: "Confiance & conformité",
+  rateLockedAtLabel: "Taux verrouillé à",
+  feeRefundGuaranteeCopy:
+    "Garantie de remboursement des frais si l’ETA annoncée n’est pas respectée.",
+  complianceCopy:
+    "Non-custodial. Données chiffrées de bout en bout avec contrôles de conformité.",
   trustItemTransparent: "Tarification transparente",
   trustItemFast: "Livraison rapide",
   trustItemSecure: "Sécurisé et conforme",
@@ -530,12 +551,14 @@ const FR_MESSAGES: Messages = {
   useRouteButton: "Utiliser cet itinéraire",
   recommendationLoading: "Chargement des suggestions...",
   recommendationEmpty: "Saisissez un montant pour voir les itinéraires.",
-  recommendationLoadError: "Les suggestions sont indisponibles pour le moment.",
+  recommendationLoadError:
+    "Impossible de charger les suggestions pour le moment. Réessayez.",
   recommendationRecommendedLabel: "Recommandé",
   recommendationOtherLabel: "Autres options",
   recommendationSingleLabel:
-    "Une seule option est disponible pour ce corridor pour l'instant.",
+    "Quelques options seulement sont disponibles pour ce corridor actuellement.",
   recommendationReasonLabel: "Pourquoi cet itinéraire",
+  recommendationWhyRouteLabel: "Pourquoi cet itinéraire ?",
   recommendationScoreFeeLabel: "Frais",
   recommendationScorePayoutLabel: "Montant reçu",
   recommendationScoreEtaLabel: "Délai",
@@ -565,6 +588,9 @@ const FR_MESSAGES: Messages = {
   mobileMoneyProviderLabel: "Opérateur mobile money",
   mobileMoneyNumberLabel: "Numéro mobile money",
   memoLabel: "Mémo (facultatif)",
+  lightningEducationTitle: "Qu’est-ce que Lightning ?",
+  lightningEducationBody:
+    "Lightning est un réseau Bitcoin qui règle les paiements instantanément avec peu de frais. Les fonds restent non-custodial et finalisés après paiement.",
   createTransferButton: "Créer un transfert",
   transferSubmitting: "Création du transfert...",
   transferCreatedLabel: "Transfert créé",
