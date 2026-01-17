@@ -1,13 +1,21 @@
 import type { ReactNode } from "react";
-import LocaleToggle from "./locale-toggle";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
+import type { Locale } from "@/src/lib/i18n/messages";
 
-export default function LocaleLayout({ children }: { children: ReactNode }) {
+export default function LocaleLayout({
+  children,
+  params,
+}: {
+  children: ReactNode;
+  params: { locale: string };
+}) {
+  const locale: Locale = params.locale === "fr" ? "fr" : "en";
   return (
-    <div className="relative min-h-screen">
-      <div className="fixed right-4 top-4 z-50">
-        <LocaleToggle />
-      </div>
-      {children}
+    <div className="flex min-h-screen flex-col bg-[var(--brand-surface)] text-slate-900">
+      <Navbar locale={locale} />
+      <main className="flex-1">{children}</main>
+      <Footer locale={locale} />
     </div>
   );
 }

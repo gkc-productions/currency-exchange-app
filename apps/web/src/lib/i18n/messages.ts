@@ -2,8 +2,65 @@ export type Locale = "en" | "fr";
 
 export type Messages = {
   quoteTitle: (from: string, to: string) => string;
+  tagline: string;
+  navAboutLabel: string;
+  navFeesLabel: string;
+  navSecurityLabel: string;
+  navHelpLabel: string;
+  navGetStartedLabel: string;
   heroTitle: string;
   heroSubtitle: string;
+  sendCardTitle: string;
+  sendCardSubtitle: string;
+  sendFromLabel: string;
+  sendToLabel: string;
+  sendCtaLabel: string;
+  trustTitle: string;
+  trustItemTransparent: string;
+  trustItemFast: string;
+  trustItemSecure: string;
+  featuresTitle: string;
+  featuresSubtitle: string;
+  featuresLinkLabel: string;
+  featureSmartRoutingTitle: string;
+  featureSmartRoutingDescription: string;
+  featureMultiRailTitle: string;
+  featureMultiRailDescription: string;
+  featureTrackingTitle: string;
+  featureTrackingDescription: string;
+  faqTitle: string;
+  faqSubtitle: string;
+  faqQuestionOne: string;
+  faqAnswerOne: string;
+  faqQuestionTwo: string;
+  faqAnswerTwo: string;
+  faqQuestionThree: string;
+  faqAnswerThree: string;
+  faqQuestionFour: string;
+  faqAnswerFour: string;
+  countrySelectChangeLabel: string;
+  countrySelectDialogTitle: string;
+  countrySelectDialogSubtitle: string;
+  countrySelectCloseLabel: string;
+  countrySelectSearchPlaceholder: string;
+  countrySelectSearchLabel: string;
+  countrySelectNoResultsLabel: string;
+  countrySelectFallbackLabel: string;
+  footerTagline: string;
+  footerCompanyLabel: string;
+  footerProductLabel: string;
+  footerResourcesLabel: string;
+  footerSupportLabel: string;
+  footerSendLinkLabel: string;
+  footerFaqLinkLabel: string;
+  footerContactLinkLabel: string;
+  footerStatusLinkLabel: string;
+  pricingControlsTitle: string;
+  pricingControlsSubtitle: string;
+  transferDetailsEmptyTitle: string;
+  transferDetailsEmptyDescription: string;
+  editSendDetailsLabel: string;
+  quoteSectionSubtitle: string;
   assetsLoadError: string;
   assetsLoading: string;
   fromAssetLabel: string;
@@ -140,11 +197,78 @@ export type Messages = {
 
 const EN_MESSAGES: Messages = {
   quoteTitle: (from, to) => `${from} to ${to} Quote`,
-  heroTitle: "Send with clarity. See every fee and the exact recipient total.",
+  tagline: "Send with clarity.",
+  navAboutLabel: "About",
+  navFeesLabel: "Fees",
+  navSecurityLabel: "Security",
+  navHelpLabel: "Help",
+  navGetStartedLabel: "Get started",
+  heroTitle: "Send with clarity. Know the rate, fees, and arrival time upfront.",
   heroSubtitle:
-    "A clean, transparent quote for cross-border remittance. Adjust assets, rails, and fees to preview totals instantly.",
+    "ClariSend delivers transparent pricing, smart routing, and modern payout rails so every transfer stays predictable.",
+  sendCardTitle: "Send money",
+  sendCardSubtitle: "Start a quote in seconds with clear fees.",
+  sendFromLabel: "Sending from",
+  sendToLabel: "Sending to",
+  sendCtaLabel: "Get started",
+  trustTitle: "Trusted for clarity at every step",
+  trustItemTransparent: "Transparent pricing",
+  trustItemFast: "Fast delivery",
+  trustItemSecure: "Secure & compliant",
+  featuresTitle: "Designed for modern remittances",
+  featuresSubtitle:
+    "Smart rails, real-time updates, and routing intelligence that keeps transfers on track.",
+  featuresLinkLabel: "Features",
+  featureSmartRoutingTitle: "Smart routing",
+  featureSmartRoutingDescription:
+    "Automatically pick the best route based on total cost, speed, and payout reliability.",
+  featureMultiRailTitle: "Multi-rail payout",
+  featureMultiRailDescription:
+    "Deliver to bank, mobile money, or lightning rails with consistent customer experiences.",
+  featureTrackingTitle: "Tracking",
+  featureTrackingDescription:
+    "Live status updates and receipts keep senders and recipients aligned end to end.",
+  faqTitle: "Frequently asked questions",
+  faqSubtitle: "Clear answers before you send.",
+  faqQuestionOne: "How does ClariSend keep pricing transparent?",
+  faqAnswerOne:
+    "We show the live rate, FX margin, and all fees before you lock your quote. No surprises at payout.",
+  faqQuestionTwo: "What payout rails do you support?",
+  faqAnswerTwo:
+    "ClariSend supports bank, mobile money, and lightning payouts depending on the corridor.",
+  faqQuestionThree: "How fast are transfers?",
+  faqAnswerThree:
+    "Delivery times vary by rail and provider, but you will see ETA ranges before you send.",
+  faqQuestionFour: "Is ClariSend compliant and secure?",
+  faqAnswerFour:
+    "Yes. We follow strict compliance controls and keep transfer data encrypted end to end.",
+  countrySelectChangeLabel: "Change",
+  countrySelectDialogTitle: "Choose a country and currency",
+  countrySelectDialogSubtitle: "Search by country, currency, or code.",
+  countrySelectCloseLabel: "Close",
+  countrySelectSearchPlaceholder: "Search country or currency",
+  countrySelectSearchLabel: "Search country",
+  countrySelectNoResultsLabel: "No matches found. Try another search.",
+  countrySelectFallbackLabel: "Select country",
+  footerTagline:
+    "Transparent global payments and remittances built for teams that demand clarity.",
+  footerCompanyLabel: "Company",
+  footerProductLabel: "Product",
+  footerResourcesLabel: "Resources",
+  footerSupportLabel: "Support",
+  footerSendLinkLabel: "Send money",
+  footerFaqLinkLabel: "FAQ",
+  footerContactLinkLabel: "Contact",
+  footerStatusLinkLabel: "System status",
+  pricingControlsTitle: "Pricing controls",
+  pricingControlsSubtitle: "Adjust rates and fees if you need to preview alternatives.",
+  transferDetailsEmptyTitle: "Lock a quote to add recipient details.",
+  transferDetailsEmptyDescription:
+    "Once locked, you can enter recipient information and confirm the payout rail.",
+  editSendDetailsLabel: "Edit send details",
+  quoteSectionSubtitle: "Review your quote, lock it, and confirm recipient details.",
   assetsLoadError: "Unable to load assets. Showing defaults.",
-  assetsLoading: "Loading assets...",
+  assetsLoading: "Fetching available assets...",
   fromAssetLabel: "From asset",
   toAssetLabel: "To asset",
   railLabel: "Rail",
@@ -162,7 +286,7 @@ const EN_MESSAGES: Messages = {
   recipientGetsLabel: "Recipient Gets",
   quoteValidFor: (seconds) => `Valid for ${seconds}s`,
   quoteExpired: "Expired",
-  quoteFetching: "Fetching quote",
+  quoteFetching: "Fetching quote...",
   refreshingQuote: "Refreshing quote...",
   waitingForQuote: "Waiting for quote response.",
   basedOnAfterFees: (amount) => `Based on ${amount} after fees.`,
@@ -176,7 +300,7 @@ const EN_MESSAGES: Messages = {
   routeActiveLabel: "Active route",
   etaRangeLabel: (minMinutes, maxMinutes) => `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Use this route",
-  recommendationLoading: "Fetching suggestions",
+  recommendationLoading: "Fetching smart suggestions...",
   recommendationEmpty: "No suggestion yet.",
   recommendationLoadError: "Unable to load suggestions. Please try again.",
   quoteBreakdownLabel: "Quote Breakdown",
@@ -279,12 +403,81 @@ const EN_MESSAGES: Messages = {
 
 const FR_MESSAGES: Messages = {
   quoteTitle: (from, to) => `De ${from} à ${to}`,
+  tagline: "Envoyez en toute clarté.",
+  navAboutLabel: "À propos",
+  navFeesLabel: "Frais",
+  navSecurityLabel: "Sécurité",
+  navHelpLabel: "Aide",
+  navGetStartedLabel: "Commencer",
   heroTitle:
-    "Envoyez en toute clarté. Voyez chaque frais et le montant exact reçu.",
+    "Envoyez en toute clarté. Connaissez le taux, les frais et le délai avant d'envoyer.",
   heroSubtitle:
-    "Un devis clair et transparent pour les envois internationaux. Ajustez les actifs, les rails et les frais pour prévisualiser instantanément.",
+    "ClariSend propose des tarifs transparents, un routage intelligent et des rails modernes pour des transferts prévisibles.",
+  sendCardTitle: "Envoyer de l'argent",
+  sendCardSubtitle: "Lancez un devis en quelques secondes avec des frais clairs.",
+  sendFromLabel: "Envoi depuis",
+  sendToLabel: "Envoi vers",
+  sendCtaLabel: "Commencer",
+  trustTitle: "La clarté à chaque étape",
+  trustItemTransparent: "Tarification transparente",
+  trustItemFast: "Livraison rapide",
+  trustItemSecure: "Sécurisé et conforme",
+  featuresTitle: "Conçu pour les envois modernes",
+  featuresSubtitle:
+    "Rails intelligents, mises à jour en temps réel et routage optimisé pour garder vos transferts sur la bonne voie.",
+  featuresLinkLabel: "Fonctionnalités",
+  featureSmartRoutingTitle: "Routage intelligent",
+  featureSmartRoutingDescription:
+    "Sélection automatique du meilleur itinéraire selon le coût total, la vitesse et la fiabilité.",
+  featureMultiRailTitle: "Paiement multi-rail",
+  featureMultiRailDescription:
+    "Livrez sur banques, mobile money ou lightning avec une expérience cohérente.",
+  featureTrackingTitle: "Suivi",
+  featureTrackingDescription:
+    "Des statuts en direct et des reçus gardent tout le monde aligné.",
+  faqTitle: "Questions fréquentes",
+  faqSubtitle: "Des réponses claires avant d'envoyer.",
+  faqQuestionOne: "Comment ClariSend garantit-il la transparence des prix ?",
+  faqAnswerOne:
+    "Nous affichons le taux en direct, la marge FX et tous les frais avant de verrouiller le devis.",
+  faqQuestionTwo: "Quels rails de paiement supportez-vous ?",
+  faqAnswerTwo:
+    "ClariSend prend en charge les virements bancaires, mobile money et lightning selon les corridors.",
+  faqQuestionThree: "Quels sont les délais de transfert ?",
+  faqAnswerThree:
+    "Les délais varient selon le rail et le fournisseur, mais vous voyez l'ETA avant d'envoyer.",
+  faqQuestionFour: "ClariSend est-il conforme et sécurisé ?",
+  faqAnswerFour:
+    "Oui. Nous appliquons des contrôles de conformité stricts et chiffrons les données.",
+  countrySelectChangeLabel: "Modifier",
+  countrySelectDialogTitle: "Choisissez un pays et une devise",
+  countrySelectDialogSubtitle: "Recherchez par pays, devise ou code.",
+  countrySelectCloseLabel: "Fermer",
+  countrySelectSearchPlaceholder: "Rechercher un pays ou une devise",
+  countrySelectSearchLabel: "Rechercher un pays",
+  countrySelectNoResultsLabel: "Aucun résultat. Essayez une autre recherche.",
+  countrySelectFallbackLabel: "Choisir un pays",
+  footerTagline:
+    "Paiements internationaux transparents, pensés pour les équipes qui exigent la clarté.",
+  footerCompanyLabel: "Entreprise",
+  footerProductLabel: "Produit",
+  footerResourcesLabel: "Ressources",
+  footerSupportLabel: "Support",
+  footerSendLinkLabel: "Envoyer de l'argent",
+  footerFaqLinkLabel: "FAQ",
+  footerContactLinkLabel: "Contact",
+  footerStatusLinkLabel: "État du système",
+  pricingControlsTitle: "Contrôles de tarification",
+  pricingControlsSubtitle:
+    "Ajustez les taux et les frais pour simuler des alternatives.",
+  transferDetailsEmptyTitle: "Verrouillez un devis pour saisir le bénéficiaire.",
+  transferDetailsEmptyDescription:
+    "Une fois verrouillé, vous pouvez saisir les informations du bénéficiaire et confirmer le rail.",
+  editSendDetailsLabel: "Modifier les détails",
+  quoteSectionSubtitle:
+    "Vérifiez votre devis, verrouillez-le et confirmez les détails du bénéficiaire.",
   assetsLoadError: "Impossible de charger les actifs. Valeurs par défaut affichées.",
-  assetsLoading: "Chargement des actifs...",
+  assetsLoading: "Chargement des devises...",
   fromAssetLabel: "Actif d'envoi",
   toAssetLabel: "Actif de réception",
   railLabel: "Rail",
@@ -302,7 +495,7 @@ const FR_MESSAGES: Messages = {
   recipientGetsLabel: "Le bénéficiaire reçoit",
   quoteValidFor: (seconds) => `Valide pendant ${seconds}s`,
   quoteExpired: "Expiré",
-  quoteFetching: "Devis en cours",
+  quoteFetching: "Devis en cours...",
   refreshingQuote: "Actualisation du devis...",
   waitingForQuote: "En attente du devis.",
   basedOnAfterFees: (amount) => `Basé sur ${amount} après frais.`,
@@ -317,7 +510,7 @@ const FR_MESSAGES: Messages = {
   etaRangeLabel: (minMinutes, maxMinutes) =>
     `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Utiliser cet itinéraire",
-  recommendationLoading: "Chargement des suggestions",
+  recommendationLoading: "Chargement des suggestions...",
   recommendationEmpty: "Aucune suggestion pour l’instant.",
   recommendationLoadError: "Impossible de charger les suggestions. Veuillez réessayer.",
   quoteBreakdownLabel: "Détail du devis",

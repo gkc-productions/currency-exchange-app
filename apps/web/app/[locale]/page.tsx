@@ -3,19 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Fraunces, Space_Grotesk } from "next/font/google";
+import SendCard from "@/components/SendCard";
+import { COUNTRY_OPTIONS } from "@/components/country-options";
 import { formatDateTime, formatMoney, formatPercent } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
-
-const grotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-grotesk",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-});
 
 const MARKET_RATE = 12.65;
 const FX_MARGIN_PCT = 1.8;
@@ -42,6 +33,8 @@ const DEFAULT_ASSETS = [
 ] as const;
 
 const DEFAULT_COUNTRY_BY_ASSET: Record<string, string> = {
+  USD: "US",
+  EUR: "FR",
   GHS: "GH",
   NGN: "NG",
   XOF: "SN",
@@ -54,6 +47,8 @@ const DEFAULT_COUNTRY_BY_ASSET: Record<string, string> = {
   EGP: "EG",
   DZD: "DZ",
   TND: "TN",
+  XCD: "LC",
+  BTC: "GL",
 };
 
 const formatNumber = (value: number, digits = 2, locale: Locale = "en") =>
@@ -160,6 +155,7 @@ export default function Home() {
   const [fixedFee, setFixedFee] = useState(String(FIXED_FEE_DEFAULT));
   const [percentFee, setPercentFee] = useState(String(PERCENT_FEE_PCT));
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoteActive, setQuoteActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
@@ -214,6 +210,31 @@ export default function Home() {
   const assetMap = useMemo(() => {
     return new Map(assetsList.map((asset) => [asset.code, asset]));
   }, [assetsList]);
+  const countryOptions = useMemo(() => {
+    const assetNameMap = new Map(
+      assetsList.map((asset) => [asset.code, asset.name])
+    );
+    const options = COUNTRY_OPTIONS.map((option) => ({
+      ...option,
+      assetName: assetNameMap.get(option.assetCode) ?? option.assetName,
+    }));
+    const ensureAsset = (assetCode: string) => {
+      if (options.some((option) => option.assetCode === assetCode)) {
+        return;
+      }
+      const assetName = assetNameMap.get(assetCode) ?? assetCode;
+      options.push({
+        id: `asset-${assetCode.toLowerCase()}`,
+        countryCode: "",
+        countryName: assetName,
+        assetCode,
+        assetName,
+      });
+    };
+    ensureAsset(fromAsset);
+    ensureAsset(toAsset);
+    return options;
+  }, [assetsList, fromAsset, toAsset]);
   const formatAmount = useCallback(
     (value: number, assetCode: string) => {
       const asset = assetMap.get(assetCode);
@@ -509,6 +530,20 @@ export default function Home() {
     return null;
   }, [fromAsset, messages.recommendationLoadError, sendAmount, toAsset]);
 
+  const handleGetStarted = useCallback(() => {
+    if (!quoteActive) {
+      setQuoteActive(true);
+    } else {
+      fetchQuote();
+      fetchRecommendation();
+    }
+    window.setTimeout(() => {
+      document
+        .getElementById("quote")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }, [fetchQuote, fetchRecommendation, quoteActive]);
+
   const resetTransferForm = useCallback(() => {
     setRecipientName("");
     setRecipientCountry(defaultRecipientCountry);
@@ -672,18 +707,24 @@ export default function Home() {
   ]);
 
   useEffect(() => {
+    if (!quoteActive) {
+      return;
+    }
     const timer = window.setTimeout(() => {
       fetchQuote();
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [fetchQuote]);
+  }, [fetchQuote, quoteActive]);
 
   useEffect(() => {
+    if (!quoteActive) {
+      return;
+    }
     const timer = window.setTimeout(() => {
       fetchRecommendation();
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [fetchRecommendation]);
+  }, [fetchRecommendation, quoteActive]);
 
   useEffect(() => {
     if (!quote?.expiresAt) {
@@ -761,680 +802,835 @@ export default function Home() {
     {
       key: "cheapest",
       label: messages.cheapestLabel,
-      accent: "border-emerald-400/40 bg-emerald-500/20 text-emerald-200",
+      accent: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
       route: cheapestRoute,
     },
     {
       key: "fastest",
       label: messages.fastestLabel,
-      accent: "border-sky-400/40 bg-sky-500/20 text-sky-200",
+      accent: "border-sky-200/70 bg-sky-50 text-sky-700",
       route: fastestRoute,
     },
     {
       key: "best",
       label: messages.bestValueLabel,
-      accent: "border-amber-400/40 bg-amber-500/20 text-amber-200",
+      accent: "border-amber-200/70 bg-amber-50 text-amber-700",
       route: bestValueRoute,
     },
   ];
 
+  const trustItems = [
+    messages.trustItemTransparent,
+    messages.trustItemFast,
+    messages.trustItemSecure,
+  ];
+
+  const featureCards = [
+    {
+      title: messages.featureSmartRoutingTitle,
+      description: messages.featureSmartRoutingDescription,
+    },
+    {
+      title: messages.featureMultiRailTitle,
+      description: messages.featureMultiRailDescription,
+    },
+    {
+      title: messages.featureTrackingTitle,
+      description: messages.featureTrackingDescription,
+    },
+  ];
+
+  const faqItems = [
+    { question: messages.faqQuestionOne, answer: messages.faqAnswerOne },
+    { question: messages.faqQuestionTwo, answer: messages.faqAnswerTwo },
+    { question: messages.faqQuestionThree, answer: messages.faqAnswerThree },
+    { question: messages.faqQuestionFour, answer: messages.faqAnswerFour },
+  ];
+
+  const countrySelectCopy = {
+    changeLabel: messages.countrySelectChangeLabel,
+    dialogTitle: messages.countrySelectDialogTitle,
+    dialogSubtitle: messages.countrySelectDialogSubtitle,
+    closeLabel: messages.countrySelectCloseLabel,
+    searchPlaceholder: messages.countrySelectSearchPlaceholder,
+    searchLabel: messages.countrySelectSearchLabel,
+    noResultsLabel: messages.countrySelectNoResultsLabel,
+    selectFallback: messages.countrySelectFallbackLabel,
+  };
+
+  const inputClassName =
+    "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40";
+  const cardClassName =
+    "rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]";
+
   return (
-    <div
-      className={`${grotesk.variable} ${fraunces.variable} min-h-screen bg-[radial-gradient(circle_at_top,_#f8d6b8,_#fdf7f0_40%,_#eef4ff)] text-slate-900`}
-    >
-      <main className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16 sm:px-10">
-        <section className="grid w-full gap-8 rounded-3xl border border-slate-200/60 bg-white/80 p-8 shadow-[0_30px_60px_-40px_rgba(15,23,42,0.5)] backdrop-blur md:grid-cols-[1.2fr_0.8fr] md:gap-10 md:p-12">
-          <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-3">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                {messages.quoteTitle(displayFromAsset, displayToAsset)}
-              </p>
-              <h1 className="font-[var(--font-fraunces)] text-3xl leading-tight text-slate-900 sm:text-4xl">
+    <div className="bg-[var(--brand-surface)] text-slate-900">
+      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#d9f3ee,_#f5f7fb_50%,_#fff4e6)]">
+        <div className="pointer-events-none absolute -top-24 right-8 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl motion-safe:animate-[float-slow_12s_ease-in-out_infinite]" />
+        <div className="pointer-events-none absolute -bottom-32 left-10 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl motion-safe:animate-[float-slow_14s_ease-in-out_infinite]" />
+        <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 lg:py-24">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="space-y-6">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
+                ClariSend
+              </span>
+              <h1 className="font-[var(--font-display)] text-4xl leading-tight text-slate-900 sm:text-5xl">
                 {messages.heroTitle}
               </h1>
-              <p className="max-w-xl text-sm leading-6 text-slate-600">
+              <p className="max-w-xl text-lg text-slate-600">
                 {messages.heroSubtitle}
               </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200/70 bg-white px-5 py-6 shadow-sm">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                  {messages.fromAssetLabel}
-                  <select
-                    value={fromAsset}
-                    onChange={(event) => setFromAsset(event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                    aria-label={messages.fromAssetLabel}
-                  >
-                    {assetsList.map((asset) => (
-                      <option key={asset.code} value={asset.code}>
-                        {asset.code} · {asset.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                  {messages.toAssetLabel}
-                  <select
-                    value={toAsset}
-                    onChange={(event) => setToAsset(event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                    aria-label={messages.toAssetLabel}
-                  >
-                    {assetsList.map((asset) => (
-                      <option key={asset.code} value={asset.code}>
-                        {asset.code} · {asset.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                  {messages.railLabel}
-                  <select
-                    value={rail}
-                    onChange={(event) => setRail(event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                    aria-label={messages.railLabel}
-                  >
-                    {payoutRailOptions.map((railOption) => (
-                      <option key={railOption.code} value={railOption.code}>
-                        {railOption.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-600">
+                <Link
+                  href={`/${locale}#features`}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                >
+                  {messages.featuresLinkLabel}
+                </Link>
+                <Link
+                  href={`/${locale}#faq`}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                >
+                  {messages.footerFaqLinkLabel}
+                </Link>
               </div>
-              {assetsLoading ? (
-                <p className="mt-3 text-xs text-slate-400">
-                  {messages.assetsLoading}
+            </div>
+            <div id="send" className="w-full">
+              <SendCard
+                title={messages.sendCardTitle}
+                subtitle={messages.sendCardSubtitle}
+                fromLabel={messages.sendFromLabel}
+                toLabel={messages.sendToLabel}
+                railLabel={messages.railLabel}
+                amountLabel={messages.sendAmountLabel}
+                amountHint={messages.sendAmountHint}
+                submitLabel={messages.sendCtaLabel}
+                assetsLoadingLabel={messages.assetsLoading}
+                fromAsset={fromAsset}
+                toAsset={toAsset}
+                rail={rail}
+                sendAmount={sendAmount}
+                sendStep={sendStep}
+                railOptions={payoutRailOptions}
+                countryOptions={countryOptions}
+                assetsLoading={assetsLoading}
+                assetsError={assetsError}
+                onChangeFrom={setFromAsset}
+                onChangeTo={setToAsset}
+                onChangeRail={setRail}
+                onChangeAmount={setSendAmount}
+                onSubmit={handleGetStarted}
+                countrySelectCopy={countrySelectCopy}
+              />
+            </div>
+          </div>
+          <div className="mt-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+              {messages.trustTitle}
+            </p>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {trustItems.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+                      <path
+                        fill="currentColor"
+                        d="M9.55 17.2L4.8 12.45l1.77-1.77 2.98 2.98 7.5-7.5 1.77 1.77-9.27 9.27z"
+                      />
+                    </svg>
+                  </span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {quoteActive ? (
+        <section id="quote" className="border-y border-slate-200/70 bg-white">
+          <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  {messages.quoteTitle(displayFromAsset, displayToAsset)}
                 </p>
-              ) : null}
-              {assetsError ? (
-                <p className="mt-2 text-xs text-rose-600">{assetsError}</p>
-              ) : null}
-            </div>
-
-            <div className="rounded-2xl border border-slate-200/70 bg-white px-5 py-6 shadow-sm">
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                {messages.sendAmountLabel} ({fromAsset})
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-lg font-semibold text-slate-900">
-                  <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    {fromAsset}
-                  </span>
-                  <input
-                    inputMode="decimal"
-                    type="number"
-                    min="0"
-                    step={sendStep}
-                    value={sendAmount}
-                    onChange={(event) => setSendAmount(event.target.value)}
-                    className="w-full bg-transparent text-2xl outline-none"
-                    aria-label={`Send amount in ${fromAsset}`}
-                  />
-                </div>
-              </label>
-              <p className="mt-3 text-xs text-slate-500">
-                {messages.sendAmountHint}
-              </p>
-            </div>
-
-            <div className="grid gap-4 rounded-2xl border border-slate-200/70 bg-white px-5 py-6 text-sm text-slate-700 shadow-sm">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                  {messages.marketRateLabel} ({toAsset} per 1 {fromAsset})
-                  <input
-                    inputMode="decimal"
-                    type="number"
-                    min="0"
-                    step="0.0001"
-                    value={marketRate}
-                    onChange={(event) => setMarketRate(event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                    aria-label={`Market rate in ${toAsset}`}
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                  {messages.fxMarginLabel}
-                  <input
-                    inputMode="decimal"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={fxMargin}
-                    onChange={(event) => setFxMargin(event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                    aria-label={messages.fxMarginLabel}
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                  {messages.fixedFeeLabel} ({fromAsset})
-                  <input
-                    inputMode="decimal"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={fixedFee}
-                    onChange={(event) => setFixedFee(event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                    aria-label={`Fixed fee in ${fromAsset}`}
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                  {messages.percentFeeLabelWithAsset(fromAsset)}
-                  <input
-                    inputMode="decimal"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={percentFee}
-                    onChange={(event) => setPercentFee(event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                    aria-label={messages.percentFeeLabelWithAsset(fromAsset)}
-                  />
-                </label>
+                <h2 className="mt-2 font-[var(--font-display)] text-3xl text-slate-900">
+                  {messages.quoteBreakdownLabel}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm text-slate-500">
+                  {messages.quoteSectionSubtitle}
+                </p>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-                <span>
-                  {hasQuote
-                    ? `1 ${displayFromAsset} = ${formatNumber(
-                        numericMarketRate,
-                        4,
-                        locale
-                      )} ${displayToAsset} ${messages.marketRateSuffix}`
-                    : messages.marketRatePending}
-                </span>
-                <span>
-                  {hasQuote
-                    ? `${messages.appliedRateRow}: 1 ${displayFromAsset} = ${formatNumber(
-                        appliedRate,
-                        4,
-                        locale
-                      )} ${displayToAsset}`
-                    : messages.appliedRatePending}
-                </span>
-              </div>
+              <Link
+                href={`/${locale}#send`}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                {messages.editSendDetailsLabel}
+              </Link>
             </div>
 
-            {lockedQuoteId ? (
-              <div className="rounded-2xl border border-slate-200/70 bg-white px-5 py-6 text-sm text-slate-700 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                      {messages.transferDetailsLabel}
+            <div className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="space-y-6">
+                <div className="rounded-3xl bg-slate-900 px-6 py-7 text-white shadow-[0_25px_60px_-40px_rgba(15,23,42,0.6)]">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                      {messages.recipientGetsLabel}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {messages.lockedQuoteLabel}: {lockedQuoteId} ·{" "}
-                      {messages.railDisplayLabel}: {railMeta?.name ?? displayRail}
-                    </p>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-200">
+                      {hasQuote
+                        ? isExpired
+                          ? messages.quoteExpired
+                          : messages.quoteValidFor(secondsRemaining)
+                        : messages.quoteFetching}
+                    </span>
                   </div>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                    {messages.draftLabel}
-                  </span>
+                  <div className="mt-4">
+                    <p className="font-[var(--font-display)] text-4xl leading-tight sm:text-5xl">
+                      {hasQuote
+                        ? formatAmount(recipientGets, displayToAsset)
+                        : "—"}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-300">
+                      {hasQuote
+                        ? messages.basedOnAfterFees(
+                            formatAmount(netConverted, displayFromAsset)
+                          )
+                        : messages.waitingForQuote}
+                    </p>
+                    {isLoading ? (
+                      <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+                        {messages.refreshingQuote}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                    {messages.recipientNameLabel}
-                    <input
-                      type="text"
-                      value={recipientName}
-                      onChange={(event) => setRecipientName(event.target.value)}
-                      onBlur={() =>
-                        setTransferTouched((prev) => ({ ...prev, name: true }))
-                      }
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                      aria-label={messages.recipientNameLabel}
-                    />
-                    {nameError ? (
-                      <span className="text-[11px] font-medium text-rose-600">
-                        {nameError}
+
+                <div className={cardClassName}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                      {messages.smartSuggestionsLabel}
+                    </p>
+                    {recommendationLoading ? (
+                      <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
+                        {messages.recommendationLoading}
                       </span>
                     ) : null}
-                  </label>
-                  <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                    {messages.recipientCountryLabel}
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={recipientCountry}
-                      onChange={(event) => {
-                        setRecipientCountry(event.target.value.toUpperCase());
-                        setTransferTouched((prev) => ({
-                          ...prev,
-                          country: true,
-                        }));
-                      }}
-                      onBlur={() =>
-                        setTransferTouched((prev) => ({
-                          ...prev,
-                          country: true,
-                        }))
-                      }
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                      aria-label={messages.recipientCountryLabel}
-                    />
-                    {countryError ? (
-                      <span className="text-[11px] font-medium text-rose-600">
-                        {countryError}
-                      </span>
-                    ) : null}
-                  </label>
-                </div>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                    {messages.recipientPhoneLabel}
-                    <input
-                      inputMode="tel"
-                      type="tel"
-                      value={recipientPhone}
-                      onChange={(event) => setRecipientPhone(event.target.value)}
-                      onBlur={() =>
-                        setTransferTouched((prev) => ({ ...prev, phone: true }))
-                      }
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                      aria-label={messages.recipientPhoneLabel}
-                    />
-                    {phoneError ? (
-                      <span className="text-[11px] font-medium text-rose-600">
-                        {phoneError}
-                      </span>
-                    ) : null}
-                  </label>
-                  <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                    {messages.memoLabel}
-                    <input
-                      type="text"
-                      value={memo}
-                      onChange={(event) => setMemo(event.target.value)}
-                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                      aria-label={messages.memoLabel}
-                    />
-                  </label>
-                </div>
-                <div className="mt-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                    {messages.payoutRailLabel}
-                  </p>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                    {payoutRailOptions.map((railOption) => (
-                      <label
-                        key={railOption.code}
-                        className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700"
+                  </div>
+                  <div className="mt-4 grid gap-4">
+                    {suggestionCards.map((card) => (
+                      <div
+                        key={card.key}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700"
                       >
-                        <input
-                          type="radio"
-                          name="payoutRail"
-                          value={railOption.code}
-                          checked={payoutRail === railOption.code}
-                          onChange={() => {
-                            setPayoutRail(
-                              railOption.code as "MOBILE_MONEY" | "BANK" | "LIGHTNING"
-                            );
-                            setTransferTouched((prev) => ({
-                              ...prev,
-                              payout: true,
-                            }));
-                          }}
-                          className="h-4 w-4"
-                          aria-label={railOption.name}
-                        />
-                        {railOption.name}
-                      </label>
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.2em] ${card.accent}`}
+                          >
+                            {card.label}
+                          </span>
+                          <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                            {resolveRouteHighlights(card.route)}
+                          </span>
+                        </div>
+                        {card.route ? (
+                          <>
+                            <p className="mt-3 text-base font-semibold text-slate-900">
+                              {resolveRailName(card.route.rail)}
+                            </p>
+                            <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                              {messages.etaRangeLabel(
+                                card.route.etaMinMinutes,
+                                card.route.etaMaxMinutes
+                              )}
+                            </p>
+                            <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
+                              <span>{messages.totalFeeRow}</span>
+                              <span>
+                                {formatAmount(
+                                  card.route.totalFee,
+                                  suggestionFrom
+                                )}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between text-xs text-slate-600">
+                              <span>{messages.recipientGetsLabel}</span>
+                              <span>
+                                {formatAmount(
+                                  card.route.recipientGets,
+                                  suggestionTo
+                                )}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => applyRouteSuggestion(card.route)}
+                              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                            >
+                              {messages.useRouteButton}
+                            </button>
+                          </>
+                        ) : (
+                          <p className="mt-3 text-xs text-slate-500">
+                            {messages.recommendationEmpty}
+                          </p>
+                        )}
+                      </div>
                     ))}
                   </div>
-                  {payoutError ? (
-                    <p className="mt-2 text-xs text-rose-600">{payoutError}</p>
+                  {recommendationError ? (
+                    <p className="mt-3 text-xs text-rose-600">
+                      {recommendationError}
+                    </p>
                   ) : null}
                 </div>
-                {payoutRail === "BANK" ? (
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                      {messages.bankNameLabel}
-                      <input
-                        type="text"
-                        value={bankName}
-                        onChange={(event) => setBankName(event.target.value)}
-                        onBlur={() =>
-                          setTransferTouched((prev) => ({ ...prev, bank: true }))
-                        }
-                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                        aria-label={messages.bankNameLabel}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                      {messages.bankAccountLabel}
-                      <input
-                        type="text"
-                        value={bankAccount}
-                        onChange={(event) => setBankAccount(event.target.value)}
-                        onBlur={() =>
-                          setTransferTouched((prev) => ({ ...prev, bank: true }))
-                        }
-                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                        aria-label={messages.bankAccountLabel}
-                      />
-                    </label>
-                    {bankError ? (
-                      <p className="text-xs text-rose-600">{bankError}</p>
-                    ) : null}
-                  </div>
-                ) : null}
-                {payoutRail === "MOBILE_MONEY" ? (
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                      {messages.mobileMoneyProviderLabel}
-                      <input
-                        type="text"
-                        value={mobileMoneyProvider}
-                        onChange={(event) =>
-                          setMobileMoneyProvider(event.target.value)
-                        }
-                        onBlur={() =>
-                          setTransferTouched((prev) => ({
-                            ...prev,
-                            mobileMoney: true,
-                          }))
-                        }
-                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                        aria-label={messages.mobileMoneyProviderLabel}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                      {messages.mobileMoneyNumberLabel}
-                      <input
-                        type="text"
-                        value={mobileMoneyNumber}
-                        onChange={(event) =>
-                          setMobileMoneyNumber(event.target.value)
-                        }
-                        onBlur={() =>
-                          setTransferTouched((prev) => ({
-                            ...prev,
-                            mobileMoney: true,
-                          }))
-                        }
-                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-900 outline-none"
-                        aria-label={messages.mobileMoneyNumberLabel}
-                      />
-                    </label>
-                    {mobileMoneyError ? (
-                      <p className="text-xs text-rose-600">{mobileMoneyError}</p>
-                    ) : null}
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  disabled={!isTransferValid || isTransferSubmitting}
-                  onClick={handleCreateTransfer}
-                  className="mt-5 w-full rounded-xl border border-slate-200 bg-slate-900 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                >
-                  {isTransferSubmitting
-                    ? messages.transferSubmitting
-                    : messages.createTransferButton}
-                </button>
-                {transferError ? (
-                  <p className="mt-2 text-xs text-rose-600">{transferError}</p>
-                ) : null}
-                {transferResult ? (
-                  <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                    <p className="font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      {messages.transferCreatedLabel}
-                    </p>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span>{messages.transferIdLabel}</span>
-                      <span className="font-medium text-slate-900">
-                        {transferResult.id}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between">
-                      <span>{messages.transferStatusLabel}</span>
-                      <span className="font-medium text-slate-900">
-                        {resolveStatusLabel(transferResult.status)}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/${locale}/transfer/${transferResult.id}`}
-                      className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-900 transition hover:border-slate-300"
-                    >
-                      {messages.viewReceiptButton}
-                    </Link>
-                  </div>
-                ) : null}
-                <p className="mt-2 text-xs text-slate-500">
-                  {isTransferValid
-                    ? messages.transferReadyMessage
-                    : messages.transferIncompleteMessage}
-                </p>
-              </div>
-            ) : null}
-          </div>
 
-          <aside className="flex h-full flex-col justify-between gap-6 rounded-3xl bg-slate-900 px-6 py-8 text-white shadow-[0_20px_60px_-30px_rgba(15,23,42,0.9)]">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  {messages.recipientGetsLabel}
-                </p>
-                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-200">
-                  {hasQuote
-                    ? isExpired
-                      ? messages.quoteExpired
-                      : messages.quoteValidFor(secondsRemaining)
-                    : messages.quoteFetching}
-                </span>
-              </div>
-              <div>
-                <p className="font-[var(--font-fraunces)] text-4xl leading-tight sm:text-5xl">
-                  {hasQuote ? formatAmount(recipientGets, displayToAsset) : "—"}
-                </p>
-                <p className="mt-2 text-sm text-slate-300">
-                  {hasQuote
-                    ? messages.basedOnAfterFees(
-                        formatAmount(netConverted, displayFromAsset)
-                      )
-                    : messages.waitingForQuote}
-                </p>
-                {isLoading ? (
-                  <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-500">
-                    {messages.refreshingQuote}
+                <div className={cardClassName}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                    {messages.quoteBreakdownLabel}
                   </p>
-                ) : null}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-xs text-slate-200">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                  {messages.smartSuggestionsLabel}
-                </p>
-                {recommendationLoading ? (
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                    {messages.recommendationLoading}
-                  </span>
-                ) : null}
-              </div>
-              <div className="mt-3 grid gap-3">
-                {suggestionCards.map((card) => (
-                  <div
-                    key={card.key}
-                    className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-xs text-slate-200"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.2em] ${card.accent}`}
-                      >
-                        {card.label}
-                      </span>
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                        {resolveRouteHighlights(card.route)}
+                  <div className="mt-4 grid gap-2 text-sm text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span>{messages.quoteIdLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {quote?.id ?? "—"}
                       </span>
                     </div>
-                    {card.route ? (
-                      <>
-                        <p className="mt-3 text-sm font-semibold text-white">
-                          {resolveRailName(card.route.rail)}
-                        </p>
-                        <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                          {messages.etaRangeLabel(
-                            card.route.etaMinMinutes,
-                            card.route.etaMaxMinutes
-                          )}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between text-[11px] text-slate-300">
-                          <span>{messages.totalFeeRow}</span>
-                          <span>
-                            {formatAmount(
-                              card.route.totalFee,
-                              suggestionFrom
-                            )}
-                          </span>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-300">
-                          <span>{messages.recipientGetsLabel}</span>
-                          <span>
-                            {formatAmount(
-                              card.route.recipientGets,
-                              suggestionTo
-                            )}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => applyRouteSuggestion(card.route)}
-                          className="mt-3 w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
-                        >
-                          {messages.useRouteButton}
-                        </button>
-                      </>
-                    ) : (
-                      <p className="mt-3 text-xs text-slate-400">
-                        {messages.recommendationEmpty}
-                      </p>
-                    )}
+                    <div className="flex items-center justify-between">
+                      <span>{messages.expiresAtLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {expiresAtLabel}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.railDisplayLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {railMeta?.name ?? displayRail}
+                      </span>
+                    </div>
                   </div>
-                ))}
+                  <div className="mt-4 grid gap-2 text-sm text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span>{messages.sendAmountRow}</span>
+                      <span>
+                        {hasQuote
+                          ? formatAmount(numericSend, displayFromAsset)
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.totalFeeRow}</span>
+                      <span>
+                        {hasQuote
+                          ? formatAmount(totalFee, displayFromAsset)
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.netConvertedRow}</span>
+                      <span>
+                        {hasQuote
+                          ? formatAmount(netConverted, displayFromAsset)
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.appliedRateRow}</span>
+                      <span>
+                        {hasQuote
+                          ? `1 ${displayFromAsset} = ${formatNumber(
+                              appliedRate,
+                              4,
+                              locale
+                            )} ${displayToAsset}`
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.fxMarginRow}</span>
+                      <span>
+                        {hasQuote ? formatPercent(numericFxMargin, locale) : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.effectiveRateRow}</span>
+                      <span>
+                        {hasQuote
+                          ? `1 ${displayFromAsset} = ${formatNumber(
+                              effectiveRate,
+                              4,
+                              locale
+                            )} ${displayToAsset}`
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                    {hasQuote
+                      ? `${messages.feesLabel}: ${formatAmount(
+                          numericFixedFee,
+                          displayFromAsset
+                        )} ${messages.fixedFeeSuffix} + ${formatPercent(
+                          numericPercentFee,
+                          locale
+                        )} (${formatAmount(
+                          percentFeeAmount,
+                          displayFromAsset
+                        )})`
+                      : `${messages.feesLabel}: —`}
+                  </div>
+                  {quoteError ? (
+                    <p className="mt-3 text-xs text-rose-600">{quoteError}</p>
+                  ) : null}
+                  {lockError ? (
+                    <p className="mt-3 text-xs text-amber-600">{lockError}</p>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={handleLockQuote}
+                    disabled={!hasQuote || isLoading || pendingLock}
+                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    {pendingLock
+                      ? messages.lockQuoteRefreshing
+                      : messages.lockQuoteButton}
+                  </button>
+                  {hasQuote && isExpired ? (
+                    <button
+                      type="button"
+                      onClick={fetchQuote}
+                      disabled={isLoading}
+                      className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {messages.refreshQuoteButton}
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              {recommendationError ? (
-                <p className="mt-3 text-xs text-rose-200">
-                  {recommendationError}
-                </p>
-              ) : null}
+
+              <div className="space-y-6">
+                <div className={cardClassName}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                    {messages.pricingControlsTitle}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {messages.pricingControlsSubtitle}
+                  </p>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      {messages.marketRateLabel} ({toAsset} per 1 {fromAsset})
+                      <input
+                        inputMode="decimal"
+                        type="number"
+                        min="0"
+                        step="0.0001"
+                        value={marketRate}
+                        onChange={(event) => setMarketRate(event.target.value)}
+                        className={inputClassName}
+                        aria-label={`Market rate in ${toAsset}`}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      {messages.fxMarginLabel}
+                      <input
+                        inputMode="decimal"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={fxMargin}
+                        onChange={(event) => setFxMargin(event.target.value)}
+                        className={inputClassName}
+                        aria-label={messages.fxMarginLabel}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      {messages.fixedFeeLabel} ({fromAsset})
+                      <input
+                        inputMode="decimal"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={fixedFee}
+                        onChange={(event) => setFixedFee(event.target.value)}
+                        className={inputClassName}
+                        aria-label={`Fixed fee in ${fromAsset}`}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      {messages.percentFeeLabelWithAsset(fromAsset)}
+                      <input
+                        inputMode="decimal"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={percentFee}
+                        onChange={(event) => setPercentFee(event.target.value)}
+                        className={inputClassName}
+                        aria-label={messages.percentFeeLabelWithAsset(fromAsset)}
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                    <span>
+                      {hasQuote
+                        ? `1 ${displayFromAsset} = ${formatNumber(
+                            numericMarketRate,
+                            4,
+                            locale
+                          )} ${displayToAsset} ${messages.marketRateSuffix}`
+                        : messages.marketRatePending}
+                    </span>
+                    <span>
+                      {hasQuote
+                        ? `${messages.appliedRateRow}: 1 ${displayFromAsset} = ${formatNumber(
+                            appliedRate,
+                            4,
+                            locale
+                          )} ${displayToAsset}`
+                        : messages.appliedRatePending}
+                    </span>
+                  </div>
+                </div>
+
+                {lockedQuoteId ? (
+                  <div className={cardClassName}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                          {messages.transferDetailsLabel}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {messages.lockedQuoteLabel}: {lockedQuoteId} ·{" "}
+                          {messages.railDisplayLabel}: {railMeta?.name ?? displayRail}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                        {messages.draftLabel}
+                      </span>
+                    </div>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        {messages.recipientNameLabel}
+                        <input
+                          type="text"
+                          value={recipientName}
+                          onChange={(event) => setRecipientName(event.target.value)}
+                          onBlur={() =>
+                            setTransferTouched((prev) => ({ ...prev, name: true }))
+                          }
+                          className={inputClassName}
+                          aria-label={messages.recipientNameLabel}
+                        />
+                        {nameError ? (
+                          <span className="text-[11px] font-medium text-rose-600">
+                            {nameError}
+                          </span>
+                        ) : null}
+                      </label>
+                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        {messages.recipientCountryLabel}
+                        <input
+                          type="text"
+                          maxLength={2}
+                          value={recipientCountry}
+                          onChange={(event) => {
+                            setRecipientCountry(event.target.value.toUpperCase());
+                            setTransferTouched((prev) => ({
+                              ...prev,
+                              country: true,
+                            }));
+                          }}
+                          onBlur={() =>
+                            setTransferTouched((prev) => ({
+                              ...prev,
+                              country: true,
+                            }))
+                          }
+                          className={inputClassName}
+                          aria-label={messages.recipientCountryLabel}
+                        />
+                        {countryError ? (
+                          <span className="text-[11px] font-medium text-rose-600">
+                            {countryError}
+                          </span>
+                        ) : null}
+                      </label>
+                    </div>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        {messages.recipientPhoneLabel}
+                        <input
+                          inputMode="tel"
+                          type="tel"
+                          value={recipientPhone}
+                          onChange={(event) => setRecipientPhone(event.target.value)}
+                          onBlur={() =>
+                            setTransferTouched((prev) => ({ ...prev, phone: true }))
+                          }
+                          className={inputClassName}
+                          aria-label={messages.recipientPhoneLabel}
+                        />
+                        {phoneError ? (
+                          <span className="text-[11px] font-medium text-rose-600">
+                            {phoneError}
+                          </span>
+                        ) : null}
+                      </label>
+                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        {messages.memoLabel}
+                        <input
+                          type="text"
+                          value={memo}
+                          onChange={(event) => setMemo(event.target.value)}
+                          className={inputClassName}
+                          aria-label={messages.memoLabel}
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        {messages.payoutRailLabel}
+                      </p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                        {payoutRailOptions.map((railOption) => (
+                          <label
+                            key={railOption.code}
+                            className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700"
+                          >
+                            <input
+                              type="radio"
+                              name="payoutRail"
+                              value={railOption.code}
+                              checked={payoutRail === railOption.code}
+                              onChange={() => {
+                                setPayoutRail(
+                                  railOption.code as
+                                    | "MOBILE_MONEY"
+                                    | "BANK"
+                                    | "LIGHTNING"
+                                );
+                                setTransferTouched((prev) => ({
+                                  ...prev,
+                                  payout: true,
+                                }));
+                              }}
+                              className="h-4 w-4 accent-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                              aria-label={railOption.name}
+                            />
+                            {railOption.name}
+                          </label>
+                        ))}
+                      </div>
+                      {payoutError ? (
+                        <p className="mt-2 text-xs text-rose-600">{payoutError}</p>
+                      ) : null}
+                    </div>
+                    {payoutRail === "BANK" ? (
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          {messages.bankNameLabel}
+                          <input
+                            type="text"
+                            value={bankName}
+                            onChange={(event) => setBankName(event.target.value)}
+                            onBlur={() =>
+                              setTransferTouched((prev) => ({ ...prev, bank: true }))
+                            }
+                            className={inputClassName}
+                            aria-label={messages.bankNameLabel}
+                          />
+                        </label>
+                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          {messages.bankAccountLabel}
+                          <input
+                            type="text"
+                            value={bankAccount}
+                            onChange={(event) => setBankAccount(event.target.value)}
+                            onBlur={() =>
+                              setTransferTouched((prev) => ({ ...prev, bank: true }))
+                            }
+                            className={inputClassName}
+                            aria-label={messages.bankAccountLabel}
+                          />
+                        </label>
+                        {bankError ? (
+                          <p className="text-xs text-rose-600">{bankError}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {payoutRail === "MOBILE_MONEY" ? (
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          {messages.mobileMoneyProviderLabel}
+                          <input
+                            type="text"
+                            value={mobileMoneyProvider}
+                            onChange={(event) =>
+                              setMobileMoneyProvider(event.target.value)
+                            }
+                            onBlur={() =>
+                              setTransferTouched((prev) => ({
+                                ...prev,
+                                mobileMoney: true,
+                              }))
+                            }
+                            className={inputClassName}
+                            aria-label={messages.mobileMoneyProviderLabel}
+                          />
+                        </label>
+                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          {messages.mobileMoneyNumberLabel}
+                          <input
+                            type="text"
+                            value={mobileMoneyNumber}
+                            onChange={(event) =>
+                              setMobileMoneyNumber(event.target.value)
+                            }
+                            onBlur={() =>
+                              setTransferTouched((prev) => ({
+                                ...prev,
+                                mobileMoney: true,
+                              }))
+                            }
+                            className={inputClassName}
+                            aria-label={messages.mobileMoneyNumberLabel}
+                          />
+                        </label>
+                        {mobileMoneyError ? (
+                          <p className="text-xs text-rose-600">{mobileMoneyError}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      disabled={!isTransferValid || isTransferSubmitting}
+                      onClick={handleCreateTransfer}
+                      className="mt-5 w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                    >
+                      {isTransferSubmitting
+                        ? messages.transferSubmitting
+                        : messages.createTransferButton}
+                    </button>
+                    {transferError ? (
+                      <p className="mt-2 text-xs text-rose-600">{transferError}</p>
+                    ) : null}
+                    {transferResult ? (
+                      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        <p className="font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {messages.transferCreatedLabel}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span>{messages.transferIdLabel}</span>
+                          <span className="font-medium text-slate-900">
+                            {transferResult.id}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between">
+                          <span>{messages.transferStatusLabel}</span>
+                          <span className="font-medium text-slate-900">
+                            {resolveStatusLabel(transferResult.status)}
+                          </span>
+                        </div>
+                        <Link
+                          href={`/${locale}/transfer/${transferResult.id}`}
+                          className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-900 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                        >
+                          {messages.viewReceiptButton}
+                        </Link>
+                      </div>
+                    ) : null}
+                    <p className="mt-2 text-xs text-slate-500">
+                      {isTransferValid
+                        ? messages.transferReadyMessage
+                        : messages.transferIncompleteMessage}
+                    </p>
+                  </div>
+                ) : (
+                  <div className={cardClassName}>
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                      {messages.transferDetailsLabel}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-slate-900">
+                      {messages.transferDetailsEmptyTitle}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-500">
+                      {messages.transferDetailsEmptyDescription}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-xs leading-5 text-slate-300">
-              <p className="font-semibold uppercase tracking-[0.2em] text-slate-400">
-                {messages.quoteBreakdownLabel}
-              </p>
-              <div className="mt-3 flex items-center justify-between text-slate-400">
-                <span>{messages.quoteIdLabel}</span>
-                <span className="font-medium text-slate-200">
-                  {quote?.id ?? "—"}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between text-slate-400">
-                <span>{messages.expiresAtLabel}</span>
-                <span className="font-medium text-slate-200">
-                  {expiresAtLabel}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between text-slate-400">
-                <span>{messages.railDisplayLabel}</span>
-                <span className="font-medium text-slate-200">
-                  {railMeta?.name ?? displayRail}
-                </span>
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <span>{messages.sendAmountRow}</span>
-                <span>
-                  {hasQuote ? formatAmount(numericSend, displayFromAsset) : "—"}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <span>{messages.totalFeeRow}</span>
-                <span>
-                  {hasQuote ? formatAmount(totalFee, displayFromAsset) : "—"}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <span>{messages.netConvertedRow}</span>
-                <span>
-                  {hasQuote
-                    ? formatAmount(netConverted, displayFromAsset)
-                    : "—"}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <span>{messages.appliedRateRow}</span>
-                <span>
-                  {hasQuote
-                    ? `1 ${displayFromAsset} = ${formatNumber(
-                        appliedRate,
-                        4,
-                        locale
-                      )} ${displayToAsset}`
-                    : "—"}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <span>{messages.fxMarginRow}</span>
-                <span>
-                  {hasQuote ? formatPercent(numericFxMargin, locale) : "—"}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <span>{messages.effectiveRateRow}</span>
-                <span>
-                  {hasQuote
-                    ? `1 ${displayFromAsset} = ${formatNumber(
-                        effectiveRate,
-                        4,
-                        locale
-                      )} ${displayToAsset}`
-                    : "—"}
-                </span>
-              </div>
-              <div className="mt-4 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[11px] text-slate-200">
-                {hasQuote
-                  ? `${messages.feesLabel}: ${formatAmount(
-                      numericFixedFee,
-                      displayFromAsset
-                    )} ${messages.fixedFeeSuffix} + ${formatPercent(
-                      numericPercentFee,
-                      locale
-                    )} (${formatAmount(
-                      percentFeeAmount,
-                      displayFromAsset
-                    )})`
-                  : `${messages.feesLabel}: —`}
-              </div>
-              {quoteError ? (
-                <p className="mt-3 text-xs text-rose-200">{quoteError}</p>
-              ) : null}
-              {lockError ? (
-                <p className="mt-3 text-xs text-amber-200">{lockError}</p>
-              ) : null}
-              <button
-                type="button"
-                onClick={handleLockQuote}
-                disabled={!hasQuote || isLoading || pendingLock}
-                className="mt-4 w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {pendingLock
-                  ? messages.lockQuoteRefreshing
-                  : messages.lockQuoteButton}
-              </button>
-              {hasQuote && isExpired ? (
-                <button
-                  type="button"
-                  onClick={fetchQuote}
-                  disabled={isLoading}
-                  className="mt-3 w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {messages.refreshQuoteButton}
-                </button>
-              ) : null}
-            </div>
-          </aside>
+          </div>
         </section>
-      </main>
+      ) : null}
+
+      <section id="features" className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+            {messages.featuresLinkLabel}
+          </p>
+          <h2 className="font-[var(--font-display)] text-3xl text-slate-900">
+            {messages.featuresTitle}
+          </h2>
+          <p className="text-sm text-slate-600">{messages.featuresSubtitle}</p>
+        </div>
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          {featureCards.map((feature) => (
+            <div
+              key={feature.title}
+              className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+                  <path
+                    fill="currentColor"
+                    d="M12 2l8 4v6c0 5.25-3.4 9.9-8 11-4.6-1.1-8-5.75-8-11V6l8-4zm0 2.2L6 6.1v5.9c0 4.15 2.6 7.9 6 9 3.4-1.1 6-4.85 6-9V6.1l-6-1.9z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                {feature.title}
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="faq"
+        className="border-t border-slate-200/70 bg-slate-50"
+      >
+        <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+              {messages.footerFaqLinkLabel}
+            </p>
+            <h2 className="font-[var(--font-display)] text-3xl text-slate-900">
+              {messages.faqTitle}
+            </h2>
+            <p className="text-sm text-slate-600">{messages.faqSubtitle}</p>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {faqItems.map((item) => (
+              <div
+                key={item.question}
+                className="rounded-3xl border border-slate-200/70 bg-white p-6"
+              >
+                <p className="text-sm font-semibold text-slate-900">
+                  {item.question}
+                </p>
+                <p className="mt-2 text-sm text-slate-600">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
