@@ -1,9 +1,10 @@
 export default async function PricingPage({
   params,
 }: {
-  params: Promise<{ locale: "en" | "fr" }>;
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
 
   const messages = {
     en: {
@@ -90,7 +91,7 @@ export default async function PricingPage({
     },
   };
 
-  const t = messages[locale];
+  const t = messages[validLocale];
 
   return (
     <div className="py-20 bg-[var(--brand-surface)]">

@@ -1,9 +1,10 @@
 export default async function HomePage({
   params,
 }: {
-  params: Promise<{ locale: "en" | "fr" }>;
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
 
   const messages = {
     en: {
@@ -86,7 +87,7 @@ export default async function HomePage({
     },
   };
 
-  const t = messages[locale];
+  const t = messages[validLocale];
 
   return (
     <div>
@@ -108,7 +109,7 @@ export default async function HomePage({
                 {t.hero.cta}
               </a>
               <a
-                href={`/${locale}/how-it-works`}
+                href={`/${validLocale}/how-it-works`}
                 className="bg-white hover:bg-slate-50 text-emerald-600 font-semibold px-8 py-4 rounded-2xl transition-colors text-lg border-2 border-emerald-600"
               >
                 {t.hero.secondary}

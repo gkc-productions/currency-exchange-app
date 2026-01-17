@@ -13,7 +13,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const validLocale = locale === "fr" ? "fr" : "en";
+  const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
 
   return (
     <div className="min-h-screen flex flex-col">
