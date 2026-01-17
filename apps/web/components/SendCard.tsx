@@ -71,7 +71,7 @@ export default function SendCard({
         event.preventDefault();
         onSubmit();
       }}
-      className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.35)]"
+      className="rounded-3xl border border-emerald-200/70 bg-white p-6 shadow-[0_25px_60px_-35px_rgba(15,23,42,0.35)]"
     >
       <div className="flex flex-col gap-2">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
@@ -128,6 +128,7 @@ export default function SendCard({
               onChange={(event) => onChangeAmount(event.target.value)}
               className="w-full bg-transparent text-lg font-semibold text-slate-900 outline-none"
               aria-label={amountLabel}
+              data-testid="send-amount"
             />
           </div>
           <p className="text-xs text-slate-500">{amountHint}</p>
@@ -136,11 +137,12 @@ export default function SendCard({
           <p className="text-xs text-slate-500">{assetsLoadingLabel}</p>
         ) : null}
         {assetsError ? (
-          <p className="text-xs text-rose-600">{assetsError}</p>
+          <p className="text-xs text-amber-700">{assetsError}</p>
         ) : null}
         <button
           type="submit"
           className="mt-2 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+          data-testid="send-cta"
         >
           {submitLabel}
         </button>

@@ -12,6 +12,11 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - `/{locale}/transfer/[id]`: transfer receipt page
 - `/{locale}/about`, `/{locale}/security`, `/{locale}/fees`, `/{locale}/help`: placeholder brand pages
 
+## Testing
+
+- Smoke: `npm run smoke` (requires the dev server running; or set `BASE_URL`).
+- E2E: `npm run test:e2e` (starts the dev server via Playwright).
+
 ## Getting Started
 
 First, run the development server:

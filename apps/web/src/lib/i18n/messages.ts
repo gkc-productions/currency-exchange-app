@@ -8,6 +8,7 @@ export type Messages = {
   navSecurityLabel: string;
   navHelpLabel: string;
   navGetStartedLabel: string;
+  heroWelcomeLabel: string;
   heroTitle: string;
   heroSubtitle: string;
   sendCardTitle: string;
@@ -97,6 +98,13 @@ export type Messages = {
   recommendationLoading: string;
   recommendationEmpty: string;
   recommendationLoadError: string;
+  recommendationRecommendedLabel: string;
+  recommendationOtherLabel: string;
+  recommendationSingleLabel: string;
+  recommendationReasonLabel: string;
+  recommendationScoreFeeLabel: string;
+  recommendationScorePayoutLabel: string;
+  recommendationScoreEtaLabel: string;
   quoteBreakdownLabel: string;
   quoteIdLabel: string;
   expiresAtLabel: string;
@@ -203,14 +211,15 @@ const EN_MESSAGES: Messages = {
   navSecurityLabel: "Security",
   navHelpLabel: "Help",
   navGetStartedLabel: "Get started",
+  heroWelcomeLabel: "Welcome to ClariSend",
   heroTitle: "Send with clarity. Know the rate, fees, and arrival time upfront.",
   heroSubtitle:
-    "ClariSend delivers transparent pricing, smart routing, and modern payout rails so every transfer stays predictable.",
+    "Transparent pricing, smart routing, and modern payout rails for predictable transfers.",
   sendCardTitle: "Send money",
   sendCardSubtitle: "Start a quote in seconds with clear fees.",
   sendFromLabel: "Sending from",
   sendToLabel: "Sending to",
-  sendCtaLabel: "Get started",
+  sendCtaLabel: "Start transfer",
   trustTitle: "Trusted for clarity at every step",
   trustItemTransparent: "Transparent pricing",
   trustItemFast: "Fast delivery",
@@ -301,8 +310,16 @@ const EN_MESSAGES: Messages = {
   etaRangeLabel: (minMinutes, maxMinutes) => `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Use this route",
   recommendationLoading: "Fetching smart suggestions...",
-  recommendationEmpty: "No suggestion yet.",
-  recommendationLoadError: "Unable to load suggestions. Please try again.",
+  recommendationEmpty: "Enter an amount to see tailored routes.",
+  recommendationLoadError: "Suggestions are unavailable right now.",
+  recommendationRecommendedLabel: "Recommended",
+  recommendationOtherLabel: "Other options",
+  recommendationSingleLabel:
+    "Only one route available for this corridor right now.",
+  recommendationReasonLabel: "Why this route",
+  recommendationScoreFeeLabel: "Fee",
+  recommendationScorePayoutLabel: "Payout",
+  recommendationScoreEtaLabel: "ETA",
   quoteBreakdownLabel: "Quote Breakdown",
   quoteIdLabel: "Quote ID",
   expiresAtLabel: "Expires at",
@@ -409,15 +426,16 @@ const FR_MESSAGES: Messages = {
   navSecurityLabel: "Sécurité",
   navHelpLabel: "Aide",
   navGetStartedLabel: "Commencer",
+  heroWelcomeLabel: "Bienvenue chez ClariSend",
   heroTitle:
     "Envoyez en toute clarté. Connaissez le taux, les frais et le délai avant d'envoyer.",
   heroSubtitle:
-    "ClariSend propose des tarifs transparents, un routage intelligent et des rails modernes pour des transferts prévisibles.",
+    "Tarifs transparents, routage intelligent et rails modernes pour des transferts prévisibles.",
   sendCardTitle: "Envoyer de l'argent",
   sendCardSubtitle: "Lancez un devis en quelques secondes avec des frais clairs.",
   sendFromLabel: "Envoi depuis",
   sendToLabel: "Envoi vers",
-  sendCtaLabel: "Commencer",
+  sendCtaLabel: "Démarrer le transfert",
   trustTitle: "La clarté à chaque étape",
   trustItemTransparent: "Tarification transparente",
   trustItemFast: "Livraison rapide",
@@ -511,8 +529,16 @@ const FR_MESSAGES: Messages = {
     `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Utiliser cet itinéraire",
   recommendationLoading: "Chargement des suggestions...",
-  recommendationEmpty: "Aucune suggestion pour l’instant.",
-  recommendationLoadError: "Impossible de charger les suggestions. Veuillez réessayer.",
+  recommendationEmpty: "Saisissez un montant pour voir les itinéraires.",
+  recommendationLoadError: "Les suggestions sont indisponibles pour le moment.",
+  recommendationRecommendedLabel: "Recommandé",
+  recommendationOtherLabel: "Autres options",
+  recommendationSingleLabel:
+    "Une seule option est disponible pour ce corridor pour l'instant.",
+  recommendationReasonLabel: "Pourquoi cet itinéraire",
+  recommendationScoreFeeLabel: "Frais",
+  recommendationScorePayoutLabel: "Montant reçu",
+  recommendationScoreEtaLabel: "Délai",
   quoteBreakdownLabel: "Détail du devis",
   quoteIdLabel: "ID du devis",
   expiresAtLabel: "Expire le",

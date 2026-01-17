@@ -24,6 +24,69 @@ function round(value: number, digits: number) {
   return Number(value.toFixed(digits));
 }
 
+type SuggestionType = "CHEAPEST" | "FASTEST" | "BEST_VALUE";
+
+type ScoredRoute = {
+  id: string;
+  corridorId: string;
+  rail: string;
+  provider: string;
+  feeFixed: number;
+  feePct: number;
+  fxMarginPct: number;
+  etaMinMinutes: number;
+  etaMaxMinutes: number;
+  totalFee: number;
+  appliedRate: number;
+  recipientGets: number;
+  effectiveCostPct: number;
+  etaMidMinutes: number;
+};
+
+function compareNumbers(a: number, b: number) {
+  return a === b ? 0 : a < b ? -1 : 1;
+}
+
+function sortCheapest(a: ScoredRoute, b: ScoredRoute) {
+  return (
+    compareNumbers(a.totalFee, b.totalFee) ||
+    compareNumbers(b.recipientGets, a.recipientGets) ||
+    compareNumbers(a.etaMaxMinutes, b.etaMaxMinutes) ||
+    compareNumbers(a.etaMinMinutes, b.etaMinMinutes) ||
+    a.id.localeCompare(b.id)
+  );
+}
+
+function sortFastest(a: ScoredRoute, b: ScoredRoute) {
+  return (
+    compareNumbers(a.etaMaxMinutes, b.etaMaxMinutes) ||
+    compareNumbers(a.etaMinMinutes, b.etaMinMinutes) ||
+    compareNumbers(b.recipientGets, a.recipientGets) ||
+    compareNumbers(a.totalFee, b.totalFee) ||
+    a.id.localeCompare(b.id)
+  );
+}
+
+function sortBestValue(a: ScoredRoute, b: ScoredRoute) {
+  return (
+    compareNumbers(b.recipientGets, a.recipientGets) ||
+    compareNumbers(a.totalFee, b.totalFee) ||
+    compareNumbers(a.etaMaxMinutes, b.etaMaxMinutes) ||
+    compareNumbers(a.etaMinMinutes, b.etaMinMinutes) ||
+    a.id.localeCompare(b.id)
+  );
+}
+
+function buildReason(type: SuggestionType, rankIndex: number) {
+  if (type === "CHEAPEST") {
+    return rankIndex === 0 ? "Lowest total fee" : "Next-lowest total fee";
+  }
+  if (type === "FASTEST") {
+    return rankIndex === 0 ? "Fastest ETA" : "Next-fastest ETA";
+  }
+  return rankIndex === 0 ? "Highest recipient payout" : "Next-best payout";
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const from = readCode(searchParams.get("from") ?? searchParams.get("fromAsset"));
@@ -102,7 +165,7 @@ export async function GET(req: Request) {
   }
 
   const sendAmount = sendAmountInput;
-  const routes = corridor.routes.map((route) => {
+  const routes: ScoredRoute[] = corridor.routes.map((route) => {
     const feeFixed = Number(route.feeFixed);
     const feePct = Number(route.feePct);
     const fxMarginPct = Number(route.fxMarginPct);
@@ -128,24 +191,52 @@ export async function GET(req: Request) {
       appliedRate,
       recipientGets,
       effectiveCostPct,
+      etaMidMinutes: Math.round((route.etaMinMinutes + route.etaMaxMinutes) / 2),
     };
   });
 
-  const cheapestRoute = routes.reduce((best, route) =>
-    route.totalFee < best.totalFee ? route : best
-  );
-  const fastestRoute = routes.reduce((best, route) => {
-    if (route.etaMaxMinutes < best.etaMaxMinutes) {
-      return route;
+  const cheapestOrder = [...routes].sort(sortCheapest);
+  const fastestOrder = [...routes].sort(sortFastest);
+  const bestValueOrder = [...routes].sort(sortBestValue);
+
+  const used = new Set<string>();
+  const pickDistinct = (list: ScoredRoute[], type: SuggestionType) => {
+    const index = list.findIndex((route) => !used.has(route.id));
+    if (index === -1) {
+      return null;
     }
-    if (route.etaMaxMinutes === best.etaMaxMinutes) {
-      return route.etaMinMinutes < best.etaMinMinutes ? route : best;
-    }
-    return best;
-  });
-  const bestValueRoute = routes.reduce((best, route) =>
-    route.recipientGets > best.recipientGets ? route : best
-  );
+    const route = list[index];
+    used.add(route.id);
+    return { type, route, rankIndex: index };
+  };
+
+  const bestValuePick = pickDistinct(bestValueOrder, "BEST_VALUE");
+  const cheapestPick = pickDistinct(cheapestOrder, "CHEAPEST");
+  const fastestPick = pickDistinct(fastestOrder, "FASTEST");
+
+  const suggestions = [bestValuePick, cheapestPick, fastestPick]
+    .filter((item) => item !== null)
+    .map((item) => {
+      const entry = item as {
+        type: SuggestionType;
+        route: ScoredRoute;
+        rankIndex: number;
+      };
+      return {
+        type: entry.type,
+        routeId: entry.route.id,
+        reason: buildReason(entry.type, entry.rankIndex),
+        scoreBreakdown: {
+          fee: round(entry.route.totalFee, 2),
+          payout: round(entry.route.recipientGets, 2),
+          etaMinutes: entry.route.etaMidMinutes,
+        },
+      };
+    });
+
+  const cheapestRoute = cheapestPick?.route ?? cheapestOrder[0];
+  const fastestRoute = fastestPick?.route ?? fastestOrder[0];
+  const bestValueRoute = bestValuePick?.route ?? bestValueOrder[0];
 
   const responseRoutes = routes.map((route) => {
     const highlights: string[] = [];
@@ -198,5 +289,6 @@ export async function GET(req: Request) {
     fastestRouteId: fastestRoute.id,
     bestValueRouteId: bestValueRoute.id,
     routes: responseRoutes,
+    suggestions,
   });
 }

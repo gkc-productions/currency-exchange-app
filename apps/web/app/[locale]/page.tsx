@@ -118,6 +118,17 @@ type RecommendationRoute = {
   highlights?: string[];
 };
 
+type RecommendationSuggestion = {
+  type: "CHEAPEST" | "FASTEST" | "BEST_VALUE";
+  routeId: string;
+  reason: string;
+  scoreBreakdown: {
+    fee: number;
+    payout: number;
+    etaMinutes: number;
+  };
+};
+
 type Recommendation = {
   from: string;
   to: string;
@@ -130,6 +141,7 @@ type Recommendation = {
   cheapestRouteId: string;
   fastestRouteId: string;
   bestValueRouteId: string;
+  suggestions?: RecommendationSuggestion[];
   routes: RecommendationRoute[];
 };
 
@@ -756,30 +768,6 @@ export default function Home() {
     }
   }, [lockedQuoteId, messages.lockQuoteUpdated, quote?.id]);
 
-  const routeHighlightLabels = useMemo(
-    () => ({
-      LOWEST_TOTAL_FEE: messages.routeHighlightLowestFee,
-      FASTEST_ETA: messages.routeHighlightFastestEta,
-      HIGHEST_PAYOUT: messages.routeHighlightHighestPayout,
-    }),
-    [messages]
-  );
-
-  const resolveRouteHighlights = useCallback(
-    (route: RecommendationRoute | null) => {
-      if (!route) {
-        return "—";
-      }
-      const labels =
-        route.highlights?.map((code) => routeHighlightLabels[code]) ?? [];
-      const filtered = labels.filter(Boolean);
-      return filtered.length > 0
-        ? filtered.join(" · ")
-        : messages.routeActiveLabel;
-    },
-    [messages.routeActiveLabel, routeHighlightLabels]
-  );
-
   const statusLabels = useMemo(
     () => ({
       READY: messages.statusReadyLabel,
@@ -798,26 +786,101 @@ export default function Home() {
     [statusLabels]
   );
 
-  const suggestionCards = [
-    {
-      key: "cheapest",
-      label: messages.cheapestLabel,
-      accent: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
-      route: cheapestRoute,
+  const suggestionLabels = useMemo(
+    () => ({
+      CHEAPEST: messages.cheapestLabel,
+      FASTEST: messages.fastestLabel,
+      BEST_VALUE: messages.bestValueLabel,
+    }),
+    [messages]
+  );
+
+  const suggestionAccents: Record<
+    RecommendationSuggestion["type"],
+    { badge: string; card: string }
+  > = {
+    BEST_VALUE: {
+      badge: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
+      card: "border-emerald-200/70 bg-emerald-50/60",
     },
-    {
-      key: "fastest",
-      label: messages.fastestLabel,
-      accent: "border-sky-200/70 bg-sky-50 text-sky-700",
-      route: fastestRoute,
+    CHEAPEST: {
+      badge: "border-sky-200/70 bg-sky-50 text-sky-700",
+      card: "border-sky-200/70 bg-sky-50/60",
     },
-    {
-      key: "best",
-      label: messages.bestValueLabel,
-      accent: "border-amber-200/70 bg-amber-50 text-amber-700",
-      route: bestValueRoute,
+    FASTEST: {
+      badge: "border-amber-200/70 bg-amber-50 text-amber-700",
+      card: "border-amber-200/70 bg-amber-50/60",
     },
-  ];
+  };
+
+  const buildFallbackSuggestion = useCallback(
+    (type: RecommendationSuggestion["type"], route: RecommendationRoute | null) => {
+      if (!route) {
+        return null;
+      }
+      return {
+        type,
+        routeId: route.id,
+        reason: route.explanation,
+        scoreBreakdown: {
+          fee: route.totalFee,
+          payout: route.recipientGets,
+          etaMinutes: Math.round(
+            (route.etaMinMinutes + route.etaMaxMinutes) / 2
+          ),
+        },
+      } satisfies RecommendationSuggestion;
+    },
+    []
+  );
+
+  const suggestionItems = useMemo(() => {
+    if (!recommendation) {
+      return [] as (RecommendationSuggestion & { route: RecommendationRoute })[];
+    }
+    const baseSuggestions =
+      recommendation.suggestions && recommendation.suggestions.length > 0
+        ? recommendation.suggestions
+        : [
+            buildFallbackSuggestion("BEST_VALUE", bestValueRoute),
+            buildFallbackSuggestion("CHEAPEST", cheapestRoute),
+            buildFallbackSuggestion("FASTEST", fastestRoute),
+          ].filter(Boolean);
+
+    const uniqueByRoute = new Map<string, RecommendationSuggestion>();
+    for (const suggestion of baseSuggestions) {
+      if (!suggestion) {
+        continue;
+      }
+      if (!uniqueByRoute.has(suggestion.routeId)) {
+        uniqueByRoute.set(suggestion.routeId, suggestion);
+      }
+    }
+    const merged = Array.from(uniqueByRoute.values());
+    return merged
+      .map((suggestion) => {
+        const route = recommendationMap.get(suggestion.routeId);
+        return route ? { ...suggestion, route } : null;
+      })
+      .filter(Boolean) as (RecommendationSuggestion & { route: RecommendationRoute })[];
+  }, [
+    bestValueRoute,
+    buildFallbackSuggestion,
+    cheapestRoute,
+    fastestRoute,
+    recommendation,
+    recommendationMap,
+  ]);
+
+  const recommendedSuggestion =
+    suggestionItems.find((item) => item.type === "BEST_VALUE") ??
+    suggestionItems[0] ??
+    null;
+  const otherSuggestions = suggestionItems.filter(
+    (item) => item.routeId !== recommendedSuggestion?.routeId
+  );
+  const recommendedType: RecommendationSuggestion["type"] =
+    recommendedSuggestion?.type ?? "BEST_VALUE";
 
   const trustItems = [
     messages.trustItemTransparent,
@@ -871,9 +934,14 @@ export default function Home() {
         <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 lg:py-24">
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="space-y-6">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
-                ClariSend
-              </span>
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
+                  {messages.heroWelcomeLabel}
+                </p>
+                <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
+                  ClariSend
+                </span>
+              </div>
               <h1 className="font-[var(--font-display)] text-4xl leading-tight text-slate-900 sm:text-5xl">
                 {messages.heroTitle}
               </h1>
@@ -951,7 +1019,11 @@ export default function Home() {
       </section>
 
       {quoteActive ? (
-        <section id="quote" className="border-y border-slate-200/70 bg-white">
+        <section
+          id="quote"
+          className="border-y border-slate-200/70 bg-white"
+          data-testid="quote-section"
+        >
           <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -1009,7 +1081,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className={cardClassName}>
+                <div className={cardClassName} data-testid="recommendation-section">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
                       {messages.smartSuggestionsLabel}
@@ -1020,75 +1092,165 @@ export default function Home() {
                       </span>
                     ) : null}
                   </div>
-                  <div className="mt-4 grid gap-4">
-                    {suggestionCards.map((card) => (
+                  <div className="mt-4">
+                    {recommendedSuggestion ? (
                       <div
-                        key={card.key}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700"
+                        className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-4 text-sm text-slate-700"
+                        data-testid="recommendation-recommended"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span
-                            className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.2em] ${card.accent}`}
-                          >
-                            {card.label}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full border border-emerald-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                              {messages.recommendationRecommendedLabel}
+                            </span>
+                            <span
+                              className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.2em] ${suggestionAccents[recommendedType].badge}`}
+                            >
+                              {suggestionLabels[recommendedType]}
+                            </span>
+                          </div>
                           <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                            {resolveRouteHighlights(card.route)}
+                            {messages.etaRangeLabel(
+                              recommendedSuggestion.route.etaMinMinutes,
+                              recommendedSuggestion.route.etaMaxMinutes
+                            )}
                           </span>
                         </div>
-                        {card.route ? (
-                          <>
-                            <p className="mt-3 text-base font-semibold text-slate-900">
-                              {resolveRailName(card.route.rail)}
-                            </p>
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                              {messages.etaRangeLabel(
-                                card.route.etaMinMinutes,
-                                card.route.etaMaxMinutes
+                        <p
+                          className="mt-3 text-base font-semibold text-slate-900"
+                          data-testid="recommendation-rail"
+                        >
+                          {resolveRailName(recommendedSuggestion.route.rail)}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          <span className="font-semibold text-slate-700">
+                            {messages.recommendationReasonLabel}:
+                          </span>{" "}
+                          {recommendedSuggestion.reason}
+                        </p>
+                        <div className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-3">
+                          <div className="rounded-xl border border-emerald-100 bg-white/80 px-3 py-2">
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                              {messages.recommendationScoreFeeLabel}
+                            </span>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {formatAmount(
+                                recommendedSuggestion.scoreBreakdown.fee,
+                                suggestionFrom
                               )}
                             </p>
-                            <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
-                              <span>{messages.totalFeeRow}</span>
-                              <span>
-                                {formatAmount(
-                                  card.route.totalFee,
-                                  suggestionFrom
-                                )}
-                              </span>
-                            </div>
-                            <div className="mt-1 flex items-center justify-between text-xs text-slate-600">
-                              <span>{messages.recipientGetsLabel}</span>
-                              <span>
-                                {formatAmount(
-                                  card.route.recipientGets,
-                                  suggestionTo
-                                )}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => applyRouteSuggestion(card.route)}
-                              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-                            >
-                              {messages.useRouteButton}
-                            </button>
-                          </>
-                        ) : (
-                          <p className="mt-3 text-xs text-slate-500">
-                            {messages.recommendationEmpty}
-                          </p>
-                        )}
+                          </div>
+                          <div className="rounded-xl border border-emerald-100 bg-white/80 px-3 py-2">
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                              {messages.recommendationScorePayoutLabel}
+                            </span>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {formatAmount(
+                                recommendedSuggestion.scoreBreakdown.payout,
+                                suggestionTo
+                              )}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-emerald-100 bg-white/80 px-3 py-2">
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                              {messages.recommendationScoreEtaLabel}
+                            </span>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {recommendedSuggestion.scoreBreakdown.etaMinutes} min
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => applyRouteSuggestion(recommendedSuggestion.route)}
+                          className="mt-4 w-full rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                        >
+                          {messages.useRouteButton}
+                        </button>
                       </div>
-                    ))}
+                    ) : (
+                      <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                        {messages.recommendationEmpty}
+                      </p>
+                    )}
                   </div>
                   {recommendationError ? (
-                    <p className="mt-3 text-xs text-rose-600">
+                    <p className="mt-3 text-xs text-amber-600">
                       {recommendationError}
                     </p>
                   ) : null}
+                  {otherSuggestions.length === 0 && recommendedSuggestion ? (
+                    <p className="mt-3 text-xs text-slate-500">
+                      {messages.recommendationSingleLabel}
+                    </p>
+                  ) : null}
+                  {otherSuggestions.length > 0 ? (
+                    <div className="mt-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                        {messages.recommendationOtherLabel}
+                      </p>
+                      <div className="mt-3 grid gap-3">
+                        {otherSuggestions.map((item) => {
+                          const accent = suggestionAccents[item.type];
+                          return (
+                            <div
+                              key={item.routeId}
+                              className={`rounded-2xl border px-4 py-3 text-sm text-slate-700 ${accent.card}`}
+                              data-testid="recommendation-option"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span
+                                  className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.2em] ${accent.badge}`}
+                                >
+                                  {suggestionLabels[item.type]}
+                                </span>
+                                <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                                  {messages.etaRangeLabel(
+                                    item.route.etaMinMinutes,
+                                    item.route.etaMaxMinutes
+                                  )}
+                                </span>
+                              </div>
+                              <p
+                                className="mt-3 text-base font-semibold text-slate-900"
+                                data-testid="recommendation-rail"
+                              >
+                                {resolveRailName(item.route.rail)}
+                              </p>
+                              <p className="mt-2 text-xs text-slate-500">
+                                <span className="font-semibold text-slate-700">
+                                  {messages.recommendationReasonLabel}:
+                                </span>{" "}
+                                {item.reason}
+                              </p>
+                              <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
+                                <span>{messages.totalFeeRow}</span>
+                                <span>
+                                  {formatAmount(item.route.totalFee, suggestionFrom)}
+                                </span>
+                              </div>
+                              <div className="mt-1 flex items-center justify-between text-xs text-slate-600">
+                                <span>{messages.recipientGetsLabel}</span>
+                                <span>
+                                  {formatAmount(item.route.recipientGets, suggestionTo)}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => applyRouteSuggestion(item.route)}
+                                className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                              >
+                                {messages.useRouteButton}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className={cardClassName}>
+                <div className={cardClassName} data-testid="quote-breakdown">
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
                     {messages.quoteBreakdownLabel}
                   </p>
@@ -1183,7 +1345,7 @@ export default function Home() {
                       : `${messages.feesLabel}: —`}
                   </div>
                   {quoteError ? (
-                    <p className="mt-3 text-xs text-rose-600">{quoteError}</p>
+                    <p className="mt-3 text-xs text-amber-600">{quoteError}</p>
                   ) : null}
                   {lockError ? (
                     <p className="mt-3 text-xs text-amber-600">{lockError}</p>
