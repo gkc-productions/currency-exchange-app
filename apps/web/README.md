@@ -15,7 +15,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Testing
 
 - Smoke: `npm run smoke` (requires the dev server running; or set `BASE_URL`).
-- E2E: `npm run test:e2e` (starts the dev server via Playwright).
+- E2E: `npm run test:e2e` (starts a local dev server via Playwright).
+- UI audit: `npm run audit:ui` (targets `http://10.0.0.105:3000`).
 
 ## Getting Started
 

@@ -1,5 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://10.0.0.105:3000";
+const useWebServer = process.env.PLAYWRIGHT_WEB_SERVER === "1";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 60_000,
@@ -7,13 +10,15 @@ export default defineConfig({
     timeout: 10_000,
   },
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    baseURL,
     headless: true,
   },
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000/en",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: useWebServer
+    ? {
+        command: "npm run dev",
+        url: `${baseURL}/en`,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      }
+    : undefined,
 });

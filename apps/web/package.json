@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "smoke": "bash scripts/smoke.sh",
-    "test:e2e": "playwright test"
+    "test:e2e": "PLAYWRIGHT_WEB_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost:3000 playwright test",
+    "audit:ui": "playwright test --reporter=line",
+    "audit:ui:headed": "playwright test --headed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
