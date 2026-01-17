@@ -1,14 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --brand-ink: #0b1220;
-  --brand-muted: #475569;
-  --brand-surface: #f5f7fb;
+  --brand-ink: #0b1f2a;
+  --brand-ink-strong: #08161d;
+  --brand-muted: #2e4a5a;
+  --brand-muted-soft: #5b6b77;
+  --brand-surface: #f7fafb;
   --brand-surface-strong: #ffffff;
-  --brand-accent: #0f766e;
-  --brand-accent-strong: #0b5f57;
-  --brand-accent-soft: #e6f4f1;
-  --brand-gold: #f1b879;
+  --brand-border: #d7e3e7;
+  --brand-accent: #1e8e8b;
+  --brand-accent-strong: #157977;
+  --brand-accent-soft: #e7f1f3;
+  --brand-mist: #e7f1f3;
+  --brand-sand: #f5f2ea;
   --background: var(--brand-surface);
   --foreground: var(--brand-ink);
 }
@@ -16,6 +20,18 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-ink-strong: var(--brand-ink-strong);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-muted-soft: var(--brand-muted-soft);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-surface-strong: var(--brand-surface-strong);
+  --color-brand-border: var(--brand-border);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-strong: var(--brand-accent-strong);
+  --color-brand-accent-soft: var(--brand-accent-soft);
+  --color-brand-mist: var(--brand-mist);
+  --color-brand-sand: var(--brand-sand);
   --font-sans: var(--font-brand-sans);
   --font-display: var(--font-brand-display);
 }

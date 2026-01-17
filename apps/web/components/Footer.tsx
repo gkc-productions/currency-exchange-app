@@ -76,24 +76,23 @@ export default function Footer({ locale }: { locale: Locale }) {
   ];
 
   return (
-    <footer className="border-t border-slate-200/70 bg-slate-50">
+    <footer className="border-t border-brand-border/70 bg-brand-mist">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-12 sm:px-10 lg:grid-cols-[1.2fr_2.2fr]">
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-semibold text-white">
-              C
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-slate-900">ClariSend</p>
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                {messages.tagline}
-              </p>
-            </div>
+          <div className="space-y-2">
+            <img
+              src="/brand/clarisend-logo-full.svg"
+              alt="ClariSend"
+              className="h-9 w-auto"
+            />
+            <p className="text-xs uppercase tracking-[0.24em] text-brand-muted">
+              {messages.tagline}
+            </p>
           </div>
-          <p className="max-w-sm text-sm text-slate-600">
+          <p className="max-w-sm text-sm text-brand-muted">
             {messages.footerTagline}
           </p>
-          <div className="flex items-center gap-3 text-slate-500">
+          <div className="flex items-center gap-3 text-brand-muted">
             {SOCIAL_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -101,20 +100,20 @@ export default function Footer({ locale }: { locale: Locale }) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={link.label}
-                className="rounded-full border border-slate-200 bg-white p-2 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                className="rounded-full border border-brand-border bg-brand-surface-strong p-2 transition hover:border-brand-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/40"
               >
                 {link.icon}
               </a>
             ))}
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-brand-muted">
             © {year} GKC Financial Technologies
           </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {columns.map((column) => (
             <div key={column.title}>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
                 {column.title}
               </p>
               <div className="mt-3 flex flex-col gap-2">
@@ -122,7 +121,7 @@ export default function Footer({ locale }: { locale: Locale }) {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="text-sm font-medium text-slate-700 transition hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                    className="text-sm font-medium text-brand-ink transition hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/40"
                   >
                     {link.label}
                   </Link>

@@ -12,6 +12,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - `/{locale}/transfer/[id]`: transfer receipt page
 - `/{locale}/about`, `/{locale}/security`, `/{locale}/fees`, `/{locale}/help`: placeholder brand pages
 
+## Brand usage
+
+- Primary logo: `public/brand/clarisend-logo-full.svg`; use `public/brand/clarisend-logo-white.svg` on dark surfaces.
+- Abstract mark: `public/brand/clarisend-mark.svg` for icons or tight spaces.
+- Keep clear space around the logo equal to the mark width; minimum logo width 120px.
+- Use Tailwind tokens (`text-brand-ink`, `bg-brand-surface`, `bg-brand-accent`) for UI color alignment.
+- Favicons and app icons live in `public/` (`favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `icon-512.png`).
+
 ## Testing
 
 - Smoke: `npm run smoke` (requires the dev server running; or set `BASE_URL`).
