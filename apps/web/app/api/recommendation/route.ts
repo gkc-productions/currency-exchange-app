@@ -51,13 +51,13 @@ export async function GET(req: Request) {
 
   if (!fromAsset || !fromAsset.isActive) {
     return NextResponse.json(
-      { error: `Unknown asset code: ${from}` },
+      { error: `We don't currently support sending from ${from}. Please check available currencies.` },
       { status: 400 }
     );
   }
   if (!toAsset || !toAsset.isActive) {
     return NextResponse.json(
-      { error: `Unknown asset code: ${to}` },
+      { error: `We don't currently support sending to ${to}. Please check available currencies.` },
       { status: 400 }
     );
   }
@@ -78,15 +78,15 @@ export async function GET(req: Request) {
 
   if (!corridor || !corridor.isActive) {
     return NextResponse.json(
-      { error: `Unknown corridor: ${from}->${to}` },
+      { error: `We don't have a route from ${from} to ${to} yet. Please try a different currency pair.` },
       { status: 400 }
     );
   }
 
   if (corridor.routes.length === 0) {
     return NextResponse.json(
-      { error: `No active routes for corridor: ${from}->${to}` },
-      { status: 400 }
+      { error: `This route is temporarily unavailable. Please try again later or contact support.` },
+      { status: 503 }
     );
   }
 
@@ -102,7 +102,7 @@ export async function GET(req: Request) {
   }
 
   const sendAmount = sendAmountInput;
-  const routes = corridor.routes.map((route) => {
+  const routes = corridor.routes.map((route: typeof corridor.routes[number]) => {
     const feeFixed = Number(route.feeFixed);
     const feePct = Number(route.feePct);
     const fxMarginPct = Number(route.fxMarginPct);
@@ -131,37 +131,70 @@ export async function GET(req: Request) {
     };
   });
 
-  const cheapestRoute = routes.reduce((best, route) =>
-    route.totalFee < best.totalFee ? route : best
-  );
-  const fastestRoute = routes.reduce((best, route) => {
-    if (route.etaMaxMinutes < best.etaMaxMinutes) {
-      return route;
-    }
+  /**
+   * Smart recommendation algorithm with deterministic tie-breaking.
+   * Ensures three distinct routes whenever possible by:
+   * 1. Finding true cheapest (lowest total fee)
+   * 2. Finding true fastest (best ETA)
+   * 3. Finding best value (highest payout, excluding previous winners)
+   *
+   * Tie-breaking rules:
+   * - Cheapest: If fees equal, prefer faster route
+   * - Fastest: If ETA equal, prefer cheaper route
+   * - Best Value: Exclude cheapest and fastest, then pick highest payout
+   */
+
+  // Step 1: Find cheapest route (tie-break by speed)
+  const cheapestRoute = routes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
+    if (route.totalFee < best.totalFee) return route;
+    if (route.totalFee === best.totalFee && route.etaMaxMinutes < best.etaMaxMinutes) return route;
+    return best;
+  });
+
+  // Step 2: Find fastest route (tie-break by cost)
+  const fastestRoute = routes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
+    if (route.etaMaxMinutes < best.etaMaxMinutes) return route;
     if (route.etaMaxMinutes === best.etaMaxMinutes) {
-      return route.etaMinMinutes < best.etaMinMinutes ? route : best;
+      if (route.etaMinMinutes < best.etaMinMinutes) return route;
+      if (route.etaMinMinutes === best.etaMinMinutes && route.totalFee < best.totalFee) return route;
     }
     return best;
   });
-  const bestValueRoute = routes.reduce((best, route) =>
-    route.recipientGets > best.recipientGets ? route : best
-  );
 
-  const responseRoutes = routes.map((route) => {
+  // Step 3: Find best value route (highest payout, excluding previous winners)
+  const usedRouteIds = new Set([cheapestRoute.id, fastestRoute.id]);
+  const remainingRoutes = routes.filter(r => !usedRouteIds.has(r.id));
+
+  // If we have remaining routes, pick the one with highest payout
+  // Otherwise, fall back to the route with highest payout overall
+  const bestValueRoute = remainingRoutes.length > 0
+    ? remainingRoutes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
+        if (route.recipientGets > best.recipientGets) return route;
+        if (route.recipientGets === best.recipientGets && route.totalFee < best.totalFee) return route;
+        return best;
+      })
+    : routes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
+        // Only use if different from cheapest and fastest
+        if (route.id === cheapestRoute.id || route.id === fastestRoute.id) return best;
+        if (route.recipientGets > best.recipientGets) return route;
+        return best;
+      }, routes[0]);
+
+  const responseRoutes = routes.map((route: typeof routes[number]) => {
     const highlights: string[] = [];
     if (route.id === cheapestRoute.id) {
-      highlights.push("LOWEST_TOTAL_FEE");
+      highlights.push("LOWEST_FEE");
     }
     if (route.id === fastestRoute.id) {
-      highlights.push("FASTEST_ETA");
+      highlights.push("FASTEST");
     }
     if (route.id === bestValueRoute.id) {
-      highlights.push("HIGHEST_PAYOUT");
+      highlights.push("BEST_VALUE");
     }
     const highlightLabels: Record<string, string> = {
-      LOWEST_TOTAL_FEE: "Lowest total fee",
-      FASTEST_ETA: "Fastest ETA",
-      HIGHEST_PAYOUT: "Highest recipient payout",
+      LOWEST_FEE: "Lowest Fee",
+      FASTEST: "Fastest",
+      BEST_VALUE: "Best Value",
     };
     const explanationParts = highlights
       .map((code) => highlightLabels[code])
@@ -181,6 +214,28 @@ export async function GET(req: Request) {
     };
   });
 
+  // Add recommendations array with clear labels
+  const recommendations = [
+    {
+      type: "LOWEST_FEE",
+      label: "Lowest Fee",
+      description: "Minimize transfer costs",
+      route: responseRoutes.find((r) => r.id === cheapestRoute.id),
+    },
+    {
+      type: "FASTEST",
+      label: "Fastest",
+      description: "Get money there quickly",
+      route: responseRoutes.find((r) => r.id === fastestRoute.id),
+    },
+    {
+      type: "BEST_VALUE",
+      label: "Best Value",
+      description: "Maximize recipient payout",
+      route: responseRoutes.find((r) => r.id === bestValueRoute.id),
+    },
+  ];
+
   return NextResponse.json({
     from: fromAsset.code,
     to: toAsset.code,
@@ -197,6 +252,7 @@ export async function GET(req: Request) {
     cheapestRouteId: cheapestRoute.id,
     fastestRouteId: fastestRoute.id,
     bestValueRouteId: bestValueRoute.id,
+    recommendations,
     routes: responseRoutes,
   });
 }

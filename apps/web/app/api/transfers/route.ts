@@ -133,19 +133,19 @@ export async function POST(req: Request) {
   try {
     payload = (await req.json()) as TransferPayload;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "We couldn't process your request. Please try again." }, { status: 400 });
   }
 
   const quoteId = readRequiredString(payload.quoteId);
   if (!quoteId) {
-    return NextResponse.json({ error: "quoteId is required" }, { status: 400 });
+    return NextResponse.json({ error: "A quote is required to create a transfer. Please request a quote first." }, { status: 400 });
   }
 
   const payoutRailInput = readRequiredString(payload.payoutRail);
   const payoutRail = payoutRailInput?.toUpperCase() ?? "";
   if (!payoutRails.has(payoutRail)) {
     return NextResponse.json(
-      { error: "payoutRail must be BANK, MOBILE_MONEY, or LIGHTNING" },
+      { error: "Please select a valid payout method: Bank Transfer, Mobile Money, or Bitcoin Lightning." },
       { status: 400 }
     );
   }
@@ -189,7 +189,7 @@ export async function POST(req: Request) {
   const recipientName = readRequiredString(payload.recipientName);
   if (!recipientName) {
     return NextResponse.json(
-      { error: "recipientName is required" },
+      { error: "Please provide the recipient's name." },
       { status: 400 }
     );
   }
@@ -198,13 +198,13 @@ export async function POST(req: Request) {
   const recipientCountry = recipientCountryInput?.toUpperCase() ?? "";
   if (!recipientCountry) {
     return NextResponse.json(
-      { error: "recipientCountry is required" },
+      { error: "Please select the recipient's country." },
       { status: 400 }
     );
   }
   if (!/^[A-Z]{2}$/.test(recipientCountry)) {
     return NextResponse.json(
-      { error: "recipientCountry must be ISO2 format" },
+      { error: "Please select a valid country from the list." },
       { status: 400 }
     );
   }
@@ -228,7 +228,7 @@ export async function POST(req: Request) {
     );
     if (!bankName || !bankAccount) {
       return NextResponse.json(
-        { error: "bank name and account are required" },
+        { error: "Please provide both bank name and account number." },
         { status: 400 }
       );
     }

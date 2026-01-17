@@ -3,14 +3,16 @@ import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import type { Locale } from "@/src/lib/i18n/messages";
 
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
   params,
 }: {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const locale: Locale = params.locale === "fr" ? "fr" : "en";
+  const { locale: rawLocale } = await params;
+  const locale: Locale = rawLocale === "fr" ? "fr" : "en";
+
   return (
     <div className="flex min-h-screen flex-col bg-[var(--brand-surface)] text-slate-900">
       <Navbar locale={locale} />
@@ -19,3 +21,4 @@ export default function LocaleLayout({
     </div>
   );
 }
+

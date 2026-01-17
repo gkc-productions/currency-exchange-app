@@ -70,7 +70,7 @@ export async function GET(req: Request) {
     corridorId: corridor.id,
     from: fromAsset.code,
     to: toAsset.code,
-    routes: corridor.routes.map((route) => ({
+    routes: corridor.routes.map((route: typeof corridor.routes[number]) => ({
       id: route.id,
       corridorId: route.corridorId,
       rail: route.rail,

@@ -771,7 +771,7 @@ export default function Home() {
         return "—";
       }
       const labels =
-        route.highlights?.map((code) => routeHighlightLabels[code]) ?? [];
+        route.highlights?.map((code) => routeHighlightLabels[code as keyof typeof routeHighlightLabels]) ?? [];
       const filtered = labels.filter(Boolean);
       return filtered.length > 0
         ? filtered.join(" · ")
@@ -1067,7 +1067,7 @@ export default function Home() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => applyRouteSuggestion(card.route)}
+                              onClick={() => card.route && applyRouteSuggestion(card.route)}
                               className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                             >
                               {messages.useRouteButton}

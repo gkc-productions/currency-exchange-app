@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 
 // curl -s http://127.0.0.1:3000/api/quote/<quoteId>
@@ -56,16 +56,13 @@ function quoteToResponse(quote: {
 }
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
+  _req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
 ) {
-  const quoteId = params.id?.trim();
-  if (!quoteId || /[<>]/.test(quoteId)) {
-    return NextResponse.json({ error: "Invalid quote id" }, { status: 400 });
-  }
+  const { id } = await ctx.params;
 
   const quote = await prisma.quote.findUnique({
-    where: { id: quoteId },
+    where: { id },
     include: {
       fromAsset: { select: { code: true, name: true, decimals: true } },
       toAsset: { select: { code: true, name: true, decimals: true } },
@@ -73,13 +70,18 @@ export async function GET(
   });
 
   if (!quote) {
-    return NextResponse.json({ error: "Quote not found" }, { status: 404 });
+    return NextResponse.json({ error: "This quote could not be found. It may have been deleted." }, { status: 404 });
   }
 
   const response = quoteToResponse(quote);
   const expired = quote.expiresAt.getTime() <= Date.now();
+
   if (expired) {
-    return NextResponse.json({ ...response, expired: true }, { status: 410 });
+    return NextResponse.json({
+      ...response,
+      expired: true,
+      error: "This quote has expired. Please request a new quote to see current rates."
+    }, { status: 410 });
   }
 
   return NextResponse.json(response);

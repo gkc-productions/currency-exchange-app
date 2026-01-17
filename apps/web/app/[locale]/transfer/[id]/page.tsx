@@ -141,7 +141,13 @@ export default function TransferReceiptPage() {
       if (res.status === 404) {
         throw new Error("not_found");
       }
-      if (res.status === 410 || payload?.expired) {
+      const isExpiredPayload =
+        typeof payload === "object" &&
+        payload !== null &&
+        "expired" in payload &&
+        (payload as { expired?: boolean }).expired === true;
+
+      if (res.status === 410 || isExpiredPayload) {
         throw new Error("expired");
       }
       throw new Error("generic");

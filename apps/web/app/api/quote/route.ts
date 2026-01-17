@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
   const allowedRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING"]);
   if (!allowedRails.has(rail)) {
-    return NextResponse.json({ error: "Unknown rail" }, { status: 400 });
+    return NextResponse.json({ error: "Please select a valid payout method (Bank, Mobile Money, or Bitcoin Lightning)." }, { status: 400 });
   }
 
   const [fromAsset, toAsset] = await prisma.$transaction([
@@ -40,10 +40,10 @@ export async function GET(req: Request) {
   ]);
 
   if (!fromAsset || !fromAsset.isActive) {
-    return NextResponse.json({ error: "Unknown asset code" }, { status: 400 });
+    return NextResponse.json({ error: `We don't currently support ${from}. Please select a different currency.` }, { status: 400 });
   }
   if (!toAsset || !toAsset.isActive) {
-    return NextResponse.json({ error: "Unknown asset code" }, { status: 400 });
+    return NextResponse.json({ error: `We don't currently support ${to}. Please select a different currency.` }, { status: 400 });
   }
 
   const sendAmount = parseNumber(searchParams.get("sendAmount"), 100);

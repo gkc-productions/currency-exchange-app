@@ -1,0 +1,135 @@
+export default async function SecurityPage({
+  params,
+}: {
+  params: Promise<{ locale: "en" | "fr" }>;
+}) {
+  const { locale } = await params;
+
+  const messages = {
+    en: {
+      title: "Your Security is Our Priority",
+      subtitle: "Bank-grade security for every transfer",
+      features: [
+        {
+          title: "End-to-End Encryption",
+          description:
+            "All data transmitted through ClariSend is encrypted using industry-standard TLS 1.3. Your sensitive information is protected at every step.",
+        },
+        {
+          title: "Secure Payment Processing",
+          description:
+            "We partner with licensed payment providers and follow strict compliance standards. Your money is handled with the same security as traditional banks.",
+        },
+        {
+          title: "Data Protection",
+          description:
+            "We never store your payment credentials. All personal information is encrypted at rest and access is strictly controlled.",
+        },
+        {
+          title: "Transparent Operations",
+          description:
+            "Every transfer gets a unique reference code. Track your money from start to finish with real-time status updates.",
+        },
+        {
+          title: "Regulatory Compliance",
+          description:
+            "ClariSend operates in compliance with international money transfer regulations and anti-money laundering (AML) requirements.",
+        },
+      ],
+      trust: {
+        title: "Built on Trust",
+        description:
+          "Our commitment to security and transparency means you can send money with confidence, knowing your transfer is protected every step of the way.",
+      },
+    },
+    fr: {
+      title: "Votre sécurité est notre priorité",
+      subtitle: "Sécurité de niveau bancaire pour chaque transfert",
+      features: [
+        {
+          title: "Chiffrement de bout en bout",
+          description:
+            "Toutes les données transmises via ClariSend sont chiffrées selon la norme TLS 1.3. Vos informations sensibles sont protégées à chaque étape.",
+        },
+        {
+          title: "Traitement sécurisé des paiements",
+          description:
+            "Nous nous associons à des fournisseurs de paiement agréés et suivons des normes de conformité strictes. Votre argent est traité avec la même sécurité que les banques traditionnelles.",
+        },
+        {
+          title: "Protection des données",
+          description:
+            "Nous ne stockons jamais vos informations de paiement. Toutes les informations personnelles sont chiffrées au repos.",
+        },
+        {
+          title: "Opérations transparentes",
+          description:
+            "Chaque transfert reçoit un code de référence unique. Suivez votre argent du début à la fin avec des mises à jour de statut en temps réel.",
+        },
+        {
+          title: "Conformité réglementaire",
+          description:
+            "ClariSend opère en conformité avec les réglementations internationales sur les transferts d'argent et les exigences anti-blanchiment.",
+        },
+      ],
+      trust: {
+        title: "Construit sur la confiance",
+        description:
+          "Notre engagement envers la sécurité et la transparence signifie que vous pouvez envoyer de l'argent en toute confiance.",
+      },
+    },
+  };
+
+  const t = messages[locale];
+
+  return (
+    <div className="py-20 bg-[var(--brand-surface)]">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold text-slate-900 mb-4">{t.title}</h1>
+          <p className="text-xl text-slate-600">{t.subtitle}</p>
+        </div>
+
+        <div className="space-y-8">
+          {t.features.map((feature, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-3xl border border-slate-200/70 p-8 shadow-sm"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <svg
+                    className="w-6 h-6 text-emerald-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-2">
+                    {feature.title}
+                  </h2>
+                  <p className="text-slate-600">{feature.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-16 bg-emerald-50 rounded-3xl border border-emerald-200 p-8 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">
+            {t.trust.title}
+          </h2>
+          <p className="text-lg text-slate-600">{t.trust.description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
