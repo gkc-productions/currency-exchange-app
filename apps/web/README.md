@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## UI structure
+
+- AppShell lives in `app/[locale]/layout.tsx` and composes `components/Navbar.tsx` and `components/Footer.tsx`.
+- The landing funnel and quote flow live in `app/[locale]/page.tsx` with reusable UI in `components/`.
+- Transfer receipts remain in `app/[locale]/transfer/[id]/page.tsx`.
+
+## Routes
+
+- `/{locale}`: landing funnel + quote/recommendation flow
+- `/{locale}/transfer/[id]`: transfer receipt page
+- `/{locale}/about`, `/{locale}/security`, `/{locale}/fees`, `/{locale}/help`: placeholder brand pages
+
 ## Getting Started
 
 First, run the development server:
