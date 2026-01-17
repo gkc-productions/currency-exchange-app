@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AssetKind {
+  FIAT
+  CRYPTO
+}
+
+enum PayoutRail {
+  BANK
+  MOBILE_MONEY
+  LIGHTNING
+}
+
+enum TransferStatus {
+  DRAFT
+  READY
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELED
+  EXPIRED
+}
+
+enum CryptoNetwork {
+  BTC_LIGHTNING
+  BTC_ONCHAIN
+}
+
+enum CryptoPayoutStatus {
+  CREATED
+  REQUESTED
+  PAID
+  EXPIRED
+  FAILED
+}
+
+model Asset {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  name      String
+  symbol    String?
+  decimals  Int
+  kind      AssetKind @default(FIAT)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  quotesFrom Quote[] @relation("FromAsset")
+  quotesTo   Quote[] @relation("ToAsset")
+  corridorsFrom Corridor[] @relation("CorridorFromAsset")
+  corridorsTo   Corridor[] @relation("CorridorToAsset")
+}
+
+model Quote {
+  id          String     @id @default(cuid())
+  fromAssetId String
+  toAssetId   String
+  fromCode    String?
+  toCode      String?
+  rail        PayoutRail
+
+  sendAmount  Decimal    @db.Decimal(18, 2)
+
+  marketRate  Decimal    @db.Decimal(18, 6)
+  rateSource  String     @default("MockRateProvider")
+  rateTimestamp DateTime @default(now())
+  fxMarginPct Decimal    @db.Decimal(5, 2)
+
+  feeFixed    Decimal    @db.Decimal(18, 2)
+  feePct      Decimal    @db.Decimal(5, 2)
+
+  appliedRate Decimal    @db.Decimal(18, 6)
+  totalFee    Decimal    @db.Decimal(18, 2)
+  recipientGets Decimal  @db.Decimal(18, 2)
+
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+
+  transfers   Transfer[]
+  fromAsset   Asset      @relation("FromAsset", fields: [fromAssetId], references: [id])
+  toAsset     Asset      @relation("ToAsset", fields: [toAssetId], references: [id])
+
+  @@index([expiresAt])
+}
+
+model Corridor {
+  id          String   @id @default(cuid())
+  fromAssetId String
+  toAssetId   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fromAsset Asset @relation("CorridorFromAsset", fields: [fromAssetId], references: [id])
+  toAsset   Asset @relation("CorridorToAsset", fields: [toAssetId], references: [id])
+  routes    Route[]
+
+  @@unique([fromAssetId, toAssetId])
+  @@index([fromAssetId])
+  @@index([toAssetId])
+  @@index([isActive])
+}
+
+model Route {
+  id            String     @id @default(cuid())
+  corridorId    String
+  rail          PayoutRail
+  provider      String
+  feeFixed      Decimal    @db.Decimal(18, 2)
+  feePct        Decimal    @db.Decimal(5, 2)
+  fxMarginPct   Decimal    @db.Decimal(5, 2)
+  etaMinMinutes Int
+  etaMaxMinutes Int
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  corridor Corridor @relation(fields: [corridorId], references: [id])
+
+  @@index([corridorId])
+  @@index([corridorId, rail])
+  @@index([isActive])
+}
+
+model Transfer {
+  id                          String         @id @default(cuid())
+  referenceCode               String         @unique
+  idempotencyKey              String?        @unique
+  quoteId                     String
+  status                      TransferStatus @default(DRAFT)
+  payoutRail                  PayoutRail
+  recipientName               String
+  recipientCountry            String
+  recipientPhone              String?
+  recipientBankName           String?
+  recipientBankAccount        String?
+  recipientMobileMoneyProvider String?
+  recipientMobileMoneyNumber  String?
+  memo                        String?
+  createdAt                   DateTime       @default(now())
+  updatedAt                   DateTime       @updatedAt
+
+  quote                       Quote          @relation(fields: [quoteId], references: [id])
+  cryptoPayout                CryptoPayout?
+  events                      TransferEvent[]
+
+  @@index([quoteId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CryptoPayout {
+  id          String             @id @default(cuid())
+  transferId  String             @unique
+  network     CryptoNetwork
+  invoice     String?
+  paymentHash String?
+  address     String?
+  amountSats  Int
+  status      CryptoPayoutStatus @default(CREATED)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  transfer    Transfer           @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  @@index([transferId])
+  @@index([status])
+}
+
+model TransferEvent {
+  id         String   @id @default(cuid())
+  transferId String
+  type       String
+  message    String
+  createdAt  DateTime @default(now())
+
+  transfer   Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  @@index([transferId, createdAt])
+}
