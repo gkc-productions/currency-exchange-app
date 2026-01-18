@@ -4,6 +4,8 @@ import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
 import { sendTransferStatusEmail } from "@/src/lib/email";
 import { getServerAuthSession } from "@/src/lib/auth";
+import { isSameOrigin } from "@/src/lib/security";
+import { canTransitionTransfer } from "@/src/lib/transfer-state";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -12,11 +14,6 @@ function readRequiredString(value: unknown) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
-
-const allowedTransitions: Record<string, Set<string>> = {
-  READY: new Set(["PROCESSING", "CANCELED"]),
-  PROCESSING: new Set(["COMPLETED", "FAILED"]),
-};
 
 const transferStatusValues = new Set<TransferStatus>(
   Object.values(TransferStatus)
@@ -157,6 +154,13 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json(
+      { error: "This action is only available from the ClariSend app." },
+      { status: 403 }
+    );
+  }
+
   const resolvedParams = await Promise.resolve(params);
   const transferId = resolvedParams.id?.trim();
   if (!transferId) {
@@ -165,7 +169,11 @@ export async function PATCH(
 
   let payload: { status?: unknown };
   try {
-    payload = (await req.json()) as { status?: unknown };
+    const body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    payload = body as { status?: unknown };
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -202,8 +210,7 @@ export async function PATCH(
     );
   }
 
-  const allowed = allowedTransitions[transfer.status];
-  if (!allowed || !allowed.has(nextStatus)) {
+  if (!canTransitionTransfer(transfer.status, nextStatus)) {
     return NextResponse.json(
       { error: "Invalid status transition" },
       { status: 409 }
