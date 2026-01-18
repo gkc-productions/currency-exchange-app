@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
 import { sendReceiptEmail } from "@/src/lib/email";
+import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -11,18 +12,14 @@ function readRequiredString(value: unknown) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-const devEndpointsDisabled =
-  process.env.NODE_ENV === "production" ||
-  process.env.DISABLE_DEV_ENDPOINTS === "true";
-
 const payoutTransitions: Record<string, Set<string>> = {
   CREATED: new Set(["REQUESTED", "EXPIRED", "FAILED"]),
   REQUESTED: new Set(["PAID", "EXPIRED", "FAILED"]),
 };
 
 export async function POST(req: Request) {
-  if (devEndpointsDisabled) {
-    console.warn("[crypto] mock-pay blocked in production/dev-disabled mode");
+  if (!ALLOW_SIMULATED_PAYOUTS) {
+    console.warn("[crypto] mock-pay blocked outside sandbox/simulated mode");
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 
@@ -112,6 +109,19 @@ export async function POST(req: Request) {
           transferId,
           type: "COMPLETED",
           message: messages.transferCompletedEvent,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          actor: "system",
+          action: "TRANSFER_STATUS_CHANGED",
+          entityType: "Transfer",
+          entityId: transferId,
+          metadata: {
+            fromStatus: transfer.status,
+            toStatus: "COMPLETED",
+            payoutStatus: "PAID",
+          },
         },
       }),
     ]);

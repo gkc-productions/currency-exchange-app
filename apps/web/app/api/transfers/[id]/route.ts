@@ -212,10 +212,33 @@ export async function PATCH(
 
   if (transfer.status === "READY" && nextStatus === "PROCESSING") {
     if (transfer.quote.expiresAt.getTime() <= Date.now()) {
-      const updated = await prisma.transfer.update({
-        where: { id: transferId },
-        data: { status: "EXPIRED" },
-      });
+      const messages = getMessages("en");
+      const [updated] = await prisma.$transaction([
+        prisma.transfer.update({
+          where: { id: transferId },
+          data: { status: "EXPIRED" },
+        }),
+        prisma.transferEvent.create({
+          data: {
+            transferId,
+            type: "EXPIRED",
+            message: messages.transferExpiredEvent,
+          },
+        }),
+        prisma.auditLog.create({
+          data: {
+            actor: "system",
+            action: "TRANSFER_STATUS_CHANGED",
+            entityType: "Transfer",
+            entityId: transferId,
+            metadata: {
+              fromStatus: transfer.status,
+              toStatus: "EXPIRED",
+              reason: "QUOTE_EXPIRED",
+            },
+          },
+        }),
+      ]);
       return NextResponse.json(
         { error: "Quote expired", expired: true, transfer: updated },
         { status: 410 }
@@ -229,6 +252,7 @@ export async function PATCH(
     COMPLETED: messages.transferCompletedEvent,
     FAILED: messages.transferFailedEvent,
     CANCELED: messages.transferCanceledEvent,
+    EXPIRED: messages.transferExpiredEvent,
   };
   const eventMessage = statusEventMessage[nextStatus];
   if (!eventMessage) {
@@ -250,6 +274,18 @@ export async function PATCH(
           transferId,
           type: nextStatus,
           message: eventMessage,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          actor: "system",
+          action: "TRANSFER_STATUS_CHANGED",
+          entityType: "Transfer",
+          entityId: transferId,
+          metadata: {
+            fromStatus: transfer.status,
+            toStatus: nextStatus,
+          },
         },
       }),
     ]);

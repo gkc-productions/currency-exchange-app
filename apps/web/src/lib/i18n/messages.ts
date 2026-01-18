@@ -239,6 +239,7 @@ export type Messages = {
   transferCompletedEvent: string;
   transferPaidEvent: string;
   transferFailedEvent: string;
+  transferExpiredEvent: string;
   transferCanceledEvent: string;
   languageToggleLabel: string;
   languageEnLabel: string;
@@ -523,6 +524,7 @@ const EN_MESSAGES: Messages = {
   transferCompletedEvent: "Transfer completed successfully",
   transferPaidEvent: "Lightning invoice paid",
   transferFailedEvent: "Transfer failed",
+  transferExpiredEvent: "Transfer expired",
   transferCanceledEvent: "Transfer canceled",
   languageToggleLabel: "Language",
   languageEnLabel: "EN",
@@ -814,6 +816,7 @@ const FR_MESSAGES: Messages = {
   transferCompletedEvent: "Transfert terminé avec succès",
   transferPaidEvent: "Facture Lightning payée",
   transferFailedEvent: "Transfert échoué",
+  transferExpiredEvent: "Transfert expiré",
   transferCanceledEvent: "Transfert annulé",
   languageToggleLabel: "Langue",
   languageEnLabel: "EN",

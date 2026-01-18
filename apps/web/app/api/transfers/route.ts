@@ -380,40 +380,60 @@ export async function POST(req: Request) {
         });
       }
       try {
-        transfer = await prisma.transfer.create({
-          data: {
-            quoteId,
-            status: "READY",
-            payoutRail: payoutRail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
-            userId,
-            recipientId,
-            recipientName,
-            recipientCountry,
-            recipientPhone,
-            recipientBankName,
-            recipientBankAccount,
-            recipientMobileMoneyProvider,
-            recipientMobileMoneyNumber,
-            recipientLightningInvoice,
-            memo,
-            referenceCode,
-            idempotencyKey,
-            cryptoPayout:
-              payoutRail === "LIGHTNING" && amountSats && lightningInvoice
-                ? {
-                    create: {
-                      network: cryptoNetwork as "BTC_LIGHTNING",
-                      invoice: lightningInvoice.invoice,
-                      paymentHash: lightningInvoice.paymentHash,
-                      amountSats,
-                      status: "REQUESTED",
-                    },
-                  }
-                : undefined,
-            events: {
-              create: events,
+        transfer = await prisma.$transaction(async (tx) => {
+          const created = await tx.transfer.create({
+            data: {
+              quoteId,
+              status: "READY",
+              payoutRail: payoutRail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
+              userId,
+              recipientId,
+              recipientName,
+              recipientCountry,
+              recipientPhone,
+              recipientBankName,
+              recipientBankAccount,
+              recipientMobileMoneyProvider,
+              recipientMobileMoneyNumber,
+              recipientLightningInvoice,
+              memo,
+              referenceCode,
+              idempotencyKey,
+              cryptoPayout:
+                payoutRail === "LIGHTNING" && amountSats && lightningInvoice
+                  ? {
+                      create: {
+                        network: cryptoNetwork as "BTC_LIGHTNING",
+                        invoice: lightningInvoice.invoice,
+                        paymentHash: lightningInvoice.paymentHash,
+                        amountSats,
+                        status: "REQUESTED",
+                      },
+                    }
+                  : undefined,
+              events: {
+                create: events,
+              },
             },
-          },
+          });
+
+          await tx.auditLog.create({
+            data: {
+              actor: "system",
+              action: "TRANSFER_CREATED",
+              entityType: "Transfer",
+              entityId: created.id,
+              metadata: {
+                quoteId,
+                payoutRail,
+                from: quote.fromAsset.code,
+                to: quote.toAsset.code,
+                sendAmount: Number(quote.sendAmount),
+              },
+            },
+          });
+
+          return created;
         });
         break;
       } catch (error) {

@@ -86,6 +86,20 @@ ClariSend is built with production-grade reliability and transparency at its cor
 - CORS and security headers via Next.js
 - Input validation on all API routes
 
+## Operational & Compliance Posture
+
+ClariSend is structured to support regulated operations without adding licensing logic yet:
+
+- **Immutable audit logs**: Quote creation, transfer creation, and status changes are recorded in an append-only audit log with timestamp, actor, and action metadata.
+- **Append-only status history**: Transfer status updates always write a status event so history is preserved for review.
+- **Environment separation**: Runtime flags distinguish sandbox vs production and simulated payouts vs live rails.
+  - `CLARISEND_ENV` (`sandbox` | `production`)
+  - `CLARISEND_PAYOUTS_MODE` (`simulated` | `live`)
+- **KYC/AML integration points (architecture only)**:
+  - A future compliance service can be inserted before transfer creation to verify sender/recipient profiles.
+  - Screening results can be attached to transfer metadata and audit logs.
+  - Risk scoring can gate payout initiation without changing the core transfer workflow.
+
 ## Getting Started
 
 First, run the development server:

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
+import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 
 type TransferEvent = {
   id: string;
@@ -288,7 +289,7 @@ export default function TransferReceiptPage() {
   const error = activeState?.error ?? null;
   const resolvedError = transferId ? error : "not_found";
   const isLoading = Boolean(transferId) && !activeState;
-  const isDev = process.env.NODE_ENV !== "production";
+  const isDev = ALLOW_SIMULATED_PAYOUTS;
 
   if (isLoading) {
     return (

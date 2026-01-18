@@ -194,6 +194,20 @@ model TransferEvent {
   @@index([transferId, createdAt])
 }
 
+model AuditLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  actor      String
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([entityType, entityId])
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?

@@ -73,25 +73,44 @@ export async function GET(req: Request) {
 
   const expiresAt = new Date(Date.now() + 30_000); // 30s validity
 
-  const quote = await prisma.quote.create({
-    data: {
-      fromAssetId: fromAsset.id,
-      toAssetId: toAsset.id,
-      fromCode: fromAsset.code,
-      toCode: toAsset.code,
-      rail: rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
-      sendAmount: sendAmount.toFixed(2),
-      marketRate: marketRate.toFixed(6),
-      rateSource,
-      rateTimestamp,
-      fxMarginPct: fxMarginPct.toFixed(2),
-      feeFixed: feeFixed.toFixed(2),
-      feePct: feePct.toFixed(2),
-      appliedRate: appliedRate.toFixed(6),
-      totalFee: totalFee.toFixed(2),
-      recipientGets: recipientGets.toFixed(2),
-      expiresAt,
-    },
+  const quote = await prisma.$transaction(async (tx) => {
+    const created = await tx.quote.create({
+      data: {
+        fromAssetId: fromAsset.id,
+        toAssetId: toAsset.id,
+        fromCode: fromAsset.code,
+        toCode: toAsset.code,
+        rail: rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
+        sendAmount: sendAmount.toFixed(2),
+        marketRate: marketRate.toFixed(6),
+        rateSource,
+        rateTimestamp,
+        fxMarginPct: fxMarginPct.toFixed(2),
+        feeFixed: feeFixed.toFixed(2),
+        feePct: feePct.toFixed(2),
+        appliedRate: appliedRate.toFixed(6),
+        totalFee: totalFee.toFixed(2),
+        recipientGets: recipientGets.toFixed(2),
+        expiresAt,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        actor: "system",
+        action: "QUOTE_CREATED",
+        entityType: "Quote",
+        entityId: created.id,
+        metadata: {
+          from: fromAsset.code,
+          to: toAsset.code,
+          rail,
+          sendAmount,
+        },
+      },
+    });
+
+    return created;
   });
 
   return NextResponse.json({
