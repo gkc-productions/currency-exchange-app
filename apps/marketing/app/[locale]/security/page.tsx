@@ -1,3 +1,61 @@
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
+
+  const metadataByLocale = {
+    en: {
+      title: "Security and compliance",
+      description:
+        "Bank-grade encryption, licensed partners, and real-time monitoring keep every transfer protected.",
+      path: "/en/security",
+    },
+    fr: {
+      title: "Securite et conformite",
+      description:
+        "Chiffrement bancaire, partenaires agrees et surveillance en temps reel pour proteger chaque transfert.",
+      path: "/fr/security",
+    },
+  } as const;
+
+  const metadata = metadataByLocale[validLocale];
+
+  return {
+    title: metadata.title,
+    description: metadata.description,
+    alternates: {
+      canonical: metadata.path,
+      languages: {
+        en: "/en/security",
+        fr: "/fr/security",
+      },
+    },
+    openGraph: {
+      title: metadata.title,
+      description: metadata.description,
+      url: `https://clarisend.co${metadata.path}`,
+      images: [
+        {
+          url: "/og.svg",
+          width: 1200,
+          height: 630,
+          alt: "ClariSend",
+        },
+      ],
+    },
+    twitter: {
+      title: metadata.title,
+      description: metadata.description,
+      images: ["/og.svg"],
+    },
+  };
+}
+
 export default async function SecurityPage({
   params,
 }: {
@@ -144,7 +202,7 @@ export default async function SecurityPage({
     <div>
       {/* Hero */}
       <section className="bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl">
             <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
             <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
@@ -158,7 +216,7 @@ export default async function SecurityPage({
       </section>
 
       {/* Security Features Grid */}
-      <section className="bg-slate-50 py-16 lg:py-20">
+      <section className="bg-slate-50 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {t.features.map((feature, index) => (
@@ -180,7 +238,7 @@ export default async function SecurityPage({
       </section>
 
       {/* Commitment Section */}
-      <section className="bg-white py-16 lg:py-20">
+      <section className="bg-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="bg-slate-900 rounded-2xl p-8 lg:p-12">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
@@ -206,7 +264,7 @@ export default async function SecurityPage({
       </section>
 
       {/* CTA */}
-      <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-20">
+      <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
           <p className="text-slate-600 mb-6">{t.cta.description}</p>

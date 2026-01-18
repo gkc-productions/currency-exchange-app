@@ -1,3 +1,62 @@
+import type { Metadata } from "next";
+import TrackedLink from "@/components/TrackedLink";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
+
+  const metadataByLocale = {
+    en: {
+      title: "International transfers with total transparency",
+      description:
+        "Compare rates across providers, lock in the best route, and send money abroad with zero hidden fees.",
+      path: "/en",
+    },
+    fr: {
+      title: "Transferts internationaux en toute transparence",
+      description:
+        "Comparez les taux, choisissez la meilleure route et envoyez de l'argent a l'international sans frais caches.",
+      path: "/fr",
+    },
+  } as const;
+
+  const metadata = metadataByLocale[validLocale];
+
+  return {
+    title: metadata.title,
+    description: metadata.description,
+    alternates: {
+      canonical: metadata.path,
+      languages: {
+        en: "/en",
+        fr: "/fr",
+      },
+    },
+    openGraph: {
+      title: metadata.title,
+      description: metadata.description,
+      url: `https://clarisend.co${metadata.path}`,
+      images: [
+        {
+          url: "/og.svg",
+          width: 1200,
+          height: 630,
+          alt: "ClariSend",
+        },
+      ],
+    },
+    twitter: {
+      title: metadata.title,
+      description: metadata.description,
+      images: ["/og.svg"],
+    },
+  };
+}
+
 export default async function HomePage({
   params,
 }: {
@@ -211,21 +270,23 @@ export default async function HomePage({
 
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <a
-                  href="https://app.clarisend.co"
-                  className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3 rounded-lg transition-colors"
-                >
-                  {t.hero.cta}
-                  <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </a>
-                <a
-                  href={`/${validLocale}/how-it-works`}
-                  className="inline-flex items-center justify-center text-slate-700 hover:text-slate-900 font-medium px-6 py-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
-                >
-                  {t.hero.secondaryCta}
-                </a>
+              <TrackedLink
+                href="https://app.clarisend.co"
+                event="cta_start_sending"
+                className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+              >
+                {t.hero.cta}
+                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </TrackedLink>
+              <TrackedLink
+                href={`/${validLocale}/how-it-works`}
+                event="cta_see_how_it_works"
+                className="inline-flex items-center justify-center text-slate-700 hover:text-slate-900 font-medium px-6 py-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+              >
+                {t.hero.secondaryCta}
+              </TrackedLink>
               </div>
             </div>
             <div className="w-full max-w-lg lg:justify-self-end">
@@ -357,12 +418,13 @@ export default async function HomePage({
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">{t.cta.title}</h2>
           <p className="text-lg text-slate-600 mb-8">{t.cta.description}</p>
-          <a
+          <TrackedLink
             href="https://app.clarisend.co"
+            event="cta_get_started"
             className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-8 py-3.5 rounded-lg transition-colors"
           >
             {t.cta.button}
-          </a>
+          </TrackedLink>
           <p className="text-sm text-slate-500 mt-4">{t.cta.note}</p>
         </div>
       </section>

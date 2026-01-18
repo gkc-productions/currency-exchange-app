@@ -1,3 +1,62 @@
+import type { Metadata } from "next";
+import TrackedLink from "@/components/TrackedLink";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
+
+  const metadataByLocale = {
+    en: {
+      title: "Contact ClariSend",
+      description:
+        "Reach our team for transfer support, pricing questions, or account assistance.",
+      path: "/en/contact",
+    },
+    fr: {
+      title: "Contacter ClariSend",
+      description:
+        "Contactez notre equipe pour toute question sur les transferts, tarifs ou assistance.",
+      path: "/fr/contact",
+    },
+  } as const;
+
+  const metadata = metadataByLocale[validLocale];
+
+  return {
+    title: metadata.title,
+    description: metadata.description,
+    alternates: {
+      canonical: metadata.path,
+      languages: {
+        en: "/en/contact",
+        fr: "/fr/contact",
+      },
+    },
+    openGraph: {
+      title: metadata.title,
+      description: metadata.description,
+      url: `https://clarisend.co${metadata.path}`,
+      images: [
+        {
+          url: "/og.svg",
+          width: 1200,
+          height: 630,
+          alt: "ClariSend",
+        },
+      ],
+    },
+    twitter: {
+      title: metadata.title,
+      description: metadata.description,
+      images: ["/og.svg"],
+    },
+  };
+}
+
 export default async function ContactPage({
   params,
 }: {
@@ -123,7 +182,7 @@ export default async function ContactPage({
     <div>
       {/* Hero */}
       <section className="bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl">
             <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
             <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
@@ -137,7 +196,7 @@ export default async function ContactPage({
       </section>
 
       {/* Contact Cards */}
-      <section className="bg-slate-50 py-16 lg:py-20">
+      <section className="bg-slate-50 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
             {/* Email */}
@@ -173,7 +232,7 @@ export default async function ContactPage({
       </section>
 
       {/* FAQ */}
-      <section className="bg-white py-16 lg:py-20">
+      <section className="bg-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="max-w-5xl">
             <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.faq.label}</span>
@@ -194,16 +253,17 @@ export default async function ContactPage({
       </section>
 
       {/* CTA */}
-      <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-20">
+      <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
           <p className="text-slate-600 mb-6">{t.cta.description}</p>
-          <a
+          <TrackedLink
             href="https://app.clarisend.co"
+            event="cta_get_started"
             className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3 rounded-lg transition-colors"
           >
             {t.cta.button}
-          </a>
+          </TrackedLink>
         </div>
       </section>
     </div>

@@ -1,3 +1,62 @@
+import type { Metadata } from "next";
+import TrackedLink from "@/components/TrackedLink";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
+
+  const metadataByLocale = {
+    en: {
+      title: "How ClariSend works",
+      description:
+        "Follow a three-step flow to compare routes, lock your rate, and track delivery in real time.",
+      path: "/en/how-it-works",
+    },
+    fr: {
+      title: "Comment fonctionne ClariSend",
+      description:
+        "Suivez un parcours simple pour comparer les routes, verrouiller votre taux et suivre la livraison.",
+      path: "/fr/how-it-works",
+    },
+  } as const;
+
+  const metadata = metadataByLocale[validLocale];
+
+  return {
+    title: metadata.title,
+    description: metadata.description,
+    alternates: {
+      canonical: metadata.path,
+      languages: {
+        en: "/en/how-it-works",
+        fr: "/fr/how-it-works",
+      },
+    },
+    openGraph: {
+      title: metadata.title,
+      description: metadata.description,
+      url: `https://clarisend.co${metadata.path}`,
+      images: [
+        {
+          url: "/og.svg",
+          width: 1200,
+          height: 630,
+          alt: "ClariSend",
+        },
+      ],
+    },
+    twitter: {
+      title: metadata.title,
+      description: metadata.description,
+      images: ["/og.svg"],
+    },
+  };
+}
+
 export default async function HowItWorksPage({
   params,
 }: {
@@ -161,7 +220,7 @@ export default async function HowItWorksPage({
     <div>
       {/* Hero */}
       <section className="bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl">
             <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
             <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
@@ -175,7 +234,7 @@ export default async function HowItWorksPage({
       </section>
 
       {/* Steps */}
-      <section className="bg-slate-50 py-16 lg:py-20">
+      <section className="bg-slate-50 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="space-y-6 lg:space-y-8">
             {t.steps.map((step, index) => (
@@ -218,7 +277,7 @@ export default async function HowItWorksPage({
       </section>
 
       {/* Payout Methods */}
-      <section className="bg-white py-16 lg:py-20">
+      <section className="bg-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.payoutMethods.label}</span>
@@ -244,16 +303,17 @@ export default async function HowItWorksPage({
       </section>
 
       {/* CTA */}
-      <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-20">
+      <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
           <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
           <p className="text-slate-600 mb-6">{t.cta.description}</p>
-          <a
+          <TrackedLink
             href="https://app.clarisend.co"
+            event="cta_get_started"
             className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3 rounded-lg transition-colors"
           >
             {t.cta.button}
-          </a>
+          </TrackedLink>
         </div>
       </section>
     </div>

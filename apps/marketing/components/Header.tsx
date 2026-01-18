@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import TrackedLink from "@/components/TrackedLink";
 
 type HeaderProps = {
   locale: "en" | "fr";
@@ -92,12 +93,13 @@ export default function Header({ locale }: HeaderProps) {
             >
               {t.login}
             </a>
-            <a
+            <TrackedLink
               href="https://app.clarisend.co"
+              event="cta_get_started"
               className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
               {t.getStarted}
-            </a>
+            </TrackedLink>
           </div>
 
           {/* Mobile Menu Button */}
@@ -184,12 +186,13 @@ export default function Header({ locale }: HeaderProps) {
                 >
                   {t.login}
                 </a>
-                <a
+                <TrackedLink
                   href="https://app.clarisend.co"
+                  event="cta_get_started"
                   className="text-center bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition-colors"
                 >
                   {t.getStarted}
-                </a>
+                </TrackedLink>
               </div>
             </nav>
           </div>

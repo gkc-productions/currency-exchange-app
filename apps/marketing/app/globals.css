@@ -1,26 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --brand-ink: #0b1220;
-  --brand-muted: #475569;
-  --brand-surface: #f5f7fb;
-  --brand-surface-strong: #ffffff;
-  --brand-accent: #0f766e;
-  --brand-accent-strong: #0b5f57;
-  --brand-accent-soft: #e6f4f1;
-  --brand-gold: #f1b879;
+  /* Core brand colors - restrained, premium palette */
+  --brand-ink: #0f172a;
+  --brand-ink-muted: #334155;
+  --brand-ink-subtle: #64748b;
+  --brand-surface: #f8fafc;
+  --brand-surface-raised: #ffffff;
+  --brand-border: #e2e8f0;
+  --brand-border-subtle: #f1f5f9;
+
+  /* Accent - used sparingly */
+  --brand-accent: #059669;
+  --brand-accent-hover: #047857;
+  --brand-accent-soft: #ecfdf5;
+  --brand-accent-muted: #d1fae5;
+
+  /* Premium gold for trust badges */
+  --brand-gold: #d97706;
+  --brand-gold-soft: #fef3c7;
+
+  /* Semantic */
+  --background: var(--brand-surface);
+  --foreground: var(--brand-ink);
 }
 
 @theme inline {
-  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-display: ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-brand-sans);
+  --font-display: var(--font-brand-display);
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
@@ -30,6 +49,34 @@ body {
 }
 
 body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-brand-sans), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* Premium typography scale */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-brand-display), var(--font-brand-sans), sans-serif;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Subtle focus states */
+:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+/* Premium button transitions */
+button, a {
+  transition: all 0.15s ease;
+}
+
+/* Custom selection */
+::selection {
+  background: var(--brand-accent-muted);
   color: var(--brand-ink);
-  background: var(--brand-surface);
 }
