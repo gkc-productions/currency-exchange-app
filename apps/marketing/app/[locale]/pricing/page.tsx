@@ -209,7 +209,7 @@ export default async function PricingPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl">
             <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
-            <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+            <h1 className="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-4">
               {t.hero.title}
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed">
@@ -222,7 +222,7 @@ export default async function PricingPage({
       {/* How Pricing Works */}
       <section className="bg-slate-50 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">{t.howItWorks.title}</h2>
+          <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-8">{t.howItWorks.title}</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {t.howItWorks.items.map((item, index) => (
               <div key={index} className="bg-white rounded-xl border border-slate-200 p-6">
@@ -242,7 +242,7 @@ export default async function PricingPage({
       <section className="bg-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="max-w-3xl mb-12">
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.comparison.title}</h2>
+            <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-3">{t.comparison.title}</h2>
             <p className="text-slate-600">{t.comparison.description}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -266,7 +266,7 @@ export default async function PricingPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2">{t.example.title}</h2>
+              <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-2">{t.example.title}</h2>
               <p className="text-slate-600">{t.example.subtitle}</p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -298,12 +298,12 @@ export default async function PricingPage({
       {/* CTA */}
       <section className="bg-white border-t border-slate-100 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
+          <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-3">{t.cta.title}</h2>
           <p className="text-slate-600 mb-6">{t.cta.description}</p>
           <TrackedLink
             href="https://app.clarisend.co"
             event="cta_get_started"
-            className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+            className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3 rounded-lg transition-colors"
           >
             {t.cta.button}
           </TrackedLink>

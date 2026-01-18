@@ -47,7 +47,7 @@ export default function StatusPage() {
         if (!active) {
           return;
         }
-        setError("Failed to fetch status");
+        setError("Status is temporarily unavailable. Please refresh in a moment.");
         console.error("Status fetch error:", err);
       }
     };
@@ -74,7 +74,7 @@ export default function StatusPage() {
 
   if (error && !status) {
     return (
-      <div className="min-h-screen bg-[var(--brand-surface)] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--brand-surface)] flex items-center justify-center px-6 py-16 lg:px-8">
         <div className="max-w-2xl w-full bg-white rounded-3xl border border-slate-200/70 shadow-sm p-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-3 h-3 rounded-full bg-red-500" />
@@ -88,15 +88,15 @@ export default function StatusPage() {
 
   if (!status) {
     return (
-      <div className="min-h-screen bg-[var(--brand-surface)] flex items-center justify-center">
-        <div className="text-slate-500">Loading status...</div>
+      <div className="min-h-screen bg-[var(--brand-surface)] flex items-center justify-center px-6 py-16 lg:px-8">
+        <div className="text-slate-500">Loading status checks...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--brand-surface)] p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[var(--brand-surface)]">
+      <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
         {/* Header */}
         <div className="bg-white rounded-3xl border border-slate-200/70 shadow-sm p-8 mb-6">
           <div className="flex items-center justify-between mb-2">

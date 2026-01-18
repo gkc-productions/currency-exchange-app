@@ -205,7 +205,7 @@ export default async function SecurityPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl">
             <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
-            <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+            <h1 className="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-4">
               {t.hero.title}
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed">
@@ -240,21 +240,21 @@ export default async function SecurityPage({
       {/* Commitment Section */}
       <section className="bg-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="bg-slate-900 rounded-2xl p-8 lg:p-12">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 lg:p-12">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
               <div>
-                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">{t.commitment.title}</h2>
-                <p className="text-slate-300 leading-relaxed">{t.commitment.description}</p>
+                <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-4">{t.commitment.title}</h2>
+                <p className="text-slate-600 leading-relaxed">{t.commitment.description}</p>
               </div>
               <div className="space-y-4">
                 {t.commitment.points.map((point, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-slate-300">{point}</span>
+                    <span className="text-slate-700">{point}</span>
                   </div>
                 ))}
               </div>
@@ -266,7 +266,7 @@ export default async function SecurityPage({
       {/* CTA */}
       <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
+          <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-3">{t.cta.title}</h2>
           <p className="text-slate-600 mb-6">{t.cta.description}</p>
           <a
             href={`/${validLocale}/${t.cta.link}`}

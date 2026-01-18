@@ -238,7 +238,7 @@ export type Messages = {
 
 const EN_MESSAGES: Messages = {
   quoteTitle: (from, to) => `${from} to ${to} Quote`,
-  tagline: "Send with clarity.",
+  tagline: "Clarity in every transfer.",
   navAboutLabel: "About",
   navFeesLabel: "Fees",
   navSecurityLabel: "Security",
@@ -249,24 +249,24 @@ const EN_MESSAGES: Messages = {
   navSignOutLabel: "Sign out",
   loginTitle: "Sign in to ClariSend",
   loginSubtitle:
-    "Get a secure magic link sent to your email. No passwords required.",
-  loginEmailLabel: "Work email",
+    "We will email you a secure sign-in link. No passwords needed.",
+  loginEmailLabel: "Email address",
   loginEmailPlaceholder: "you@company.com",
   loginButton: "Send magic link",
   loginSentTitle: "Check your inbox",
   loginSentDescription:
     "We sent a secure sign-in link. It expires in 24 hours.",
-  loginError: "We could not send the link. Please try again.",
+  loginError: "We could not send the link. Check the address and try again.",
   dashboardTitle: "Your transfers",
-  dashboardSubtitle: "Track every transfer and access receipts instantly.",
+  dashboardSubtitle: "Track transfers and access receipts in one place.",
   dashboardEmptyTitle: "No transfers yet",
   dashboardEmptyDescription:
-    "Start a new quote to see your transfers appear here.",
+    "Start a quote to see transfers appear here.",
   recipientsTitle: "Recipients",
-  recipientsSubtitle: "Save recipients once and reuse them in future transfers.",
+  recipientsSubtitle: "Save recipients once and reuse them for future transfers.",
   recipientsEmptyTitle: "No saved recipients yet",
   recipientsEmptyDescription:
-    "Create a recipient to speed up your next transfer.",
+    "Create a recipient to keep details ready for the next transfer.",
   recipientsCreateTitle: "Add a recipient",
   recipientsSaveButton: "Save recipient",
   recipientRemoveButton: "Remove",
@@ -275,7 +275,7 @@ const EN_MESSAGES: Messages = {
   recipientSelectHelper: "Prefill details from a saved recipient.",
   recipientAuthHelper: "Sign in to save recipients and reuse details faster.",
   recipientSaveToggleLabel: "Save this recipient for next time",
-  recipientSaveSuccess: "Recipient saved to your list.",
+  recipientSaveSuccess: "Recipient saved.",
   recipientSaveError: "Unable to save recipient. Please try again.",
   recipientLoadError: "Unable to load recipients. Try refreshing.",
   recipientLightningInvoiceLabel: "Lightning invoice (optional)",
@@ -291,31 +291,31 @@ const EN_MESSAGES: Messages = {
   adminUnauthorizedDescription:
     "You do not have permission to view this page.",
   heroTitle:
-    "Send with clarity. Know the rate, fees, and delivery time upfront.",
+    "Send with clarity. Rates, fees, and delivery time upfront.",
   heroSubtitle:
-    "Transparent pricing, smart routing, and modern payout rails keep every transfer predictable for you and your recipient.",
+    "Transparent pricing and dependable rails keep every transfer predictable for you and your recipient.",
   sendCardTitle: "Send money",
   sendCardSubtitle: "Start a quote in seconds with clear fees and live rates.",
   sendFromLabel: "Sending from",
   sendToLabel: "Sending to",
   sendCtaLabel: "Get started",
-  trustTitle: "Trusted for clarity at every step",
+  trustTitle: "Clarity at every step",
   trustItemTransparent: "Transparent pricing",
-  trustItemFast: "Fast delivery",
-  trustItemSecure: "Secure & compliant",
-  featuresTitle: "Designed for modern remittances",
+  trustItemFast: "Predictable delivery",
+  trustItemSecure: "Security-first controls",
+  featuresTitle: "Built for dependable transfers",
   featuresSubtitle:
-    "Smart rails, real-time updates, and routing intelligence that keeps transfers on track.",
+    "Clear pricing, real-time updates, and rails that keep transfers on track.",
   featuresLinkLabel: "Features",
   featureSmartRoutingTitle: "Smart routing",
   featureSmartRoutingDescription:
-    "Automatically pick the best route based on total cost, speed, and payout reliability.",
+    "Compare routes based on total cost, speed, and payout reliability.",
   featureMultiRailTitle: "Multi-rail payout",
   featureMultiRailDescription:
-    "Deliver to bank, mobile money, or lightning rails with consistent customer experiences.",
+    "Deliver to bank, mobile money, or lightning rails with a consistent experience.",
   featureTrackingTitle: "Tracking",
   featureTrackingDescription:
-    "Live status updates and receipts keep senders and recipients aligned end to end.",
+    "Live status updates and receipts keep senders and recipients aligned.",
   faqTitle: "Frequently asked questions",
   faqSubtitle: "Clear answers before you send.",
   faqQuestionOne: "How does ClariSend keep pricing transparent?",
@@ -329,7 +329,7 @@ const EN_MESSAGES: Messages = {
     "Delivery times vary by rail and provider, but you will see ETA ranges before you send.",
   faqQuestionFour: "Is ClariSend compliant and secure?",
   faqAnswerFour:
-    "Yes. We follow strict compliance controls and keep transfer data encrypted end to end.",
+    "We apply strict controls and keep transfer data encrypted end to end.",
   countrySelectChangeLabel: "Change",
   countrySelectDialogTitle: "Choose a country and currency",
   countrySelectDialogSubtitle: "Search by country, currency, or code.",
@@ -339,7 +339,7 @@ const EN_MESSAGES: Messages = {
   countrySelectNoResultsLabel: "No matches found. Try another search.",
   countrySelectFallbackLabel: "Select country",
   footerTagline:
-    "Transparent global payments and remittances built for teams that demand clarity.",
+    "Transparent global payments built for teams that demand clarity.",
   footerCompanyLabel: "Company",
   footerProductLabel: "Product",
   footerResourcesLabel: "Resources",
@@ -388,11 +388,11 @@ const EN_MESSAGES: Messages = {
   routeActiveLabel: "Active route",
   etaRangeLabel: (minMinutes, maxMinutes) => `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Use this route",
-  recommendationLoading: "Calculating the best routes...",
+  recommendationLoading: "Calculating available routes...",
   recommendationEmpty:
-    "Enter your amount to unlock personalized route suggestions.",
+    "Enter an amount to see route suggestions.",
   recommendationLoadError:
-    "We could not load suggestions. Please refresh or try again in a moment.",
+    "We could not load suggestions. Please refresh or try again shortly.",
   recommendationWhyLabel: "Why this route",
   quoteBreakdownLabel: "Quote Breakdown",
   quoteIdLabel: "Quote ID",
@@ -451,7 +451,7 @@ const EN_MESSAGES: Messages = {
   receiptTotalFeesLabel: "Total fees",
   receiptRecipientGetsLabel: "Recipient gets",
   receiptLoadingLabel: "Loading receipt...",
-  receiptLoadError: "Unable to load receipt. Please try again.",
+  receiptLoadError: "Unable to load the receipt. Please try again.",
   receiptNotFoundLabel: "Transfer not found.",
   receiptExpiredLabel: "Transfer expired.",
   receiptBackHomeButton: "Back to home",
@@ -494,7 +494,7 @@ const EN_MESSAGES: Messages = {
 
 const FR_MESSAGES: Messages = {
   quoteTitle: (from, to) => `De ${from} à ${to}`,
-  tagline: "Envoyez en toute clarté.",
+  tagline: "La clarte a chaque transfert.",
   navAboutLabel: "À propos",
   navFeesLabel: "Frais",
   navSecurityLabel: "Sécurité",
@@ -505,14 +505,14 @@ const FR_MESSAGES: Messages = {
   navSignOutLabel: "Deconnexion",
   loginTitle: "Connectez-vous a ClariSend",
   loginSubtitle:
-    "Recevez un lien securise par email. Aucun mot de passe.",
-  loginEmailLabel: "Email professionnel",
+    "Recevez un lien de connexion securise par email. Sans mot de passe.",
+  loginEmailLabel: "Adresse email",
   loginEmailPlaceholder: "vous@entreprise.com",
   loginButton: "Envoyer le lien",
   loginSentTitle: "Consultez votre boite mail",
   loginSentDescription:
     "Nous avons envoye un lien securise. Il expire sous 24 heures.",
-  loginError: "Impossible d'envoyer le lien. Veuillez reessayer.",
+  loginError: "Impossible d'envoyer le lien. Verifiez l'adresse et reessayez.",
   dashboardTitle: "Vos transferts",
   dashboardSubtitle: "Suivez chaque transfert et accedez aux recus.",
   dashboardEmptyTitle: "Aucun transfert pour le moment",
@@ -520,10 +520,10 @@ const FR_MESSAGES: Messages = {
     "Lancez un devis pour voir vos transferts ici.",
   recipientsTitle: "Beneficiaires",
   recipientsSubtitle:
-    "Enregistrez vos beneficiaires pour accelerer vos transferts.",
+    "Enregistrez vos beneficiaires pour reutiliser leurs infos.",
   recipientsEmptyTitle: "Aucun beneficiaire enregistre",
   recipientsEmptyDescription:
-    "Ajoutez un beneficiaire pour votre prochain transfert.",
+    "Ajoutez un beneficiaire pour garder ses informations a portee de main.",
   recipientsCreateTitle: "Ajouter un beneficiaire",
   recipientsSaveButton: "Enregistrer le beneficiaire",
   recipientRemoveButton: "Supprimer",
@@ -550,32 +550,32 @@ const FR_MESSAGES: Messages = {
   adminUnauthorizedDescription:
     "Vous n'avez pas les droits pour voir cette page.",
   heroTitle:
-    "Envoyez en toute clarté. Connaissez le taux, les frais et le délai avant d'envoyer.",
+    "Envoyez en toute clarte. Taux, frais et delais visibles.",
   heroSubtitle:
-    "Tarification transparente, routage intelligent et rails modernes pour des transferts previsibles.",
+    "Tarification transparente et rails fiables pour des transferts previsibles.",
   sendCardTitle: "Envoyer de l'argent",
   sendCardSubtitle:
     "Lancez un devis en quelques secondes avec des frais clairs et des taux en direct.",
   sendFromLabel: "Envoi depuis",
   sendToLabel: "Envoi vers",
   sendCtaLabel: "Commencer",
-  trustTitle: "La clarté à chaque étape",
+  trustTitle: "Clarte a chaque etape",
   trustItemTransparent: "Tarification transparente",
-  trustItemFast: "Livraison rapide",
-  trustItemSecure: "Sécurisé et conforme",
-  featuresTitle: "Conçu pour les envois modernes",
+  trustItemFast: "Livraison previsible",
+  trustItemSecure: "Controles de securite",
+  featuresTitle: "Concu pour des transferts fiables",
   featuresSubtitle:
-    "Rails intelligents, mises à jour en temps réel et routage optimisé pour garder vos transferts sur la bonne voie.",
+    "Tarification claire, mises a jour en temps reel et rails fiables.",
   featuresLinkLabel: "Fonctionnalités",
   featureSmartRoutingTitle: "Routage intelligent",
   featureSmartRoutingDescription:
-    "Sélection automatique du meilleur itinéraire selon le coût total, la vitesse et la fiabilité.",
+    "Comparez les routes selon le cout total, la vitesse et la fiabilite.",
   featureMultiRailTitle: "Paiement multi-rail",
   featureMultiRailDescription:
     "Livrez sur banques, mobile money ou lightning avec une expérience cohérente.",
   featureTrackingTitle: "Suivi",
   featureTrackingDescription:
-    "Des statuts en direct et des reçus gardent tout le monde aligné.",
+    "Des statuts en direct et des recus gardent tout le monde aligne.",
   faqTitle: "Questions fréquentes",
   faqSubtitle: "Des réponses claires avant d'envoyer.",
   faqQuestionOne: "Comment ClariSend garantit-il la transparence des prix ?",
@@ -589,7 +589,7 @@ const FR_MESSAGES: Messages = {
     "Les délais varient selon le rail et le fournisseur, mais vous voyez l'ETA avant d'envoyer.",
   faqQuestionFour: "ClariSend est-il conforme et sécurisé ?",
   faqAnswerFour:
-    "Oui. Nous appliquons des contrôles de conformité stricts et chiffrons les données.",
+    "Nous appliquons des controles stricts et chiffrons les donnees.",
   countrySelectChangeLabel: "Modifier",
   countrySelectDialogTitle: "Choisissez un pays et une devise",
   countrySelectDialogSubtitle: "Recherchez par pays, devise ou code.",
@@ -599,7 +599,7 @@ const FR_MESSAGES: Messages = {
   countrySelectNoResultsLabel: "Aucun résultat. Essayez une autre recherche.",
   countrySelectFallbackLabel: "Choisir un pays",
   footerTagline:
-    "Paiements internationaux transparents, pensés pour les équipes qui exigent la clarté.",
+    "Paiements internationaux transparents, pensés pour les equipes qui exigent la clarte.",
   footerCompanyLabel: "Entreprise",
   footerProductLabel: "Produit",
   footerResourcesLabel: "Ressources",
@@ -651,11 +651,11 @@ const FR_MESSAGES: Messages = {
   etaRangeLabel: (minMinutes, maxMinutes) =>
     `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Utiliser cet itinéraire",
-  recommendationLoading: "Calcul des meilleures routes...",
+  recommendationLoading: "Calcul des routes disponibles...",
   recommendationEmpty:
-    "Entrez un montant pour afficher les suggestions personnalisees.",
+    "Saisissez un montant pour afficher les suggestions.",
   recommendationLoadError:
-    "Impossible de charger les suggestions. Veuillez reessayer dans un instant.",
+    "Impossible de charger les suggestions. Veuillez reessayer bientot.",
   recommendationWhyLabel: "Pourquoi cette route",
   quoteBreakdownLabel: "Détail du devis",
   quoteIdLabel: "ID du devis",
@@ -714,7 +714,7 @@ const FR_MESSAGES: Messages = {
   receiptTotalFeesLabel: "Frais totaux",
   receiptRecipientGetsLabel: "Montant reçu",
   receiptLoadingLabel: "Chargement du reçu...",
-  receiptLoadError: "Impossible de charger le reçu. Veuillez réessayer.",
+  receiptLoadError: "Impossible de charger le recu. Veuillez reessayer.",
   receiptNotFoundLabel: "Transfert introuvable.",
   receiptExpiredLabel: "Transfert expiré.",
   receiptBackHomeButton: "Retour à l'accueil",

@@ -10,7 +10,7 @@ export default function AuthStatus({ locale }: { locale: Locale }) {
 
   if (status === "loading") {
     return (
-      <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+      <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-400">
         ...
       </span>
     );
@@ -20,7 +20,7 @@ export default function AuthStatus({ locale }: { locale: Locale }) {
     return (
       <Link
         href={`/${locale}/login`}
-        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300"
+        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300"
       >
         {messages.navSignInLabel}
       </Link>
@@ -31,14 +31,14 @@ export default function AuthStatus({ locale }: { locale: Locale }) {
     <div className="flex items-center gap-3">
       <Link
         href={`/${locale}/dashboard`}
-        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300"
+        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300"
       >
         {messages.navDashboardLabel}
       </Link>
       <button
         type="button"
         onClick={() => signOut({ callbackUrl: `/${locale}` })}
-        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300"
+        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300"
       >
         {messages.navSignOutLabel}
       </button>

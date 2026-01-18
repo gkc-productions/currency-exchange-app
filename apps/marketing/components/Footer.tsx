@@ -7,7 +7,7 @@ type FooterProps = {
 export default function Footer({ locale }: FooterProps) {
   const messages = {
     en: {
-      tagline: "Send money internationally with complete transparency.",
+      tagline: "Send money internationally with clear pricing and predictable delivery.",
       product: "Product",
       howItWorks: "How It Works",
       security: "Security",
@@ -19,10 +19,10 @@ export default function Footer({ locale }: FooterProps) {
       terms: "Terms of Service",
       rights: "All rights reserved.",
       madeWith: "Built for transparency",
-      regulated: "Licensed money transfer service",
+      regulated: "Compliance-focused transfer experience",
     },
     fr: {
-      tagline: "Envoyez de l'argent a l'international en toute transparence.",
+      tagline: "Envoyez de l'argent a l'international avec des frais clairs et des delais previsibles.",
       product: "Produit",
       howItWorks: "Comment ca marche",
       security: "Securite",
@@ -34,7 +34,7 @@ export default function Footer({ locale }: FooterProps) {
       terms: "Conditions d'utilisation",
       rights: "Tous droits reserves.",
       madeWith: "Construit pour la transparence",
-      regulated: "Service de transfert d'argent agree",
+      regulated: "Experience de transfert axee conformite",
     },
   };
 
@@ -48,8 +48,8 @@ export default function Footer({ locale }: FooterProps) {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href={`/${locale}`} className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm tracking-tight">CS</span>
+              <div className="w-8 h-8 rounded-lg border border-emerald-200 bg-emerald-50 flex items-center justify-center text-emerald-700 font-semibold text-sm">
+                CS
               </div>
               <span className="text-lg font-semibold text-white tracking-tight">ClariSend</span>
             </Link>

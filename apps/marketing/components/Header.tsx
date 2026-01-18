@@ -33,13 +33,13 @@ export default function Header({ locale }: HeaderProps) {
   const t = messages[locale];
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-50">
+    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <span className="text-white font-bold text-sm tracking-tight">CS</span>
+            <div className="w-8 h-8 rounded-lg border border-emerald-200 bg-emerald-50 flex items-center justify-center text-emerald-700 font-semibold text-sm shadow-sm group-hover:border-emerald-300 transition-colors">
+              CS
             </div>
             <span className="text-lg font-semibold text-slate-900 tracking-tight">ClariSend</span>
           </Link>

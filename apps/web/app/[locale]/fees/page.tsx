@@ -31,14 +31,16 @@ export default function FeesPage({ params }: { params: { locale: string } }) {
         };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-16 sm:px-10">
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">
-        {content.eyebrow}
-      </p>
-      <h1 className="mt-3 font-[var(--font-display)] text-4xl text-slate-900">
-        {content.title}
-      </h1>
-      <p className="mt-4 text-lg text-slate-600">{content.subtitle}</p>
+    <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8">
+      <div className="max-w-3xl">
+        <p className="text-xs font-medium text-emerald-700">
+          {content.eyebrow}
+        </p>
+        <h1 className="mt-3 font-[var(--font-display)] text-3xl text-slate-900 sm:text-4xl">
+          {content.title}
+        </h1>
+        <p className="mt-4 text-lg text-slate-600">{content.subtitle}</p>
+      </div>
       <div className="mt-8 grid gap-3">
         {content.points.map((point) => (
           <div
@@ -51,7 +53,7 @@ export default function FeesPage({ params }: { params: { locale: string } }) {
       </div>
       <Link
         href={`/${locale}#send`}
-        className="mt-10 inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+        className="mt-10 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
       >
         {content.cta}
       </Link>

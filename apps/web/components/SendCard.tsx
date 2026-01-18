@@ -71,10 +71,10 @@ export default function SendCard({
         event.preventDefault();
         onSubmit();
       }}
-      className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.35)]"
+      className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.3)]"
     >
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+        <p className="text-xs font-medium text-emerald-700">
           {title}
         </p>
         <p className="text-lg font-semibold text-slate-900">{subtitle}</p>
@@ -95,7 +95,7 @@ export default function SendCard({
           copy={countrySelectCopy}
         />
         <label className="flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+          <span className="text-xs font-medium text-slate-500">
             {railLabel}
           </span>
           <select
@@ -112,11 +112,11 @@ export default function SendCard({
           </select>
         </label>
         <label className="flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+          <span className="text-xs font-medium text-slate-500">
             {amountLabel}
           </span>
           <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-sm">
-            <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+            <span className="text-xs font-semibold text-slate-400">
               {fromAsset}
             </span>
             <input
@@ -140,7 +140,7 @@ export default function SendCard({
         ) : null}
         <button
           type="submit"
-          className="mt-2 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+          className="mt-2 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
         >
           {submitLabel}
         </button>

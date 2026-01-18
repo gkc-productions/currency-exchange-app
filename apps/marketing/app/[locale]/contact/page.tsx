@@ -185,7 +185,7 @@ export default async function ContactPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl">
             <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
-            <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+            <h1 className="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-4">
               {t.hero.title}
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed">
@@ -236,7 +236,7 @@ export default async function ContactPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="max-w-5xl">
             <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.faq.label}</span>
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">{t.faq.title}</h2>
+            <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-8">{t.faq.title}</h2>
             <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
               {t.faq.items.map((item, index) => (
                 <div
@@ -255,7 +255,7 @@ export default async function ContactPage({
       {/* CTA */}
       <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
+          <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-3">{t.cta.title}</h2>
           <p className="text-slate-600 mb-6">{t.cta.description}</p>
           <TrackedLink
             href="https://app.clarisend.co"

@@ -68,11 +68,11 @@ export default async function HomePage({
   const messages = {
     en: {
       hero: {
-        badge: "Trusted by 10,000+ users worldwide",
+        badge: "Transparent transfers, end to end",
         title: "International transfers,",
-        titleAccent: "finally transparent",
+        titleAccent: "clearly priced",
         description:
-          "Compare rates across providers. See exactly what you pay. Send money abroad with zero hidden fees.",
+          "Compare routes across providers, lock the rate, and send with fees shown upfront.",
         cta: "Start sending",
         secondaryCta: "See how it works",
         preview: {
@@ -89,12 +89,12 @@ export default async function HomePage({
         },
       },
       stats: {
-        countries: "50+ countries",
-        countriesLabel: "Supported destinations",
-        saved: "$2M+",
-        savedLabel: "Saved in fees",
-        transfers: "100K+",
-        transfersLabel: "Transfers completed",
+        countries: "50+ destinations",
+        countriesLabel: "Corridors supported",
+        saved: "Clear fees",
+        savedLabel: "Upfront cost breakdowns",
+        transfers: "Reliable delivery",
+        transfersLabel: "Consistent payout tracking",
       },
       trust: {
         title: "Why people choose ClariSend",
@@ -104,12 +104,12 @@ export default async function HomePage({
             description: "See the full cost breakdown before you send. No surprises, no hidden charges.",
           },
           {
-            title: "Best rates guaranteed",
-            description: "We compare routes in real-time to find you the lowest fees and best exchange rates.",
+            title: "Competitive routes",
+            description: "We compare routes in real-time so you can choose the best balance of price and speed.",
           },
           {
-            title: "Bank-grade security",
-            description: "256-bit encryption, licensed partners, and full regulatory compliance.",
+            title: "Security-first operations",
+            description: "Encryption at every step with partners that meet strict compliance standards.",
           },
         ],
       },
@@ -120,7 +120,7 @@ export default async function HomePage({
           {
             step: "1",
             title: "Enter your transfer",
-            description: "Choose currencies and amount. We show you all available routes instantly.",
+            description: "Choose currencies and amount. We show available routes instantly.",
           },
           {
             step: "2",
@@ -130,35 +130,35 @@ export default async function HomePage({
           {
             step: "3",
             title: "Send securely",
-            description: "Complete payment and track your transfer in real-time until delivery.",
+            description: "Confirm payment and track your transfer until delivery.",
           },
         ],
       },
       security: {
         label: "Security & Compliance",
         title: "Your money is protected",
-        description: "We partner with licensed financial institutions and follow strict regulatory standards to keep your transfers safe.",
+        description: "We work with regulated partners and apply strict controls to keep transfers secure.",
         features: [
           "End-to-end encryption",
-          "Licensed payment providers",
-          "AML/KYC compliant",
+          "Regulated payment partners",
+          "KYC/AML-aligned controls",
           "Real-time fraud monitoring",
         ],
       },
       cta: {
-        title: "Ready to save on your next transfer?",
-        description: "Join thousands who trust ClariSend for transparent international money transfers.",
-        button: "Get started free",
-        note: "No account fees. Cancel anytime.",
+        title: "Ready to send with clarity?",
+        description: "See rates, fees, and delivery times before you commit.",
+        button: "Get started",
+        note: "Clear pricing. No hidden fees.",
       },
     },
     fr: {
       hero: {
-        badge: "Plus de 10 000 utilisateurs nous font confiance",
+        badge: "Transferts transparents de bout en bout",
         title: "Transferts internationaux,",
-        titleAccent: "enfin transparents",
+        titleAccent: "prix clairs",
         description:
-          "Comparez les taux entre fournisseurs. Voyez exactement ce que vous payez. Envoyez de l'argent sans frais caches.",
+          "Comparez les routes, bloquez le taux et envoyez avec des frais visibles.",
         cta: "Commencer",
         secondaryCta: "Comment ca marche",
         preview: {
@@ -175,12 +175,12 @@ export default async function HomePage({
         },
       },
       stats: {
-        countries: "50+ pays",
-        countriesLabel: "Destinations supportees",
-        saved: "2M$+",
-        savedLabel: "Economies en frais",
-        transfers: "100K+",
-        transfersLabel: "Transferts completes",
+        countries: "50+ destinations",
+        countriesLabel: "Corridors supportes",
+        saved: "Frais clairs",
+        savedLabel: "Couts affiches avant envoi",
+        transfers: "Suivi fiable",
+        transfersLabel: "Statuts de paiement a jour",
       },
       trust: {
         title: "Pourquoi choisir ClariSend",
@@ -190,12 +190,12 @@ export default async function HomePage({
             description: "Voyez la repartition complete des couts avant d'envoyer. Pas de surprises.",
           },
           {
-            title: "Meilleurs taux garantis",
-            description: "Nous comparons les routes en temps reel pour trouver les frais les plus bas.",
+            title: "Routes competitives",
+            description: "Nous comparons les routes en temps reel pour equilibrer cout et rapidite.",
           },
           {
-            title: "Securite bancaire",
-            description: "Chiffrement 256 bits, partenaires agrees et conformite reglementaire complete.",
+            title: "Securite en continu",
+            description: "Chiffrement a chaque etape et partenaires soumis aux exigences reglementaires.",
           },
         ],
       },
@@ -206,7 +206,7 @@ export default async function HomePage({
           {
             step: "1",
             title: "Entrez votre transfert",
-            description: "Choisissez les devises et le montant. Nous vous montrons toutes les routes disponibles.",
+            description: "Choisissez les devises et le montant. Nous affichons les routes disponibles.",
           },
           {
             step: "2",
@@ -216,26 +216,26 @@ export default async function HomePage({
           {
             step: "3",
             title: "Envoyez en securite",
-            description: "Effectuez le paiement et suivez votre transfert en temps reel.",
+            description: "Effectuez le paiement et suivez le transfert jusqu'a la reception.",
           },
         ],
       },
       security: {
         label: "Securite & Conformite",
         title: "Votre argent est protege",
-        description: "Nous travaillons avec des institutions financieres agreees et suivons des normes reglementaires strictes.",
+        description: "Nous travaillons avec des partenaires reglementes et appliquons des controles stricts.",
         features: [
           "Chiffrement de bout en bout",
-          "Fournisseurs de paiement agrees",
-          "Conforme AML/KYC",
+          "Partenaires reglementes",
+          "Controles KYC/AML",
           "Surveillance des fraudes en temps reel",
         ],
       },
       cta: {
-        title: "Pret a economiser sur votre prochain transfert?",
-        description: "Rejoignez les milliers de personnes qui font confiance a ClariSend.",
-        button: "Commencer gratuitement",
-        note: "Pas de frais de compte. Annulez a tout moment.",
+        title: "Pret a envoyer en toute clarte?",
+        description: "Taux, frais et delais visibles avant validation.",
+        button: "Commencer",
+        note: "Tarifs clairs, sans frais caches.",
       },
     },
   };
@@ -246,25 +246,25 @@ export default async function HomePage({
     <div>
       {/* Hero Section */}
       <section className="relative bg-white overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-emerald-50/20" />
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
             <div className="max-w-2xl lg:max-w-none">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-100 bg-emerald-50/70 mb-6">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                 <span className="text-sm text-emerald-700 font-medium">{t.hero.badge}</span>
               </div>
 
               {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-5xl font-bold text-slate-900 tracking-tight mb-6">
+              <h1 className="text-4xl sm:text-4xl lg:text-5xl font-semibold text-slate-900 tracking-tight mb-6">
                 {t.hero.title}
                 <br />
                 <span className="text-emerald-600">{t.hero.titleAccent}</span>
               </h1>
 
               {/* Description */}
-              <p className="text-lg lg:text-xl text-slate-600 leading-relaxed mb-8">
+              <p className="text-lg text-slate-600 leading-relaxed mb-8">
                 {t.hero.description}
               </p>
 
@@ -315,30 +315,30 @@ export default async function HomePage({
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-slate-900">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <section className="bg-slate-50 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
           <div className="grid sm:grid-cols-3 gap-6">
             <div className="text-center">
-              <p className="text-2xl lg:text-3xl font-bold text-white">{t.stats.countries}</p>
-              <p className="text-sm text-slate-400 mt-1">{t.stats.countriesLabel}</p>
+              <p className="text-2xl font-semibold text-slate-900">{t.stats.countries}</p>
+              <p className="text-sm text-slate-500 mt-1">{t.stats.countriesLabel}</p>
             </div>
-            <div className="text-center sm:border-x sm:border-slate-700">
-              <p className="text-2xl lg:text-3xl font-bold text-white">{t.stats.saved}</p>
-              <p className="text-sm text-slate-400 mt-1">{t.stats.savedLabel}</p>
+            <div className="text-center sm:border-x sm:border-slate-200">
+              <p className="text-2xl font-semibold text-slate-900">{t.stats.saved}</p>
+              <p className="text-sm text-slate-500 mt-1">{t.stats.savedLabel}</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl lg:text-3xl font-bold text-white">{t.stats.transfers}</p>
-              <p className="text-sm text-slate-400 mt-1">{t.stats.transfersLabel}</p>
+              <p className="text-2xl font-semibold text-slate-900">{t.stats.transfers}</p>
+              <p className="text-sm text-slate-500 mt-1">{t.stats.transfersLabel}</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Trust Section */}
-      <section className="bg-white py-20 lg:py-24">
+      <section className="bg-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900">
               {t.trust.title}
             </h2>
           </div>
@@ -361,11 +361,11 @@ export default async function HomePage({
       </section>
 
       {/* How It Works */}
-      <section className="bg-slate-50 py-20 lg:py-24">
+      <section className="bg-slate-50 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-12 lg:mb-16">
             <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.howItWorks.label}</span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">{t.howItWorks.title}</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900">{t.howItWorks.title}</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
             {t.howItWorks.steps.map((step, index) => (
@@ -387,24 +387,24 @@ export default async function HomePage({
       </section>
 
       {/* Security Section */}
-      <section className="bg-white py-20 lg:py-24">
+      <section className="bg-white py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="bg-slate-900 rounded-2xl p-8 lg:p-12">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 lg:p-12">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
               <div>
-                <span className="text-sm font-medium text-emerald-400 mb-2 block">{t.security.label}</span>
-                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">{t.security.title}</h2>
-                <p className="text-slate-300 leading-relaxed">{t.security.description}</p>
+                <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.security.label}</span>
+                <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-4">{t.security.title}</h2>
+                <p className="text-slate-600 leading-relaxed">{t.security.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {t.security.features.map((feature, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-sm text-slate-300">{feature}</span>
+                    <span className="text-sm text-slate-700">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -414,14 +414,14 @@ export default async function HomePage({
       </section>
 
       {/* Final CTA */}
-      <section className="bg-slate-50 py-20 lg:py-24">
+      <section className="bg-slate-50 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">{t.cta.title}</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-4">{t.cta.title}</h2>
           <p className="text-lg text-slate-600 mb-8">{t.cta.description}</p>
           <TrackedLink
             href="https://app.clarisend.co"
             event="cta_get_started"
-            className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-8 py-3.5 rounded-lg transition-colors"
+            className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-8 py-3.5 rounded-lg transition-colors"
           >
             {t.cta.button}
           </TrackedLink>

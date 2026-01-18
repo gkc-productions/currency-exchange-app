@@ -82,12 +82,12 @@ export default function LanguageSelect() {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-700 shadow-sm transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+        className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={messages.languageToggleLabel}
       >
-        <span className="text-[10px] text-slate-500">{messages.languageToggleLabel}</span>
+        <span className="text-xs text-slate-500">{messages.languageToggleLabel}</span>
         <span>{locale === "fr" ? messages.languageFrLabel : messages.languageEnLabel}</span>
       </button>
       {open ? (
@@ -104,14 +104,14 @@ export default function LanguageSelect() {
                 type="button"
                 role="menuitem"
                 onClick={() => handleSwitch(option.code)}
-                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
                   isActive
                     ? "bg-emerald-50 text-emerald-700"
                     : "text-slate-700 hover:bg-slate-50"
                 }`}
               >
                 <span>{option.label}</span>
-                <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                <span className="text-xs text-slate-400">
                   {option.code.toUpperCase()}
                 </span>
               </button>

@@ -46,8 +46,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-xl px-6 py-16 lg:px-8 lg:py-24">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.45)]">
+    <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
+      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)]">
         <h1 className="text-2xl font-semibold text-slate-900">
           {messages.loginTitle}
         </h1>
@@ -64,7 +64,7 @@ export default function LoginPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
               {messages.loginEmailLabel}
               <input
                 type="email"
@@ -72,7 +72,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder={messages.loginEmailPlaceholder}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
               />
             </label>
             {error ? (
@@ -81,7 +81,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting || email.trim().length === 0}
-              className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
             >
               {isSubmitting ? messages.loginButton : messages.loginButton}
             </button>

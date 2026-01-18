@@ -21,12 +21,12 @@ export default function Navbar({ locale }: { locale: Locale }) {
             className="flex items-center gap-3 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
             aria-label="ClariSend"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-semibold text-white shadow-sm">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-lg font-semibold text-emerald-700 shadow-sm">
               C
             </span>
             <div className="hidden sm:flex flex-col leading-none">
               <span className="text-base font-semibold tracking-tight">ClariSend</span>
-              <span className="text-xs uppercase tracking-[0.24em] text-slate-500">
+              <span className="text-xs text-slate-500">
                 {messages.tagline}
               </span>
             </div>
@@ -46,7 +46,7 @@ export default function Navbar({ locale }: { locale: Locale }) {
         <div className="flex items-center gap-3">
           <Link
             href={`/${locale}#send`}
-            className="hidden items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 sm:flex"
+            className="hidden items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 sm:flex"
           >
             {messages.navGetStartedLabel}
           </Link>

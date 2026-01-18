@@ -1004,19 +1004,18 @@ export default function Home() {
   };
 
   const inputClassName =
-    "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40";
+    "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40";
   const cardClassName =
-    "rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.45)]";
+    "rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)]";
 
   return (
     <div className="bg-[var(--brand-surface)] text-slate-900">
-      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#d9f3ee,_#f5f7fb_50%,_#fff4e6)]">
-        <div className="pointer-events-none absolute -top-24 right-8 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl motion-safe:animate-[float-slow_12s_ease-in-out_infinite]" />
-        <div className="pointer-events-none absolute -bottom-32 left-10 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl motion-safe:animate-[float-slow_14s_ease-in-out_infinite]" />
+      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#e8f6f1,_#f5f7fb_55%,_#ffffff)]">
+        <div className="pointer-events-none absolute -top-24 right-8 h-56 w-56 rounded-full bg-emerald-200/30 blur-3xl motion-safe:animate-[float-slow_12s_ease-in-out_infinite]" />
         <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="space-y-6">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700">
                 ClariSend
               </span>
               <h1 className="font-[var(--font-display)] text-4xl leading-tight text-slate-900 sm:text-5xl">
@@ -1025,16 +1024,16 @@ export default function Home() {
               <p className="max-w-xl text-lg text-slate-600">
                 {messages.heroSubtitle}
               </p>
-              <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-600">
+              <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-600">
                 <Link
                   href={`/${locale}#features`}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                 >
                   {messages.featuresLinkLabel}
                 </Link>
                 <Link
                   href={`/${locale}#faq`}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                 >
                   {messages.footerFaqLinkLabel}
                 </Link>
@@ -1070,14 +1069,14 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+            <p className="text-xs font-medium text-slate-500">
               {messages.trustTitle}
             </p>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               {trustItems.map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm"
+                  className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
@@ -1100,7 +1099,7 @@ export default function Home() {
           <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                <p className="text-xs font-medium text-slate-500">
                   {messages.quoteTitle(displayFromAsset, displayToAsset)}
                 </p>
                 <h2 className="mt-2 font-[var(--font-display)] text-3xl text-slate-900">
@@ -1112,7 +1111,7 @@ export default function Home() {
               </div>
               <Link
                 href={`/${locale}#send`}
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
               >
                 {messages.editSendDetailsLabel}
               </Link>
@@ -1120,12 +1119,12 @@ export default function Home() {
 
             <div className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-6">
-                <div className="rounded-3xl bg-slate-900 px-6 py-7 text-white shadow-[0_25px_60px_-40px_rgba(15,23,42,0.6)]">
+                <div className="rounded-3xl bg-slate-900 px-6 py-7 text-white shadow-[0_25px_60px_-40px_rgba(15,23,42,0.5)]">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    <p className="text-xs font-medium text-slate-300">
                       {messages.recipientGetsLabel}
                     </p>
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-200">
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
                       {hasQuote
                         ? isExpired
                           ? messages.quoteExpired
@@ -1147,7 +1146,7 @@ export default function Home() {
                         : messages.waitingForQuote}
                     </p>
                     {isLoading ? (
-                      <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+                      <p className="mt-2 text-xs font-medium text-slate-400">
                         {messages.refreshingQuote}
                       </p>
                     ) : null}
@@ -1156,11 +1155,11 @@ export default function Home() {
 
                 <div className={cardClassName}>
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                    <p className="text-xs font-medium text-slate-500">
                       {messages.smartSuggestionsLabel}
                     </p>
                     {recommendationLoading ? (
-                      <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
+                      <span className="text-xs text-slate-400">
                         {messages.recommendationLoading}
                       </span>
                     ) : null}
@@ -1173,11 +1172,11 @@ export default function Home() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span
-                            className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.2em] ${card.accent}`}
+                            className={`rounded-full border px-2 py-1 text-[11px] font-medium ${card.accent}`}
                           >
                             {card.label}
                           </span>
-                          <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                          <span className="text-[11px] text-slate-400">
                             {resolveRouteHighlights(card.route)}
                           </span>
                         </div>
@@ -1192,7 +1191,7 @@ export default function Home() {
                               </span>{" "}
                               {card.route.explanation}
                             </p>
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                            <p className="mt-1 text-xs text-slate-500">
                               {messages.etaRangeLabel(
                                 card.route.etaMinMinutes,
                                 card.route.etaMaxMinutes
@@ -1219,7 +1218,7 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() => card.route && applyRouteSuggestion(card.route)}
-                              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                             >
                               {messages.useRouteButton}
                             </button>
@@ -1240,7 +1239,7 @@ export default function Home() {
                 </div>
 
                 <div className={cardClassName}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  <p className="text-xs font-medium text-slate-500">
                     {messages.quoteBreakdownLabel}
                   </p>
                   <div className="mt-4 grid gap-2 text-sm text-slate-600">
@@ -1343,7 +1342,7 @@ export default function Home() {
                     type="button"
                     onClick={handleLockQuote}
                     disabled={!hasQuote || isLoading || pendingLock}
-                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300"
+                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
                     {pendingLock
                       ? messages.lockQuoteRefreshing
@@ -1354,7 +1353,7 @@ export default function Home() {
                       type="button"
                       onClick={fetchQuote}
                       disabled={isLoading}
-                      className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {messages.refreshQuoteButton}
                     </button>
@@ -1364,14 +1363,14 @@ export default function Home() {
 
               <div className="space-y-6">
                 <div className={cardClassName}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  <p className="text-xs font-medium text-slate-500">
                     {messages.pricingControlsTitle}
                   </p>
                   <p className="mt-2 text-sm text-slate-500">
                     {messages.pricingControlsSubtitle}
                   </p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                       {messages.marketRateLabel} ({toAsset} per 1 {fromAsset})
                       <input
                         inputMode="decimal"
@@ -1384,7 +1383,7 @@ export default function Home() {
                         aria-label={`Market rate in ${toAsset}`}
                       />
                     </label>
-                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                       {messages.fxMarginLabel}
                       <input
                         inputMode="decimal"
@@ -1397,7 +1396,7 @@ export default function Home() {
                         aria-label={messages.fxMarginLabel}
                       />
                     </label>
-                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                       {messages.fixedFeeLabel} ({fromAsset})
                       <input
                         inputMode="decimal"
@@ -1410,7 +1409,7 @@ export default function Home() {
                         aria-label={`Fixed fee in ${fromAsset}`}
                       />
                     </label>
-                    <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                       {messages.percentFeeLabelWithAsset(fromAsset)}
                       <input
                         inputMode="decimal"
@@ -1450,7 +1449,7 @@ export default function Home() {
                   <div className={cardClassName}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                        <p className="text-xs font-medium text-slate-500">
                           {messages.transferDetailsLabel}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
@@ -1458,21 +1457,21 @@ export default function Home() {
                           {messages.railDisplayLabel}: {railMeta?.name ?? displayRail}
                         </p>
                       </div>
-                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">
                         {messages.draftLabel}
                       </span>
                     </div>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
                       {session?.user ? (
                         <div className="sm:col-span-2 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3">
-                          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                             {messages.recipientSelectLabel}
                             <select
                               value={selectedRecipientId}
                               onChange={(event) =>
                                 setSelectedRecipientId(event.target.value)
                               }
-                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900"
+                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900"
                             >
                               <option value="">
                                 {messages.recipientSelectPlaceholder}
@@ -1503,7 +1502,7 @@ export default function Home() {
                           {messages.recipientAuthHelper}
                         </div>
                       )}
-                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                         {messages.recipientNameLabel}
                         <input
                           type="text"
@@ -1521,7 +1520,7 @@ export default function Home() {
                           </span>
                         ) : null}
                       </label>
-                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                         {messages.recipientCountryLabel}
                         <input
                           type="text"
@@ -1551,7 +1550,7 @@ export default function Home() {
                       </label>
                     </div>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                         {messages.recipientPhoneLabel}
                         <input
                           inputMode="tel"
@@ -1570,7 +1569,7 @@ export default function Home() {
                           </span>
                         ) : null}
                       </label>
-                      <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                         {messages.memoLabel}
                         <input
                           type="text"
@@ -1582,14 +1581,14 @@ export default function Home() {
                       </label>
                     </div>
                     <div className="mt-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <p className="text-xs font-medium text-slate-500">
                         {messages.payoutRailLabel}
                       </p>
                       <div className="mt-2 grid gap-2 sm:grid-cols-3">
                         {payoutRailOptions.map((railOption) => (
                           <label
                             key={railOption.code}
-                            className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700"
+                            className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700"
                           >
                             <input
                               type="radio"
@@ -1621,7 +1620,7 @@ export default function Home() {
                     </div>
                     {payoutRail === "BANK" ? (
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                           {messages.bankNameLabel}
                           <input
                             type="text"
@@ -1634,7 +1633,7 @@ export default function Home() {
                             aria-label={messages.bankNameLabel}
                           />
                         </label>
-                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                           {messages.bankAccountLabel}
                           <input
                             type="text"
@@ -1654,7 +1653,7 @@ export default function Home() {
                     ) : null}
                     {payoutRail === "MOBILE_MONEY" ? (
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                           {messages.mobileMoneyProviderLabel}
                           <input
                             type="text"
@@ -1672,7 +1671,7 @@ export default function Home() {
                             aria-label={messages.mobileMoneyProviderLabel}
                           />
                         </label>
-                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                           {messages.mobileMoneyNumberLabel}
                           <input
                             type="text"
@@ -1697,7 +1696,7 @@ export default function Home() {
                     ) : null}
                     {payoutRail === "LIGHTNING" ? (
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                           {messages.recipientLightningInvoiceLabel}
                           <input
                             type="text"
@@ -1712,7 +1711,7 @@ export default function Home() {
                       </div>
                     ) : null}
                     {session?.user ? (
-                      <label className="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <label className="mt-4 flex items-center gap-2 text-xs font-medium text-slate-500">
                         <input
                           type="checkbox"
                           checked={saveRecipient}
@@ -1731,7 +1730,7 @@ export default function Home() {
                       type="button"
                       disabled={!isTransferValid || isTransferSubmitting}
                       onClick={handleCreateTransfer}
-                      className="mt-5 w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                      className="mt-5 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                     >
                       {isTransferSubmitting
                         ? messages.transferSubmitting
@@ -1742,7 +1741,7 @@ export default function Home() {
                     ) : null}
                     {transferResult ? (
                       <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                        <p className="font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        <p className="font-medium text-slate-500">
                           {messages.transferCreatedLabel}
                         </p>
                         <div className="mt-2 flex items-center justify-between">
@@ -1759,7 +1758,7 @@ export default function Home() {
                         </div>
                         <Link
                           href={`/${locale}/transfer/${transferResult.id}`}
-                          className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-900 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                          className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                         >
                           {messages.viewReceiptButton}
                         </Link>
@@ -1773,7 +1772,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className={cardClassName}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                    <p className="text-xs font-medium text-slate-500">
                       {messages.transferDetailsLabel}
                     </p>
                     <p className="mt-2 text-lg font-semibold text-slate-900">
@@ -1792,7 +1791,7 @@ export default function Home() {
 
       <section id="features" className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+          <p className="text-xs font-medium text-emerald-700">
             {messages.featuresLinkLabel}
           </p>
           <h2 className="font-[var(--font-display)] text-3xl text-slate-900">
@@ -1831,7 +1830,7 @@ export default function Home() {
       >
         <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
           <div className="flex flex-col gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+            <p className="text-xs font-medium text-emerald-700">
               {messages.footerFaqLinkLabel}
             </p>
             <h2 className="font-[var(--font-display)] text-3xl text-slate-900">

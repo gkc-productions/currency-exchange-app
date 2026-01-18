@@ -293,7 +293,7 @@ export default function TransferReceiptPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100">
-        <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-16 lg:px-8">
           <div className="animate-pulse rounded-3xl border border-white/10 bg-white/5 p-8">
             <div className="h-4 w-32 rounded bg-white/10" />
             <div className="mt-4 h-10 w-52 rounded bg-white/10" />
@@ -303,7 +303,7 @@ export default function TransferReceiptPage() {
             </div>
             <div className="mt-6 h-48 rounded-2xl bg-white/10" />
           </div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs font-medium text-slate-500">
             {messages.receiptLoadingLabel}
           </p>
         </main>
@@ -321,11 +321,11 @@ export default function TransferReceiptPage() {
 
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100">
-        <main className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 px-6 py-16 text-center">
+        <main className="mx-auto flex w-full max-w-7xl flex-col items-center gap-4 px-6 py-16 text-center lg:px-8">
           <h1 className="text-2xl font-semibold">{errorMessage}</h1>
           <Link
             href={`/${locale}`}
-            className="rounded-full border border-white/20 bg-white/10 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-white/20"
+            className="rounded-full border border-white/20 bg-white/10 px-6 py-2 text-sm font-medium text-white transition hover:bg-white/20"
           >
             {messages.receiptBackHomeButton}
           </Link>
@@ -384,11 +384,11 @@ export default function TransferReceiptPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-16 lg:px-8">
         <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-8 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.9)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-500">
+              <p className="text-xs font-medium text-slate-400">
                 {messages.transferReceiptTitle}
               </p>
               <h1 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">
@@ -400,7 +400,7 @@ export default function TransferReceiptPage() {
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <span
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${statusStyle}`}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle}`}
               >
                 {statusLabel}
               </span>
@@ -408,7 +408,7 @@ export default function TransferReceiptPage() {
                 <button
                   type="button"
                   onClick={() => handleCopy(referenceCode, "code")}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
+                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
                 >
                   {copied === "code"
                     ? messages.copiedLabel
@@ -417,7 +417,7 @@ export default function TransferReceiptPage() {
                 <button
                   type="button"
                   onClick={() => handleCopy(shareLink, "link")}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
+                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
                 >
                   {copied === "link"
                     ? messages.copiedLabel
@@ -428,7 +428,7 @@ export default function TransferReceiptPage() {
                     type="button"
                     onClick={handleResendReceipt}
                     disabled={resendState === "sending"}
-                    className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed"
+                    className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed"
                   >
                     {resendState === "sending"
                       ? messages.receiptResendLoading
@@ -454,10 +454,10 @@ export default function TransferReceiptPage() {
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+              <p className="text-xs font-medium text-slate-400">
                 {messages.timelineLabel}
               </p>
-              <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
+              <span className="text-xs text-slate-500">
                 {events.length}
               </span>
             </div>
@@ -470,7 +470,7 @@ export default function TransferReceiptPage() {
                       <p className="text-sm font-semibold text-white">
                         {resolveEventMessage(event)}
                       </p>
-                      <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                      <p className="mt-2 text-xs text-slate-500">
                         {formatDateTime(event.createdAt, locale)}
                       </p>
                     </div>
@@ -486,7 +486,7 @@ export default function TransferReceiptPage() {
 
           <div className="flex flex-col gap-6">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+              <p className="text-xs font-medium text-slate-400">
                 {messages.recipientSummaryLabel}
               </p>
               <div className="mt-4 space-y-3 text-sm text-slate-200">
@@ -563,7 +563,7 @@ export default function TransferReceiptPage() {
 
             {cryptoPayout ? (
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                <p className="text-xs font-medium text-slate-400">
                   {messages.lightningInvoiceLabel}
                 </p>
                 <div className="mt-4 space-y-3 text-sm text-slate-200">
@@ -590,7 +590,7 @@ export default function TransferReceiptPage() {
                     type="button"
                     onClick={() => handleCopyInvoice(cryptoPayout.invoice ?? "")}
                     disabled={!cryptoPayout.invoice}
-                    className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {copied === "invoice"
                       ? messages.copiedLabel
@@ -601,7 +601,7 @@ export default function TransferReceiptPage() {
                       type="button"
                       onClick={handleSimulatePayment}
                       disabled={isSimulating || !canSimulatePayment}
-                      className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {messages.simulatePaymentButton}
                     </button>
@@ -611,7 +611,7 @@ export default function TransferReceiptPage() {
             ) : null}
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+              <p className="text-xs font-medium text-slate-400">
                 {messages.lockedQuoteSummaryLabel}
               </p>
               <div className="mt-4 space-y-3 text-sm text-slate-200">
@@ -656,7 +656,7 @@ export default function TransferReceiptPage() {
                     )}
                   </span>
                 </div>
-                <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                <div className="pt-2 text-xs text-slate-500">
                   {messages.expiresAtLabel}:{" "}
                   {formatDateTime(quote.expiresAt, locale)}
                 </div>

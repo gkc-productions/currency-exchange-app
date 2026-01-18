@@ -77,15 +77,15 @@ export default function Footer({ locale }: { locale: Locale }) {
 
   return (
     <footer className="border-t border-slate-200/70 bg-slate-50">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-12 sm:px-10 lg:grid-cols-[1.2fr_2.2fr]">
+      <div className="mx-auto grid w-full max-w-7xl gap-10 px-6 py-12 lg:px-8 lg:grid-cols-[1.2fr_2.2fr]">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-semibold text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-lg font-semibold text-emerald-700">
               C
             </div>
             <div>
               <p className="text-lg font-semibold text-slate-900">ClariSend</p>
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+              <p className="text-xs text-slate-500">
                 {messages.tagline}
               </p>
             </div>

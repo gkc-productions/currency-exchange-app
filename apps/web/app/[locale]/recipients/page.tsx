@@ -49,7 +49,7 @@ export default async function RecipientsPage({
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+          <p className="text-xs font-medium text-emerald-700">
             {messages.recipientsTitle}
           </p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-900">
@@ -61,7 +61,7 @@ export default async function RecipientsPage({
         </div>
         <Link
           href={`/${validLocale}/dashboard`}
-          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 transition hover:border-slate-300"
+          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300"
         >
           {messages.navDashboardLabel}
         </Link>

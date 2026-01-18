@@ -142,7 +142,7 @@ export default function RecipientsManager({
                   <p className="text-lg font-semibold text-slate-900">
                     {recipient.name}
                   </p>
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                  <p className="text-xs text-slate-500">
                     {recipient.country} · {recipient.rail.replace("_", " ")}
                   </p>
                 </div>
@@ -150,7 +150,7 @@ export default function RecipientsManager({
                   type="button"
                   onClick={() => handleDelete(recipient.id)}
                   disabled={deleteLoading === recipient.id}
-                  className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:border-slate-300 disabled:cursor-not-allowed"
+                  className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-500 transition hover:border-slate-300 disabled:cursor-not-allowed"
                 >
                   {deleteLoading === recipient.id ? "..." : messages.recipientRemoveButton}
                 </button>
@@ -172,32 +172,32 @@ export default function RecipientsManager({
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+        <p className="text-xs font-medium text-slate-500">
           {messages.recipientsCreateTitle}
         </p>
         <div className="mt-4 grid gap-4">
-          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+          <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
             {messages.recipientNameLabel}
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
             />
           </label>
-          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+          <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
             {messages.recipientCountryLabel}
             <input
               value={country}
               onChange={(event) => setCountry(event.target.value.toUpperCase())}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
             />
           </label>
-          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+          <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
             {messages.payoutRailLabel}
             <select
               value={rail}
               onChange={(event) => setRail(event.target.value as "BANK" | "MOBILE_MONEY" | "LIGHTNING")}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
             >
               {railOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -208,51 +208,51 @@ export default function RecipientsManager({
           </label>
           {rail === "BANK" ? (
             <>
-              <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                 {messages.bankNameLabel}
                 <input
                   value={bankName}
                   onChange={(event) => setBankName(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                 {messages.bankAccountLabel}
                 <input
                   value={bankAccount}
                   onChange={(event) => setBankAccount(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
                 />
               </label>
             </>
           ) : null}
           {rail === "MOBILE_MONEY" ? (
             <>
-              <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                 {messages.mobileMoneyProviderLabel}
                 <input
                   value={mobileMoneyProvider}
                   onChange={(event) => setMobileMoneyProvider(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                 {messages.mobileMoneyNumberLabel}
                 <input
                   value={mobileMoneyNumber}
                   onChange={(event) => setMobileMoneyNumber(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
                 />
               </label>
             </>
           ) : null}
           {rail === "LIGHTNING" ? (
-            <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+            <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
               {messages.recipientLightningInvoiceLabel}
               <input
                 value={lightningInvoice}
                 onChange={(event) => setLightningInvoice(event.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
               />
             </label>
           ) : null}
@@ -268,7 +268,7 @@ export default function RecipientsManager({
             type="button"
             onClick={handleSave}
             disabled={!isValid || isSaving}
-            className="mt-2 w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isSaving ? "..." : messages.recipientsSaveButton}
           </button>

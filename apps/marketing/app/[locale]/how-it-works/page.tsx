@@ -223,7 +223,7 @@ export default async function HowItWorksPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl">
             <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
-            <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+            <h1 className="text-3xl lg:text-4xl font-semibold text-slate-900 tracking-tight mb-4">
               {t.hero.title}
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed">
@@ -281,7 +281,7 @@ export default async function HowItWorksPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.payoutMethods.label}</span>
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.payoutMethods.title}</h2>
+            <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-3">{t.payoutMethods.title}</h2>
             <p className="text-slate-600 max-w-xl mx-auto">{t.payoutMethods.description}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
@@ -305,7 +305,7 @@ export default async function HowItWorksPage({
       {/* CTA */}
       <section className="bg-slate-50 border-t border-slate-100 py-16 lg:py-24">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
+          <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-3">{t.cta.title}</h2>
           <p className="text-slate-600 mb-6">{t.cta.description}</p>
           <TrackedLink
             href="https://app.clarisend.co"

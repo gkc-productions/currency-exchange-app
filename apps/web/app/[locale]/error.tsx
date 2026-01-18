@@ -32,21 +32,21 @@ export default function LocaleError({
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">
-          Something went wrong
+        <h1 className="text-2xl font-semibold text-slate-900 mb-2">
+          We could not load this page
         </h1>
         <p className="text-slate-600 mb-6">
-          We are having trouble loading this page. Please try again.
+          Please try again. If the problem persists, try returning home.
         </p>
         <button
           onClick={reset}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-2xl transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:outline-none"
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold px-6 py-3 rounded-2xl transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:outline-none"
         >
           Try again
         </button>
         <Link
           href="/"
-          className="block mt-3 text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+          className="block mt-3 text-sm text-slate-600 hover:text-slate-900 transition-colors"
         >
           Return to home
         </Link>
