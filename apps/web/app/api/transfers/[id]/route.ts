@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
-import { sendReceiptEmail } from "@/src/lib/email";
+import { sendTransferStatusEmail } from "@/src/lib/email";
+import { getServerAuthSession } from "@/src/lib/auth";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -85,6 +86,21 @@ export async function GET(
 
   if (!transfer) {
     return NextResponse.json({ error: "Transfer not found" }, { status: 404 });
+  }
+
+  // Ownership enforcement: if transfer has a userId, only that user can view it
+  if (transfer.userId) {
+    const session = await getServerAuthSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+    if (!user || user.id !== transfer.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   if (transfer.status === "EXPIRED") {
@@ -244,35 +260,39 @@ export async function PATCH(
     );
   }
 
-  if (nextStatus === "COMPLETED" && transfer.userId) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: transfer.userId },
-        select: { email: true },
-      });
-      if (user?.email) {
-        const receiptUrl = `${process.env.NEXTAUTH_URL ?? "https://app.clarisend.co"}/en/transfer/${transfer.id}`;
-        await sendReceiptEmail({
-          to: user.email,
-          referenceCode: transfer.referenceCode,
-          status: nextStatus,
-          sendAmount: Number(transfer.quote.sendAmount),
-          totalFee: Number(transfer.quote.totalFee),
-          recipientGets: Number(transfer.quote.recipientGets),
-          fromAsset: transfer.quote.fromAsset.code,
-          toAsset: transfer.quote.toAsset.code,
-          receiptUrl,
-        });
-        await prisma.transfer.update({
+  // Send status email for COMPLETED or FAILED (non-blocking)
+  if ((nextStatus === "COMPLETED" || nextStatus === "FAILED") && transfer.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: transfer.userId },
+      select: { email: true },
+    });
+    if (user?.email) {
+      const receiptUrl = `${process.env.NEXTAUTH_URL ?? "https://app.clarisend.co"}/en/transfer/${transfer.id}`;
+      sendTransferStatusEmail({
+        to: user.email,
+        type: nextStatus as "COMPLETED" | "FAILED",
+        referenceCode: transfer.referenceCode,
+        sendAmount: Number(transfer.quote.sendAmount),
+        totalFee: Number(transfer.quote.totalFee),
+        recipientGets: Number(transfer.quote.recipientGets),
+        fromAsset: transfer.quote.fromAsset.code,
+        toAsset: transfer.quote.toAsset.code,
+        recipientName: transfer.recipientName,
+        receiptUrl,
+        transferId: transfer.id,
+        timestamp: new Date(),
+      }).then(() => {
+        // Update receipt tracking
+        return prisma.transfer.update({
           where: { id: transferId },
           data: {
             receiptLastSentAt: new Date(),
             receiptSendCount: { increment: 1 },
           },
         });
-      }
-    } catch {
-      // Email failures should not block status updates.
+      }).catch(() => {
+        // Email failures logged internally, should not block transfers
+      });
     }
   }
 
