@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@/src/lib/prisma";
+import { alertEmailFailure } from "@/src/lib/alerts";
+import { logError } from "@/src/lib/logging";
 
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = Number(process.env.SMTP_PORT ?? 587);
@@ -49,7 +51,10 @@ async function logEmail({
     });
   } catch {
     // Logging failures should not break the main flow
-    console.error("Failed to log email:", { type, transferId, recipient, success, error });
+    logError("email_log_failed", {
+      transferId: transferId ?? undefined,
+      meta: { type, recipient, success, error },
+    });
   }
 }
 
@@ -85,6 +90,9 @@ export async function sendMagicLinkEmail({
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     await logEmail({ type: "MAGIC_LINK", recipient: to, success: false, error: errorMessage });
+    alertEmailFailure({
+      context: { type: "MAGIC_LINK", recipient: to, error: errorMessage },
+    });
     throw err;
   }
 }
@@ -244,6 +252,10 @@ ClariSend - Secure International Transfers`;
       success: false,
       error: errorMessage,
     });
+    alertEmailFailure({
+      transferId,
+      context: { type: `TRANSFER_${type}`, recipient: to, error: errorMessage },
+    });
     // Email failures should not break transfers - fail silently but log
   }
 }
@@ -282,6 +294,10 @@ export async function sendReceiptEmail({
       recipient: to,
       success: false,
       error: "SMTP not configured",
+    });
+    alertEmailFailure({
+      transferId,
+      context: { type: "RECEIPT_RESEND", recipient: to, error: "SMTP not configured" },
     });
     throw new Error("SMTP not configured");
   }
@@ -324,6 +340,10 @@ export async function sendReceiptEmail({
       recipient: to,
       success: false,
       error: errorMessage,
+    });
+    alertEmailFailure({
+      transferId,
+      context: { type: "RECEIPT_RESEND", recipient: to, error: errorMessage },
     });
     throw err;
   }

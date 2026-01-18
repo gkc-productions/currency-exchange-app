@@ -100,6 +100,28 @@ ClariSend is structured to support regulated operations without adding licensing
   - Screening results can be attached to transfer metadata and audit logs.
   - Risk scoring can gate payout initiation without changing the core transfer workflow.
 
+## Operational Runbook
+
+**Restart services**
+- App (web): `pm2 restart clarisend`
+- Marketing site: `pm2 restart clarisend-marketing`
+- Check status: `pm2 list` and `pm2 logs <name> --lines 100`
+
+**Diagnose failed transfers**
+- Check transfer status in `/status` (recent errors) and `/api/status` payload.
+- Inspect transfer events in the database (`TransferEvent`) and audit trail (`AuditLog`).
+- Confirm quote validity and payout rail consistency.
+
+**Verify rails**
+- Ensure `CLARISEND_ENV` and `CLARISEND_PAYOUTS_MODE` are set correctly.
+- Simulated payouts only run when `CLARISEND_ENV=sandbox` and `CLARISEND_PAYOUTS_MODE=simulated`.
+- Use `/api/crypto/mock-pay` for Lightning simulation only in sandbox.
+
+**Check system health**
+- `/status` page should report `healthy` with DB status `ok`.
+- Verify transfers and error counts for the last hour/day.
+- Confirm queue depth is `0` (no async queue configured).
+
 ## Getting Started
 
 First, run the development server:

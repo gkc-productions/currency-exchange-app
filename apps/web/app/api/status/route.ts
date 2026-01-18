@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
+import { logError } from "@/src/lib/logging";
 
 // Build timestamp set at build time
 const BUILD_TIMESTAMP = new Date().toISOString();
@@ -30,6 +31,18 @@ type StatusResponse = {
   };
   rateCache: RateCacheStats;
   corridors: RailInfo[];
+  transfers: {
+    lastHour: number;
+    last24Hours: number;
+  };
+  errors: {
+    lastHour: number;
+    last24Hours: number;
+  };
+  queue: {
+    depth: number | null;
+    note: string;
+  };
 };
 
 // Simple in-memory cache stats tracking
@@ -60,7 +73,9 @@ export async function GET() {
     dbResponseTime = Date.now() - dbStart;
   } catch (error) {
     dbError = "Database connection failed";
-    console.error("[status] Database health check failed:", error);
+    logError("status_db_check_failed", {
+      meta: { error: error instanceof Error ? error.message : "unknown" },
+    });
   }
 
   // Rate cache stats (basic implementation - tracks via module-level counters)
@@ -95,7 +110,39 @@ export async function GET() {
       });
     }
   } catch (error) {
-    console.error("[status] Failed to fetch corridor data:", error);
+    logError("status_corridor_fetch_failed", {
+      meta: { error: error instanceof Error ? error.message : "unknown" },
+    });
+  }
+
+  const now = Date.now();
+  const lastHour = new Date(now - 60 * 60 * 1000);
+  const lastDay = new Date(now - 24 * 60 * 60 * 1000);
+
+  let transfersLastHour = 0;
+  let transfersLastDay = 0;
+  let errorsLastHour = 0;
+  let errorsLastDay = 0;
+
+  try {
+    const [recentHour, recentDay, errorHour, errorDay] = await prisma.$transaction([
+      prisma.transfer.count({ where: { createdAt: { gte: lastHour } } }),
+      prisma.transfer.count({ where: { createdAt: { gte: lastDay } } }),
+      prisma.transfer.count({
+        where: { status: { in: ["FAILED", "EXPIRED"] }, updatedAt: { gte: lastHour } },
+      }),
+      prisma.transfer.count({
+        where: { status: { in: ["FAILED", "EXPIRED"] }, updatedAt: { gte: lastDay } },
+      }),
+    ]);
+    transfersLastHour = recentHour;
+    transfersLastDay = recentDay;
+    errorsLastHour = errorHour;
+    errorsLastDay = errorDay;
+  } catch (error) {
+    logError("status_transfer_metrics_failed", {
+      meta: { error: error instanceof Error ? error.message : "unknown" },
+    });
   }
 
   // Determine overall status
@@ -118,6 +165,18 @@ export async function GET() {
     },
     rateCache: rateCacheStats,
     corridors: corridorRails,
+    transfers: {
+      lastHour: transfersLastHour,
+      last24Hours: transfersLastDay,
+    },
+    errors: {
+      lastHour: errorsLastHour,
+      last24Hours: errorsLastDay,
+    },
+    queue: {
+      depth: null,
+      note: "No async queue configured",
+    },
   };
 
   const httpStatus = overallStatus === "down" ? 503 : 200;

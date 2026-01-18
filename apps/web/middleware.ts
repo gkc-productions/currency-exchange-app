@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { logInfo } from "@/src/lib/logging";
 
 const SUPPORTED_LOCALES = ["en", "fr"] as const;
 const DEFAULT_LOCALE = "en";
@@ -22,7 +23,11 @@ export function middleware(req: NextRequest) {
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set("x-request-id", requestId);
 
-    console.info(`[api] ${requestId} ${req.method} ${req.nextUrl.pathname}`);
+    logInfo("api_request", {
+      requestId,
+      route: req.nextUrl.pathname,
+      meta: { method: req.method },
+    });
 
     const response = NextResponse.next({
       request: { headers: requestHeaders },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 import { isSameOrigin } from "@/src/lib/security";
 import { executePayout } from "@/src/lib/rails";
+import { logWarn } from "@/src/lib/logging";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -13,7 +14,9 @@ function readRequiredString(value: unknown) {
 
 export async function POST(req: Request) {
   if (!ALLOW_SIMULATED_PAYOUTS) {
-    console.warn("[crypto] mock-pay blocked outside sandbox/simulated mode");
+    logWarn("mock_pay_blocked", {
+      meta: { reason: "simulated_payouts_disabled" },
+    });
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 

@@ -6,6 +6,7 @@ import { sendTransferStatusEmail } from "@/src/lib/email";
 import { getServerAuthSession } from "@/src/lib/auth";
 import { isSameOrigin } from "@/src/lib/security";
 import { canTransitionTransfer } from "@/src/lib/transfer-state";
+import { alertTransferFailure } from "@/src/lib/alerts";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -337,6 +338,16 @@ export async function PATCH(
         // Email failures logged internally, should not block transfers
       });
     }
+  }
+
+  if (nextStatus === "FAILED") {
+    alertTransferFailure({
+      transferId,
+      context: {
+        fromStatus: transfer.status,
+        toStatus: nextStatus,
+      },
+    });
   }
 
   return NextResponse.json(updated);

@@ -23,6 +23,18 @@ type StatusResponse = {
     rails: string[];
     activeRoutesCount: number;
   }>;
+  transfers: {
+    lastHour: number;
+    last24Hours: number;
+  };
+  errors: {
+    lastHour: number;
+    last24Hours: number;
+  };
+  queue: {
+    depth: number | null;
+    note: string;
+  };
 };
 
 export default function StatusPage() {
@@ -197,6 +209,44 @@ export default function StatusPage() {
                   : "—"}
               </div>
               <div className="text-sm text-slate-600">Last Update</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Operational Metrics */}
+        <div className="bg-white rounded-3xl border border-slate-200/70 shadow-sm p-8 mb-6">
+          <h2 className="text-xl font-bold text-slate-900 mb-4">
+            Operational Metrics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-slate-200/60 p-4">
+              <div className="text-sm text-slate-500">Transfers</div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900">
+                {status.transfers.lastHour}
+              </div>
+              <div className="text-xs text-slate-500">Last hour</div>
+              <div className="mt-3 text-lg font-semibold text-slate-900">
+                {status.transfers.last24Hours}
+              </div>
+              <div className="text-xs text-slate-500">Last 24 hours</div>
+            </div>
+            <div className="rounded-2xl border border-slate-200/60 p-4">
+              <div className="text-sm text-slate-500">Errors</div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900">
+                {status.errors.lastHour}
+              </div>
+              <div className="text-xs text-slate-500">Last hour</div>
+              <div className="mt-3 text-lg font-semibold text-slate-900">
+                {status.errors.last24Hours}
+              </div>
+              <div className="text-xs text-slate-500">Last 24 hours</div>
+            </div>
+            <div className="rounded-2xl border border-slate-200/60 p-4">
+              <div className="text-sm text-slate-500">Queue Depth</div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900">
+                {status.queue.depth ?? "—"}
+              </div>
+              <div className="text-xs text-slate-500">{status.queue.note}</div>
             </div>
           </div>
         </div>
