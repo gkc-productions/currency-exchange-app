@@ -7,60 +7,65 @@ type FooterProps = {
 export default function Footer({ locale }: FooterProps) {
   const messages = {
     en: {
-      tagline: "Transparent cross-border money transfers",
+      tagline: "Send money internationally with complete transparency.",
       product: "Product",
       howItWorks: "How It Works",
       security: "Security",
       pricing: "Pricing",
       company: "Company",
-      about: "About",
       contact: "Contact",
       legal: "Legal",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       rights: "All rights reserved.",
+      madeWith: "Built for transparency",
+      regulated: "Licensed money transfer service",
     },
     fr: {
-      tagline: "Transferts d'argent internationaux transparents",
+      tagline: "Envoyez de l'argent a l'international en toute transparence.",
       product: "Produit",
-      howItWorks: "Comment ça marche",
-      security: "Sécurité",
+      howItWorks: "Comment ca marche",
+      security: "Securite",
       pricing: "Tarification",
       company: "Entreprise",
-      about: "À propos",
       contact: "Contact",
-      legal: "Légal",
-      privacy: "Politique de confidentialité",
+      legal: "Legal",
+      privacy: "Politique de confidentialite",
       terms: "Conditions d'utilisation",
-      rights: "Tous droits réservés.",
+      rights: "Tous droits reserves.",
+      madeWith: "Construit pour la transparence",
+      regulated: "Service de transfert d'argent agree",
     },
   };
 
   const t = messages[locale];
 
   return (
-    <footer className="bg-white border-t border-slate-200/70 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-slate-900 text-slate-300 mt-auto">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Main Footer Content */}
+        <div className="py-12 lg:py-16 grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
-          <div>
-            <Link href={`/${locale}`} className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
+          <div className="col-span-2 md:col-span-1">
+            <Link href={`/${locale}`} className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm tracking-tight">CS</span>
               </div>
-              <span className="text-xl font-bold text-slate-900">ClariSend</span>
+              <span className="text-lg font-semibold text-white tracking-tight">ClariSend</span>
             </Link>
-            <p className="text-sm text-slate-600">{t.tagline}</p>
+            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+              {t.tagline}
+            </p>
           </div>
 
           {/* Product */}
           <div>
-            <h3 className="font-semibold text-slate-900 mb-4">{t.product}</h3>
-            <ul className="space-y-2">
+            <h3 className="text-sm font-semibold text-white mb-4">{t.product}</h3>
+            <ul className="space-y-3">
               <li>
                 <Link
                   href={`/${locale}/how-it-works`}
-                  className="text-sm text-slate-600 hover:text-emerald-600 transition-colors"
+                  className="text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   {t.howItWorks}
                 </Link>
@@ -68,7 +73,7 @@ export default function Footer({ locale }: FooterProps) {
               <li>
                 <Link
                   href={`/${locale}/security`}
-                  className="text-sm text-slate-600 hover:text-emerald-600 transition-colors"
+                  className="text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   {t.security}
                 </Link>
@@ -76,7 +81,7 @@ export default function Footer({ locale }: FooterProps) {
               <li>
                 <Link
                   href={`/${locale}/pricing`}
-                  className="text-sm text-slate-600 hover:text-emerald-600 transition-colors"
+                  className="text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   {t.pricing}
                 </Link>
@@ -86,12 +91,12 @@ export default function Footer({ locale }: FooterProps) {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold text-slate-900 mb-4">{t.company}</h3>
-            <ul className="space-y-2">
+            <h3 className="text-sm font-semibold text-white mb-4">{t.company}</h3>
+            <ul className="space-y-3">
               <li>
                 <Link
                   href={`/${locale}/contact`}
-                  className="text-sm text-slate-600 hover:text-emerald-600 transition-colors"
+                  className="text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   {t.contact}
                 </Link>
@@ -101,22 +106,26 @@ export default function Footer({ locale }: FooterProps) {
 
           {/* Legal */}
           <div>
-            <h3 className="font-semibold text-slate-900 mb-4">{t.legal}</h3>
-            <ul className="space-y-2">
+            <h3 className="text-sm font-semibold text-white mb-4">{t.legal}</h3>
+            <ul className="space-y-3">
               <li>
-                <span className="text-sm text-slate-600">{t.privacy}</span>
+                <span className="text-sm text-slate-500">{t.privacy}</span>
               </li>
               <li>
-                <span className="text-sm text-slate-600">{t.terms}</span>
+                <span className="text-sm text-slate-500">{t.terms}</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-slate-200/70">
-          <p className="text-center text-sm text-slate-500">
-            © {new Date().getFullYear()} ClariSend. {t.rights}
+        {/* Bottom Bar */}
+        <div className="py-6 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-slate-500">
+            &copy; {new Date().getFullYear()} ClariSend. {t.rights}
           </p>
+          <div className="flex items-center gap-6">
+            <span className="text-xs text-slate-600">{t.regulated}</span>
+          </div>
         </div>
       </div>
     </footer>

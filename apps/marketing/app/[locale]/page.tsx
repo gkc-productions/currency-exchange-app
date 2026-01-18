@@ -9,80 +9,174 @@ export default async function HomePage({
   const messages = {
     en: {
       hero: {
-        title: "Send Money Globally",
-        subtitle: "With Crystal-Clear Pricing",
+        badge: "Trusted by 10,000+ users worldwide",
+        title: "International transfers,",
+        titleAccent: "finally transparent",
         description:
-          "Compare routes, minimize fees, and get the best rates for your international money transfers. No hidden costs, ever.",
-        cta: "Start Sending Money",
-        secondary: "See how it works",
+          "Compare rates across providers. See exactly what you pay. Send money abroad with zero hidden fees.",
+        cta: "Start sending",
+        secondaryCta: "See how it works",
+        preview: {
+          title: "Transfer preview",
+          subtitle: "Sending $500 to Nigeria",
+          rows: [
+            { label: "Transfer fee", value: "$4.99" },
+            { label: "Exchange rate", value: "1 USD = 1,580 NGN" },
+            { label: "Delivery time", value: "Within 1 business day" },
+          ],
+          totalLabel: "Recipient gets",
+          totalValue: "782,015.80 NGN",
+          note: "Final amounts locked at checkout.",
+        },
+      },
+      stats: {
+        countries: "50+ countries",
+        countriesLabel: "Supported destinations",
+        saved: "$2M+",
+        savedLabel: "Saved in fees",
+        transfers: "100K+",
+        transfersLabel: "Transfers completed",
       },
       trust: {
-        title: "Trusted by thousands",
-        transparent: "100% Transparent Fees",
-        secure: "Bank-Level Security",
-        fast: "Fast Global Transfers",
+        title: "Why people choose ClariSend",
+        items: [
+          {
+            title: "Complete transparency",
+            description: "See the full cost breakdown before you send. No surprises, no hidden charges.",
+          },
+          {
+            title: "Best rates guaranteed",
+            description: "We compare routes in real-time to find you the lowest fees and best exchange rates.",
+          },
+          {
+            title: "Bank-grade security",
+            description: "256-bit encryption, licensed partners, and full regulatory compliance.",
+          },
+        ],
       },
-      features: {
-        title: "Why ClariSend?",
-        compare: {
-          title: "Compare All Routes",
-          description:
-            "See every available option side-by-side. Choose the cheapest, fastest, or best value route for your needs.",
-        },
-        transparent: {
-          title: "Transparent Pricing",
-          description:
-            "Know exactly what you're paying before you send. No surprise fees, no hidden charges, no fine print.",
-        },
-        secure: {
-          title: "Bank-Grade Security",
-          description:
-            "Your money and data are protected with enterprise-level encryption and compliance standards.",
-        },
+      howItWorks: {
+        label: "How it works",
+        title: "Send money in three steps",
+        steps: [
+          {
+            step: "1",
+            title: "Enter your transfer",
+            description: "Choose currencies and amount. We show you all available routes instantly.",
+          },
+          {
+            step: "2",
+            title: "Compare and choose",
+            description: "See fees, rates, and delivery times side-by-side. Pick what works for you.",
+          },
+          {
+            step: "3",
+            title: "Send securely",
+            description: "Complete payment and track your transfer in real-time until delivery.",
+          },
+        ],
+      },
+      security: {
+        label: "Security & Compliance",
+        title: "Your money is protected",
+        description: "We partner with licensed financial institutions and follow strict regulatory standards to keep your transfers safe.",
+        features: [
+          "End-to-end encryption",
+          "Licensed payment providers",
+          "AML/KYC compliant",
+          "Real-time fraud monitoring",
+        ],
       },
       cta: {
-        title: "Ready to send money?",
-        description: "Join thousands of people who trust ClariSend for their international transfers.",
-        button: "Get Started Now",
+        title: "Ready to save on your next transfer?",
+        description: "Join thousands who trust ClariSend for transparent international money transfers.",
+        button: "Get started free",
+        note: "No account fees. Cancel anytime.",
       },
     },
     fr: {
       hero: {
-        title: "Envoyez de l'argent dans le monde entier",
-        subtitle: "Avec une tarification claire",
+        badge: "Plus de 10 000 utilisateurs nous font confiance",
+        title: "Transferts internationaux,",
+        titleAccent: "enfin transparents",
         description:
-          "Comparez les routes, minimisez les frais et obtenez les meilleurs taux pour vos transferts internationaux. Aucun coût caché, jamais.",
-        cta: "Commencer à envoyer",
-        secondary: "Comment ça marche",
+          "Comparez les taux entre fournisseurs. Voyez exactement ce que vous payez. Envoyez de l'argent sans frais caches.",
+        cta: "Commencer",
+        secondaryCta: "Comment ca marche",
+        preview: {
+          title: "Apercu du transfert",
+          subtitle: "Envoi de 500$ vers le Nigeria",
+          rows: [
+            { label: "Frais de transfert", value: "4,99$" },
+            { label: "Taux de change", value: "1 USD = 1 580 NGN" },
+            { label: "Delai de livraison", value: "Sous 1 jour ouvrable" },
+          ],
+          totalLabel: "Le destinataire recoit",
+          totalValue: "782 015,80 NGN",
+          note: "Montants finaux bloques a la validation.",
+        },
+      },
+      stats: {
+        countries: "50+ pays",
+        countriesLabel: "Destinations supportees",
+        saved: "2M$+",
+        savedLabel: "Economies en frais",
+        transfers: "100K+",
+        transfersLabel: "Transferts completes",
       },
       trust: {
-        title: "Approuvé par des milliers",
-        transparent: "Frais 100% transparents",
-        secure: "Sécurité bancaire",
-        fast: "Transferts mondiaux rapides",
+        title: "Pourquoi choisir ClariSend",
+        items: [
+          {
+            title: "Transparence complete",
+            description: "Voyez la repartition complete des couts avant d'envoyer. Pas de surprises.",
+          },
+          {
+            title: "Meilleurs taux garantis",
+            description: "Nous comparons les routes en temps reel pour trouver les frais les plus bas.",
+          },
+          {
+            title: "Securite bancaire",
+            description: "Chiffrement 256 bits, partenaires agrees et conformite reglementaire complete.",
+          },
+        ],
       },
-      features: {
-        title: "Pourquoi ClariSend?",
-        compare: {
-          title: "Comparez toutes les routes",
-          description:
-            "Visualisez toutes les options côte à côte. Choisissez la route la moins chère, la plus rapide ou la meilleure valeur.",
-        },
-        transparent: {
-          title: "Tarification transparente",
-          description:
-            "Sachez exactement ce que vous payez avant d'envoyer. Pas de frais surprises, pas de frais cachés.",
-        },
-        secure: {
-          title: "Sécurité de niveau bancaire",
-          description:
-            "Votre argent et vos données sont protégés avec un chiffrement et des normes de conformité de niveau entreprise.",
-        },
+      howItWorks: {
+        label: "Comment ca marche",
+        title: "Envoyez de l'argent en trois etapes",
+        steps: [
+          {
+            step: "1",
+            title: "Entrez votre transfert",
+            description: "Choisissez les devises et le montant. Nous vous montrons toutes les routes disponibles.",
+          },
+          {
+            step: "2",
+            title: "Comparez et choisissez",
+            description: "Voyez les frais, taux et delais cote a cote. Choisissez ce qui vous convient.",
+          },
+          {
+            step: "3",
+            title: "Envoyez en securite",
+            description: "Effectuez le paiement et suivez votre transfert en temps reel.",
+          },
+        ],
+      },
+      security: {
+        label: "Securite & Conformite",
+        title: "Votre argent est protege",
+        description: "Nous travaillons avec des institutions financieres agreees et suivons des normes reglementaires strictes.",
+        features: [
+          "Chiffrement de bout en bout",
+          "Fournisseurs de paiement agrees",
+          "Conforme AML/KYC",
+          "Surveillance des fraudes en temps reel",
+        ],
       },
       cta: {
-        title: "Prêt à envoyer de l'argent?",
-        description: "Rejoignez des milliers de personnes qui font confiance à ClariSend.",
-        button: "Commencer maintenant",
+        title: "Pret a economiser sur votre prochain transfert?",
+        description: "Rejoignez les milliers de personnes qui font confiance a ClariSend.",
+        button: "Commencer gratuitement",
+        note: "Pas de frais de compte. Annulez a tout moment.",
       },
     },
   };
@@ -92,190 +186,184 @@ export default async function HomePage({
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 mb-4">
-              {t.hero.title}
-              <br />
-              <span className="text-emerald-600">{t.hero.subtitle}</span>
-            </h1>
-            <p className="text-xl text-slate-600 mb-8">{t.hero.description}</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="https://app.clarisend.co"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-4 rounded-2xl transition-colors text-lg shadow-lg"
-              >
-                {t.hero.cta}
-              </a>
-              <a
-                href={`/${validLocale}/how-it-works`}
-                className="bg-white hover:bg-slate-50 text-emerald-600 font-semibold px-8 py-4 rounded-2xl transition-colors text-lg border-2 border-emerald-600"
-              >
-                {t.hero.secondary}
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section className="relative bg-white overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30" />
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
+            <div className="max-w-2xl lg:max-w-none">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full mb-6">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                <span className="text-sm text-emerald-700 font-medium">{t.hero.badge}</span>
+              </div>
 
-      {/* Trust Indicators */}
-      <section className="py-12 bg-white border-y border-slate-200/70">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">
-                {t.trust.transparent}
-              </h3>
-            </div>
-            <div>
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">
-                {t.trust.secure}
-              </h3>
-            </div>
-            <div>
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">
-                {t.trust.fast}
-              </h3>
-            </div>
-          </div>
-        </div>
-      </section>
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-5xl lg:text-5xl font-bold text-slate-900 tracking-tight mb-6">
+                {t.hero.title}
+                <br />
+                <span className="text-emerald-600">{t.hero.titleAccent}</span>
+              </h1>
 
-      {/* Features */}
-      <section className="py-20 bg-[var(--brand-surface)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-slate-900 mb-12">
-            {t.features.title}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-3xl border border-slate-200/70 p-8 shadow-sm">
-              <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">
-                {t.features.compare.title}
-              </h3>
-              <p className="text-slate-600">{t.features.compare.description}</p>
-            </div>
-
-            <div className="bg-white rounded-3xl border border-slate-200/70 p-8 shadow-sm">
-              <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">
-                {t.features.transparent.title}
-              </h3>
-              <p className="text-slate-600">
-                {t.features.transparent.description}
+              {/* Description */}
+              <p className="text-lg lg:text-xl text-slate-600 leading-relaxed mb-8">
+                {t.hero.description}
               </p>
-            </div>
 
-            <div className="bg-white rounded-3xl border border-slate-200/70 p-8 shadow-sm">
-              <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="https://app.clarisend.co"
+                  className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3 rounded-lg transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
+                  {t.hero.cta}
+                  <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+                <a
+                  href={`/${validLocale}/how-it-works`}
+                  className="inline-flex items-center justify-center text-slate-700 hover:text-slate-900 font-medium px-6 py-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+                >
+                  {t.hero.secondaryCta}
+                </a>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">
-                {t.features.secure.title}
-              </h3>
-              <p className="text-slate-600">{t.features.secure.description}</p>
+            </div>
+            <div className="w-full max-w-lg lg:justify-self-end">
+              <div className="bg-white/90 backdrop-blur border border-slate-200 rounded-2xl shadow-sm p-6 lg:p-8">
+                <div className="mb-6">
+                  <p className="text-sm text-slate-500">{t.hero.preview.title}</p>
+                  <p className="text-xl font-semibold text-slate-900">{t.hero.preview.subtitle}</p>
+                </div>
+                <div className="space-y-4">
+                  {t.hero.preview.rows.map((row, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm text-slate-600">
+                      <span>{row.label}</span>
+                      <span className="text-slate-900 font-medium">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 flex items-center justify-between">
+                  <span className="text-sm text-emerald-700 font-medium">{t.hero.preview.totalLabel}</span>
+                  <span className="text-lg font-semibold text-emerald-700">{t.hero.preview.totalValue}</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-4">{t.hero.preview.note}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Bar */}
+      <section className="bg-slate-900">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div className="text-center">
+              <p className="text-2xl lg:text-3xl font-bold text-white">{t.stats.countries}</p>
+              <p className="text-sm text-slate-400 mt-1">{t.stats.countriesLabel}</p>
+            </div>
+            <div className="text-center sm:border-x sm:border-slate-700">
+              <p className="text-2xl lg:text-3xl font-bold text-white">{t.stats.saved}</p>
+              <p className="text-sm text-slate-400 mt-1">{t.stats.savedLabel}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl lg:text-3xl font-bold text-white">{t.stats.transfers}</p>
+              <p className="text-sm text-slate-400 mt-1">{t.stats.transfersLabel}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Section */}
+      <section className="bg-white py-20 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto text-center mb-12 lg:mb-16">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">
+              {t.trust.title}
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            {t.trust.items.map((item, index) => (
+              <div key={index} className="text-center md:text-left">
+                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 mx-auto md:mx-0">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    {index === 0 && <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />}
+                    {index === 1 && <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />}
+                    {index === 2 && <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />}
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="bg-slate-50 py-20 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-12 lg:mb-16">
+            <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.howItWorks.label}</span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">{t.howItWorks.title}</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            {t.howItWorks.steps.map((step, index) => (
+              <div key={index} className="relative">
+                {index < 2 && (
+                  <div className="hidden md:block absolute top-8 left-full w-full h-px bg-slate-200 -translate-x-1/2" />
+                )}
+                <div className="bg-white rounded-xl border border-slate-200 p-6 lg:p-8 relative">
+                  <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center text-sm font-semibold mb-4">
+                    {step.step}
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{step.title}</h3>
+                  <p className="text-slate-600">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Security Section */}
+      <section className="bg-white py-20 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="bg-slate-900 rounded-2xl p-8 lg:p-12">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              <div>
+                <span className="text-sm font-medium text-emerald-400 mb-2 block">{t.security.label}</span>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">{t.security.title}</h2>
+                <p className="text-slate-300 leading-relaxed">{t.security.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {t.security.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-slate-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-emerald-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">{t.cta.title}</h2>
-          <p className="text-xl text-emerald-100 mb-8">{t.cta.description}</p>
+      <section className="bg-slate-50 py-20 lg:py-24">
+        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">{t.cta.title}</h2>
+          <p className="text-lg text-slate-600 mb-8">{t.cta.description}</p>
           <a
             href="https://app.clarisend.co"
-            className="inline-block bg-white hover:bg-emerald-50 text-emerald-600 font-semibold px-8 py-4 rounded-2xl transition-colors text-lg shadow-lg"
+            className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-8 py-3.5 rounded-lg transition-colors"
           >
             {t.cta.button}
           </a>
+          <p className="text-sm text-slate-500 mt-4">{t.cta.note}</p>
         </div>
       </section>
     </div>

@@ -8,165 +8,247 @@ export default async function PricingPage({
 
   const messages = {
     en: {
-      title: "Transparent Pricing",
-      subtitle: "Know exactly what you're paying, every time",
-      intro: {
-        title: "No Hidden Fees",
-        description:
-          "With ClariSend, you see the full cost breakdown before you send. We believe in complete transparency because your money deserves clarity.",
+      hero: {
+        label: "Transparent Pricing",
+        title: "Know exactly what you pay",
+        description: "No hidden fees, no surprises. See the complete cost breakdown before every transfer.",
       },
-      breakdown: {
-        title: "How Our Pricing Works",
+      howItWorks: {
+        title: "How our pricing works",
         items: [
           {
-            title: "Transfer Fee",
-            description:
-              "A small fixed fee plus a percentage of your send amount. This varies by route and payout method.",
+            title: "Transfer fee",
+            description: "A small fixed fee plus a percentage of your send amount. Varies by corridor and payout method. Always shown upfront.",
+            example: "Example: $2.99 + 0.5%",
           },
           {
-            title: "Exchange Rate Margin",
-            description:
-              "A transparent markup on the mid-market exchange rate. Typically 1-2%, always displayed upfront.",
+            title: "Exchange rate margin",
+            description: "A transparent markup on the mid-market rate. Typically 0.5-2% depending on the currency pair.",
+            example: "Example: 1.2% margin",
           },
           {
-            title: "No Surprise Charges",
-            description:
-              "What you see is what you pay. No hidden fees, no fine print, no surprises at any stage of your transfer.",
+            title: "No hidden charges",
+            description: "What you see is what you pay. No receiving fees, no intermediary bank charges, no processing fees.",
+            example: "Total: Exactly as quoted",
           },
         ],
       },
-      compare: {
-        title: "Always Get the Best Deal",
-        description:
-          "We show you multiple routes for every transfer. Compare fees, exchange rates, and delivery times to choose what works best for you.",
+      comparison: {
+        title: "Compare before you send",
+        description: "We show you multiple routes for every transfer so you can choose what matters most to you.",
         features: [
-          "Lowest Fee option highlighted",
-          "Fastest delivery option shown",
-          "Best value for recipient displayed",
-          "Real-time rate updates",
+          {
+            title: "Lowest fee",
+            description: "Highlighted so you can save the most on transfer costs.",
+          },
+          {
+            title: "Best rate",
+            description: "The route that maximizes how much your recipient receives.",
+          },
+          {
+            title: "Fastest delivery",
+            description: "When speed matters, see which option delivers quickest.",
+          },
+          {
+            title: "Best value",
+            description: "Our recommendation balancing cost, speed, and reliability.",
+          },
         ],
       },
-      cta: "See Live Rates Now",
+      example: {
+        title: "Sample transfer breakdown",
+        subtitle: "Sending $500 USD to Nigeria (NGN)",
+        rows: [
+          { label: "You send", value: "$500.00 USD", highlight: false },
+          { label: "Transfer fee", value: "-$4.99", highlight: false },
+          { label: "Amount converted", value: "$495.01 USD", highlight: false },
+          { label: "Exchange rate", value: "1 USD = 1,580 NGN", highlight: false },
+          { label: "Recipient gets", value: "782,015.80 NGN", highlight: true },
+        ],
+        note: "Rates are illustrative. Actual rates vary by corridor and provider.",
+      },
+      cta: {
+        title: "Ready to see your rates?",
+        description: "Get a live quote for your transfer in seconds.",
+        button: "Get live rates",
+      },
     },
     fr: {
-      title: "Tarification transparente",
-      subtitle: "Sachez exactement ce que vous payez, à chaque fois",
-      intro: {
-        title: "Aucun frais caché",
-        description:
-          "Avec ClariSend, vous voyez la répartition complète des coûts avant d'envoyer. Nous croyons en la transparence totale.",
+      hero: {
+        label: "Tarification Transparente",
+        title: "Sachez exactement ce que vous payez",
+        description: "Pas de frais caches, pas de surprises. Voyez la repartition complete des couts avant chaque transfert.",
       },
-      breakdown: {
+      howItWorks: {
         title: "Comment fonctionne notre tarification",
         items: [
           {
             title: "Frais de transfert",
-            description:
-              "Un petit frais fixe plus un pourcentage de votre montant envoyé. Cela varie selon la route et la méthode de paiement.",
+            description: "Un petit frais fixe plus un pourcentage du montant envoye. Varie selon le corridor et la methode de paiement.",
+            example: "Exemple: 2,99$ + 0,5%",
           },
           {
             title: "Marge de taux de change",
-            description:
-              "Une majoration transparente sur le taux de change du marché moyen. Généralement 1-2%, toujours affiché à l'avance.",
+            description: "Une majoration transparente sur le taux moyen du marche. Generalement 0,5-2% selon la paire de devises.",
+            example: "Exemple: 1,2% de marge",
           },
           {
-            title: "Aucun frais surprise",
-            description:
-              "Ce que vous voyez est ce que vous payez. Pas de frais cachés, pas de petits caractères, pas de surprises.",
+            title: "Aucun frais cache",
+            description: "Ce que vous voyez est ce que vous payez. Pas de frais de reception, pas de frais bancaires intermediaires.",
+            example: "Total: Exactement comme indique",
           },
         ],
       },
-      compare: {
-        title: "Obtenez toujours la meilleure offre",
-        description:
-          "Nous vous montrons plusieurs routes pour chaque transfert. Comparez les frais, les taux de change et les délais de livraison.",
+      comparison: {
+        title: "Comparez avant d'envoyer",
+        description: "Nous vous montrons plusieurs routes pour chaque transfert afin que vous puissiez choisir ce qui compte le plus.",
         features: [
-          "Option de frais les plus bas mise en évidence",
-          "Option de livraison la plus rapide affichée",
-          "Meilleure valeur pour le destinataire affichée",
-          "Mises à jour des taux en temps réel",
+          {
+            title: "Frais les plus bas",
+            description: "Mis en evidence pour economiser le plus sur les couts de transfert.",
+          },
+          {
+            title: "Meilleur taux",
+            description: "La route qui maximise ce que votre destinataire recoit.",
+          },
+          {
+            title: "Livraison la plus rapide",
+            description: "Quand la vitesse compte, voyez quelle option livre le plus vite.",
+          },
+          {
+            title: "Meilleure valeur",
+            description: "Notre recommandation equilibrant cout, vitesse et fiabilite.",
+          },
         ],
       },
-      cta: "Voir les taux en direct",
+      example: {
+        title: "Exemple de repartition de transfert",
+        subtitle: "Envoi de 500$ USD vers le Nigeria (NGN)",
+        rows: [
+          { label: "Vous envoyez", value: "500,00$ USD", highlight: false },
+          { label: "Frais de transfert", value: "-4,99$", highlight: false },
+          { label: "Montant converti", value: "495,01$ USD", highlight: false },
+          { label: "Taux de change", value: "1 USD = 1 580 NGN", highlight: false },
+          { label: "Le destinataire recoit", value: "782 015,80 NGN", highlight: true },
+        ],
+        note: "Les taux sont indicatifs. Les taux reels varient selon le corridor et le fournisseur.",
+      },
+      cta: {
+        title: "Pret a voir vos taux?",
+        description: "Obtenez un devis en direct pour votre transfert en quelques secondes.",
+        button: "Voir les taux en direct",
+      },
     },
   };
 
   const t = messages[validLocale];
 
   return (
-    <div className="py-20 bg-[var(--brand-surface)]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-slate-900 mb-4">{t.title}</h1>
-          <p className="text-xl text-slate-600">{t.subtitle}</p>
+    <div>
+      {/* Hero */}
+      <section className="bg-white border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
+          <div className="max-w-3xl">
+            <span className="text-sm font-medium text-emerald-600 mb-3 block">{t.hero.label}</span>
+            <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+              {t.hero.title}
+            </h1>
+            <p className="text-lg text-slate-600 leading-relaxed">
+              {t.hero.description}
+            </p>
+          </div>
         </div>
+      </section>
 
-        {/* Intro */}
-        <div className="bg-emerald-50 rounded-3xl border border-emerald-200 p-8 mb-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
-            {t.intro.title}
-          </h2>
-          <p className="text-lg text-slate-600">{t.intro.description}</p>
-        </div>
-
-        {/* Pricing Breakdown */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold text-slate-900 mb-8">
-            {t.breakdown.title}
-          </h2>
-          <div className="space-y-6">
-            {t.breakdown.items.map((item, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-3xl border border-slate-200/70 p-8 shadow-sm"
-              >
-                <h3 className="text-xl font-bold text-slate-900 mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-slate-600">{item.description}</p>
+      {/* How Pricing Works */}
+      <section className="bg-slate-50 py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">{t.howItWorks.title}</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {t.howItWorks.items.map((item, index) => (
+              <div key={index} className="bg-white rounded-xl border border-slate-200 p-6">
+                <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center text-sm font-semibold mb-4">
+                  {index + 1}
+                </div>
+                <h3 className="font-semibold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-sm text-slate-600 mb-4">{item.description}</p>
+                <span className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded">{item.example}</span>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Compare Routes */}
-        <div className="bg-white rounded-3xl border border-slate-200/70 p-8 shadow-sm mb-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
-            {t.compare.title}
-          </h2>
-          <p className="text-lg text-slate-600 mb-6">{t.compare.description}</p>
-          <ul className="space-y-3">
-            {t.compare.features.map((feature, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <svg
-                  className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                <span className="text-slate-700">{feature}</span>
-              </li>
+      {/* Comparison Features */}
+      <section className="bg-white py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl mb-12">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.comparison.title}</h2>
+            <p className="text-slate-600">{t.comparison.description}</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {t.comparison.features.map((feature, index) => (
+              <div key={index} className="bg-slate-50 rounded-xl p-5">
+                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mb-3">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-slate-900 mb-1">{feature.title}</h3>
+                <p className="text-sm text-slate-600">{feature.description}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
+      </section>
 
-        {/* CTA */}
-        <div className="text-center">
+      {/* Example Breakdown */}
+      <section className="bg-slate-50 py-16 lg:py-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2">{t.example.title}</h2>
+              <p className="text-slate-600">{t.example.subtitle}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="divide-y divide-slate-100">
+                {t.example.rows.map((row, index) => (
+                  <div
+                    key={index}
+                    className={`flex justify-between items-center px-6 py-4 ${
+                      row.highlight ? "bg-emerald-50" : ""
+                    }`}
+                  >
+                    <span className={`text-sm ${row.highlight ? "font-medium text-slate-900" : "text-slate-600"}`}>
+                      {row.label}
+                    </span>
+                    <span className={`font-mono ${row.highlight ? "text-lg font-semibold text-emerald-600" : "text-slate-900"}`}>
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
+                <p className="text-xs text-slate-500 text-center">{t.example.note}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-white border-t border-slate-100 py-16 lg:py-20">
+        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{t.cta.title}</h2>
+          <p className="text-slate-600 mb-6">{t.cta.description}</p>
           <a
             href="https://app.clarisend.co"
-            className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-4 rounded-2xl transition-colors text-lg shadow-lg"
+            className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-lg transition-colors"
           >
-            {t.cta}
+            {t.cta.button}
           </a>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

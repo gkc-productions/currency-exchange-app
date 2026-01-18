@@ -12,67 +12,67 @@ export default function Header({ locale }: HeaderProps) {
 
   const messages = {
     en: {
-      features: "Features",
       howItWorks: "How It Works",
       security: "Security",
       pricing: "Pricing",
       contact: "Contact",
       getStarted: "Get Started",
+      login: "Log in",
     },
     fr: {
-      features: "Fonctionnalités",
-      howItWorks: "Comment ça marche",
-      security: "Sécurité",
+      howItWorks: "Comment ca marche",
+      security: "Securite",
       pricing: "Tarification",
       contact: "Contact",
       getStarted: "Commencer",
+      login: "Connexion",
     },
   };
 
   const t = messages[locale];
 
   return (
-    <header className="bg-white border-b border-slate-200/70 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">C</span>
+          <Link href={`/${locale}`} className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+              <span className="text-white font-bold text-sm tracking-tight">CS</span>
             </div>
-            <span className="text-xl font-bold text-slate-900">ClariSend</span>
+            <span className="text-lg font-semibold text-slate-900 tracking-tight">ClariSend</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-1">
             <Link
               href={`/${locale}/how-it-works`}
-              className="text-slate-600 hover:text-emerald-600 transition-colors"
+              className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
             >
               {t.howItWorks}
             </Link>
             <Link
               href={`/${locale}/security`}
-              className="text-slate-600 hover:text-emerald-600 transition-colors"
+              className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
             >
               {t.security}
             </Link>
             <Link
               href={`/${locale}/pricing`}
-              className="text-slate-600 hover:text-emerald-600 transition-colors"
+              className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
             >
               {t.pricing}
             </Link>
             <Link
               href={`/${locale}/contact`}
-              className="text-slate-600 hover:text-emerald-600 transition-colors"
+              className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
             >
               {t.contact}
             </Link>
           </nav>
 
           {/* CTA & Language Selector */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             <select
               value={locale}
               onChange={(e) => {
@@ -81,14 +81,20 @@ export default function Header({ locale }: HeaderProps) {
                 const newPath = currentPath.replace(/^\/(en|fr)/, `/${newLocale}`);
                 window.location.href = newPath;
               }}
-              className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              className="px-2.5 py-1.5 text-sm text-slate-600 bg-transparent border border-slate-200 rounded-lg hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
             >
               <option value="en">EN</option>
               <option value="fr">FR</option>
             </select>
             <a
               href="https://app.clarisend.co"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors"
+              className="text-sm text-slate-600 hover:text-slate-900 px-4 py-2 rounded-lg transition-colors"
+            >
+              {t.login}
+            </a>
+            <a
+              href="https://app.clarisend.co"
+              className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
               {t.getStarted}
             </a>
@@ -97,26 +103,26 @@ export default function Header({ locale }: HeaderProps) {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-600 hover:text-emerald-600"
+            className="md:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
+            aria-label="Toggle menu"
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              strokeWidth={2}
             >
               {mobileMenuOpen ? (
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
                   d="M6 18L18 6M6 6l12 12"
                 />
               ) : (
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
                   d="M4 6h16M4 12h16M4 18h16"
                 />
               )}
@@ -126,36 +132,61 @@ export default function Header({ locale }: HeaderProps) {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-slate-200/70">
-            <nav className="flex flex-col gap-4">
+          <div className="md:hidden py-4 border-t border-slate-100">
+            <nav className="flex flex-col gap-1">
               <Link
                 href={`/${locale}/how-it-works`}
-                className="text-slate-600 hover:text-emerald-600 transition-colors"
+                className="px-3 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 {t.howItWorks}
               </Link>
               <Link
                 href={`/${locale}/security`}
-                className="text-slate-600 hover:text-emerald-600 transition-colors"
+                className="px-3 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 {t.security}
               </Link>
               <Link
                 href={`/${locale}/pricing`}
-                className="text-slate-600 hover:text-emerald-600 transition-colors"
+                className="px-3 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 {t.pricing}
               </Link>
               <Link
                 href={`/${locale}/contact`}
-                className="text-slate-600 hover:text-emerald-600 transition-colors"
+                className="px-3 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 {t.contact}
               </Link>
-              <div className="pt-4 border-t border-slate-200/70">
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+                <select
+                  value={locale}
+                  onChange={(e) => {
+                    const newLocale = e.target.value as "en" | "fr";
+                    const currentPath = window.location.pathname;
+                    const newPath = currentPath.replace(/^\/(en|fr)/, `/${newLocale}`);
+                    window.location.href = newPath;
+                  }}
+                  className="px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg"
+                >
+                  <option value="en">EN</option>
+                  <option value="fr">FR</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2 mt-3">
                 <a
                   href="https://app.clarisend.co"
-                  className="block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors"
+                  className="text-center text-slate-600 hover:text-slate-900 py-2.5 rounded-lg border border-slate-200 transition-colors"
+                >
+                  {t.login}
+                </a>
+                <a
+                  href="https://app.clarisend.co"
+                  className="text-center bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition-colors"
                 >
                   {t.getStarted}
                 </a>
