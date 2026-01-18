@@ -269,3 +269,17 @@ model Recipient {
   @@index([rail])
   @@index([createdAt])
 }
+
+model EmailLog {
+  id         String   @id @default(cuid())
+  type       String
+  transferId String?
+  recipient  String
+  success    Boolean
+  error      String?
+  createdAt  DateTime @default(now())
+
+  @@index([transferId])
+  @@index([type])
+  @@index([createdAt])
+}

@@ -4,6 +4,7 @@ import { createHash, randomInt } from "crypto";
 import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
 import { getServerAuthSession } from "@/src/lib/auth";
+import { sendTransferStatusEmail } from "@/src/lib/email";
 
 const payoutRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING"]);
 const cryptoNetworks = new Set(["BTC_LIGHTNING", "BTC_ONCHAIN"]);
@@ -265,7 +266,13 @@ export async function POST(req: Request) {
     recipientMobileMoneyNumber = number;
   }
 
-  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
+  const quote = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    include: {
+      fromAsset: { select: { code: true } },
+      toAsset: { select: { code: true } },
+    },
+  });
   if (!quote) {
     return NextResponse.json({ error: "Quote not found" }, { status: 404 });
   }
@@ -442,6 +449,27 @@ export async function POST(req: Request) {
       { error: messages.transferCreateError },
       { status: 500 }
     );
+  }
+
+  // Send INITIATED email (non-blocking)
+  if (userId && session?.user?.email) {
+    const receiptUrl = `${process.env.NEXTAUTH_URL ?? "https://app.clarisend.co"}/en/transfer/${transfer.id}`;
+    sendTransferStatusEmail({
+      to: session.user.email,
+      type: "INITIATED",
+      referenceCode: transfer.referenceCode,
+      sendAmount: Number(quote.sendAmount),
+      totalFee: Number(quote.totalFee),
+      recipientGets: Number(quote.recipientGets),
+      fromAsset: quote.fromAsset.code,
+      toAsset: quote.toAsset.code,
+      recipientName,
+      receiptUrl,
+      transferId: transfer.id,
+      timestamp: transfer.createdAt,
+    }).catch(() => {
+      // Email failures logged internally, should not break transfers
+    });
   }
 
   return NextResponse.json(buildTransferResponse(transfer));

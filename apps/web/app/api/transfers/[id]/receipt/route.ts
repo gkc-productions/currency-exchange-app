@@ -70,6 +70,7 @@ export async function POST(
     fromAsset: transfer.quote.fromAsset.code,
     toAsset: transfer.quote.toAsset.code,
     receiptUrl,
+    transferId: transfer.id,
   });
 
   await prisma.transfer.update({
