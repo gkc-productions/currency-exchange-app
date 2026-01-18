@@ -55,6 +55,8 @@ export type Messages = {
   sendFromLabel: string;
   sendToLabel: string;
   sendCtaLabel: string;
+  primaryCorridorNote: string;
+  secondaryCorridorNote: string;
   trustTitle: string;
   trustItemTransparent: string;
   trustItemFast: string;
@@ -120,6 +122,7 @@ export type Messages = {
   recipientGetsLabel: string;
   quoteValidFor: (seconds: number) => string;
   quoteExpired: string;
+  quoteExpiredNotice: string;
   quoteFetching: string;
   refreshingQuote: string;
   waitingForQuote: string;
@@ -179,6 +182,8 @@ export type Messages = {
   viewReceiptButton: string;
   transferReceiptTitle: string;
   referenceCodeLabel: string;
+  createdAtLabel: string;
+  updatedAtLabel: string;
   copyReferenceButton: string;
   copyLinkButton: string;
   copiedLabel: string;
@@ -199,6 +204,27 @@ export type Messages = {
   receiptNotFoundLabel: string;
   receiptExpiredLabel: string;
   receiptBackHomeButton: string;
+  lifecycleTitle: string;
+  lifecycleCreatedLabel: string;
+  lifecycleQuotedLabel: string;
+  lifecycleInitiatedLabel: string;
+  lifecyclePendingLabel: string;
+  lifecycleCompletedLabel: string;
+  lifecycleFailedLabel: string;
+  lifecycleExpiredLabel: string;
+  lifecycleCreatedDescription: string;
+  lifecycleQuotedDescription: string;
+  lifecycleInitiatedDescription: string;
+  lifecyclePendingDescription: string;
+  lifecycleCompletedDescription: string;
+  lifecycleFailedDescription: string;
+  lifecycleExpiredDescription: string;
+  nextStepTitle: string;
+  nextStepReady: string;
+  nextStepProcessing: string;
+  nextStepCompleted: string;
+  nextStepFailed: string;
+  nextStepExpired: string;
   lightningInvoiceLabel: string;
   lightningAmountLabel: string;
   lightningStatusLabel: string;
@@ -299,6 +325,9 @@ const EN_MESSAGES: Messages = {
   sendFromLabel: "Sending from",
   sendToLabel: "Sending to",
   sendCtaLabel: "Get started",
+  primaryCorridorNote: "Primary corridor: USD → GHS",
+  secondaryCorridorNote:
+    "Secondary corridor selected. Availability may vary by rail.",
   trustTitle: "Clarity at every step",
   trustItemTransparent: "Transparent pricing",
   trustItemFast: "Predictable delivery",
@@ -374,13 +403,15 @@ const EN_MESSAGES: Messages = {
   recipientGetsLabel: "Recipient Gets",
   quoteValidFor: (seconds) => `Valid for ${seconds}s`,
   quoteExpired: "Expired",
+  quoteExpiredNotice:
+    "This quote has expired. Refresh to lock a new rate before continuing.",
   quoteFetching: "Fetching quote...",
   refreshingQuote: "Refreshing quote...",
   waitingForQuote: "Waiting for quote response.",
   basedOnAfterFees: (amount) => `Based on ${amount} after fees.`,
   smartSuggestionsLabel: "Smart Suggestions",
-  cheapestLabel: "Cheapest",
-  fastestLabel: "Fastest",
+  cheapestLabel: "Lowest Fee",
+  fastestLabel: "Fastest ETA",
   bestValueLabel: "Best Value",
   routeHighlightLowestFee: "Lowest total fee",
   routeHighlightFastestEta: "Fastest ETA",
@@ -435,6 +466,8 @@ const EN_MESSAGES: Messages = {
   viewReceiptButton: "View receipt",
   transferReceiptTitle: "Transfer receipt",
   referenceCodeLabel: "Reference code",
+  createdAtLabel: "Created",
+  updatedAtLabel: "Last updated",
   copyReferenceButton: "Copy code",
   copyLinkButton: "Copy link",
   copiedLabel: "Copied",
@@ -455,6 +488,27 @@ const EN_MESSAGES: Messages = {
   receiptNotFoundLabel: "Transfer not found.",
   receiptExpiredLabel: "Transfer expired.",
   receiptBackHomeButton: "Back to home",
+  lifecycleTitle: "Transfer lifecycle",
+  lifecycleCreatedLabel: "CREATED",
+  lifecycleQuotedLabel: "QUOTED",
+  lifecycleInitiatedLabel: "INITIATED",
+  lifecyclePendingLabel: "PENDING",
+  lifecycleCompletedLabel: "COMPLETED",
+  lifecycleFailedLabel: "FAILED",
+  lifecycleExpiredLabel: "EXPIRED",
+  lifecycleCreatedDescription: "We received your transfer request.",
+  lifecycleQuotedDescription: "Your quote was locked at the confirmed rate.",
+  lifecycleInitiatedDescription: "Recipient details were confirmed and sent to payout.",
+  lifecyclePendingDescription: "Payout is in progress with the selected rail.",
+  lifecycleCompletedDescription: "Transfer completed and receipt issued.",
+  lifecycleFailedDescription: "Transfer failed before payout completed.",
+  lifecycleExpiredDescription: "Quote expired before payout could complete.",
+  nextStepTitle: "What happens next",
+  nextStepReady: "We are preparing payout with the selected rail.",
+  nextStepProcessing: "Payout is in progress. We will update you when it completes.",
+  nextStepCompleted: "Transfer completed. Your receipt is ready.",
+  nextStepFailed: "Transfer failed. Please contact support for next steps.",
+  nextStepExpired: "Quote expired. Start a new transfer to continue.",
   lightningInvoiceLabel: "Lightning invoice",
   lightningAmountLabel: "Invoice amount (sats)",
   lightningStatusLabel: "Lightning status",
@@ -559,6 +613,9 @@ const FR_MESSAGES: Messages = {
   sendFromLabel: "Envoi depuis",
   sendToLabel: "Envoi vers",
   sendCtaLabel: "Commencer",
+  primaryCorridorNote: "Corridor principal : USD → GHS",
+  secondaryCorridorNote:
+    "Corridor secondaire selectionne. Disponibilite variable selon le rail.",
   trustTitle: "Clarte a chaque etape",
   trustItemTransparent: "Tarification transparente",
   trustItemFast: "Livraison previsible",
@@ -636,13 +693,15 @@ const FR_MESSAGES: Messages = {
   recipientGetsLabel: "Le bénéficiaire reçoit",
   quoteValidFor: (seconds) => `Valide pendant ${seconds}s`,
   quoteExpired: "Expiré",
+  quoteExpiredNotice:
+    "Ce devis a expire. Actualisez pour verrouiller un nouveau taux.",
   quoteFetching: "Devis en cours...",
   refreshingQuote: "Actualisation du devis...",
   waitingForQuote: "En attente du devis.",
   basedOnAfterFees: (amount) => `Basé sur ${amount} après frais.`,
   smartSuggestionsLabel: "Suggestions intelligentes",
-  cheapestLabel: "Moins cher",
-  fastestLabel: "Plus rapide",
+  cheapestLabel: "Frais les plus bas",
+  fastestLabel: "ETA la plus rapide",
   bestValueLabel: "Meilleure valeur",
   routeHighlightLowestFee: "Frais totaux les plus bas",
   routeHighlightFastestEta: "ETA la plus rapide",
@@ -698,6 +757,8 @@ const FR_MESSAGES: Messages = {
   viewReceiptButton: "Voir le reçu",
   transferReceiptTitle: "Reçu de transfert",
   referenceCodeLabel: "Code de référence",
+  createdAtLabel: "Créé",
+  updatedAtLabel: "Dernière mise à jour",
   copyReferenceButton: "Copier le code",
   copyLinkButton: "Copier le lien",
   copiedLabel: "Copié",
@@ -718,6 +779,27 @@ const FR_MESSAGES: Messages = {
   receiptNotFoundLabel: "Transfert introuvable.",
   receiptExpiredLabel: "Transfert expiré.",
   receiptBackHomeButton: "Retour à l'accueil",
+  lifecycleTitle: "Cycle de transfert",
+  lifecycleCreatedLabel: "CRÉÉ",
+  lifecycleQuotedLabel: "DEVISÉ",
+  lifecycleInitiatedLabel: "INITIÉ",
+  lifecyclePendingLabel: "EN ATTENTE",
+  lifecycleCompletedLabel: "TERMINÉ",
+  lifecycleFailedLabel: "ÉCHOUÉ",
+  lifecycleExpiredLabel: "EXPIRÉ",
+  lifecycleCreatedDescription: "Nous avons reçu votre demande de transfert.",
+  lifecycleQuotedDescription: "Le devis est verrouillé au taux confirmé.",
+  lifecycleInitiatedDescription: "Les informations du bénéficiaire ont été envoyées.",
+  lifecyclePendingDescription: "Le paiement est en cours sur le rail sélectionné.",
+  lifecycleCompletedDescription: "Transfert terminé et reçu disponible.",
+  lifecycleFailedDescription: "Le transfert a échoué avant la livraison.",
+  lifecycleExpiredDescription: "Le devis a expiré avant la livraison.",
+  nextStepTitle: "Prochaine étape",
+  nextStepReady: "Nous préparons le paiement avec le rail sélectionné.",
+  nextStepProcessing: "Paiement en cours. Nous vous informerons à la fin.",
+  nextStepCompleted: "Transfert terminé. Votre reçu est prêt.",
+  nextStepFailed: "Transfert échoué. Contactez le support.",
+  nextStepExpired: "Devis expiré. Lancez un nouveau transfert.",
   lightningInvoiceLabel: "Facture Lightning",
   lightningAmountLabel: "Montant de la facture (sats)",
   lightningStatusLabel: "Statut Lightning",

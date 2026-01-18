@@ -381,6 +381,87 @@ export default function TransferReceiptPage() {
     typeof window === "undefined"
       ? `/${locale}/transfer/${transfer.id}`
       : `${window.location.origin}/${locale}/transfer/${transfer.id}`;
+  const eventByType = new Map(events.map((event) => [event.type, event]));
+  const finalStatus =
+    transfer.status === "FAILED" || transfer.status === "CANCELED"
+      ? "FAILED"
+      : transfer.status === "EXPIRED"
+        ? "EXPIRED"
+        : transfer.status === "COMPLETED"
+          ? "COMPLETED"
+          : "COMPLETED";
+  const finalLabel =
+    finalStatus === "FAILED"
+      ? messages.lifecycleFailedLabel
+      : finalStatus === "EXPIRED"
+        ? messages.lifecycleExpiredLabel
+        : messages.lifecycleCompletedLabel;
+  const finalDescription =
+    finalStatus === "FAILED"
+      ? messages.lifecycleFailedDescription
+      : finalStatus === "EXPIRED"
+        ? messages.lifecycleExpiredDescription
+        : messages.lifecycleCompletedDescription;
+  const lifecycleSteps = [
+    {
+      key: "CREATED",
+      label: messages.lifecycleCreatedLabel,
+      description: messages.lifecycleCreatedDescription,
+      timestamp: eventByType.get("CREATED")?.createdAt ?? transfer.createdAt,
+    },
+    {
+      key: "QUOTED",
+      label: messages.lifecycleQuotedLabel,
+      description: messages.lifecycleQuotedDescription,
+      timestamp: quote.createdAt,
+    },
+    {
+      key: "INITIATED",
+      label: messages.lifecycleInitiatedLabel,
+      description: messages.lifecycleInitiatedDescription,
+      timestamp:
+        eventByType.get("QUOTE_LOCKED")?.createdAt ?? transfer.createdAt,
+    },
+    {
+      key: "PENDING",
+      label: messages.lifecyclePendingLabel,
+      description: messages.lifecyclePendingDescription,
+      timestamp:
+        eventByType.get("PROCESSING")?.createdAt ??
+        (transfer.status === "PROCESSING" ? transfer.updatedAt : null),
+    },
+    {
+      key: finalStatus,
+      label: finalLabel,
+      description: finalDescription,
+      timestamp:
+        eventByType.get(finalStatus)?.createdAt ??
+        (["COMPLETED", "FAILED", "EXPIRED", "CANCELED"].includes(transfer.status)
+          ? transfer.updatedAt
+          : null),
+    },
+  ];
+  const stageIndexByStatus: Record<string, number> = {
+    DRAFT: 0,
+    READY: 2,
+    PROCESSING: 3,
+    COMPLETED: 4,
+    FAILED: 4,
+    EXPIRED: 4,
+    CANCELED: 4,
+  };
+  const currentStageIndex =
+    stageIndexByStatus[transfer.status] ?? stageIndexByStatus.READY;
+  const nextStepMessage =
+    transfer.status === "PROCESSING"
+      ? messages.nextStepProcessing
+      : transfer.status === "COMPLETED"
+        ? messages.nextStepCompleted
+        : transfer.status === "FAILED" || transfer.status === "CANCELED"
+          ? messages.nextStepFailed
+          : transfer.status === "EXPIRED"
+            ? messages.nextStepExpired
+            : messages.nextStepReady;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -397,6 +478,22 @@ export default function TransferReceiptPage() {
               <p className="mt-2 text-sm text-slate-400">
                 {messages.referenceCodeLabel}
               </p>
+              <div className="mt-4 grid gap-2 text-xs text-slate-400 sm:grid-cols-2">
+                <div>
+                  {messages.createdAtLabel}:{" "}
+                  {formatDateTime(transfer.createdAt, locale)}
+                </div>
+                <div>
+                  {messages.updatedAtLabel}:{" "}
+                  {formatDateTime(transfer.updatedAt, locale)}
+                </div>
+              </div>
+              <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+                <p className="text-xs font-medium text-slate-400">
+                  {messages.nextStepTitle}
+                </p>
+                <p className="mt-1">{nextStepMessage}</p>
+              </div>
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <span
@@ -452,35 +549,82 @@ export default function TransferReceiptPage() {
         </header>
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-slate-400">
-                {messages.timelineLabel}
-              </p>
-              <span className="text-xs text-slate-500">
-                {events.length}
-              </span>
-            </div>
-            <div className="mt-5 space-y-4 border-l border-white/10 pl-4">
-              {events.length > 0 ? (
-                events.map((event) => (
-                  <div key={event.id} className="relative">
-                    <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <p className="text-sm font-semibold text-white">
-                        {resolveEventMessage(event)}
-                      </p>
-                      <p className="mt-2 text-xs text-slate-500">
-                        {formatDateTime(event.createdAt, locale)}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400">
-                  {messages.timelineEmptyLabel}
+          <div className="flex flex-col gap-6">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-slate-400">
+                  {messages.lifecycleTitle}
                 </p>
-              )}
+                <span className="text-xs text-slate-500">{referenceCode}</span>
+              </div>
+              <div className="mt-5 space-y-4">
+                {lifecycleSteps.map((step, index) => {
+                  const isComplete = index < currentStageIndex;
+                  const isCurrent = index === currentStageIndex;
+                  const indicatorClass = isComplete
+                    ? "bg-emerald-400"
+                    : isCurrent
+                      ? "bg-amber-400"
+                      : "bg-white/10";
+                  const textClass = isComplete
+                    ? "text-slate-100"
+                    : isCurrent
+                      ? "text-white"
+                      : "text-slate-400";
+                  return (
+                    <div key={step.key} className="flex items-start gap-3">
+                      <span
+                        className={`mt-1 h-2.5 w-2.5 rounded-full ${indicatorClass}`}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between gap-4">
+                          <p className={`text-xs font-medium ${textClass}`}>
+                            {step.label}
+                          </p>
+                          <span className="text-xs text-slate-500">
+                            {step.timestamp
+                              ? formatDateTime(step.timestamp, locale)
+                              : "—"}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-slate-400">
+                  {messages.timelineLabel}
+                </p>
+                <span className="text-xs text-slate-500">{events.length}</span>
+              </div>
+              <div className="mt-5 space-y-4 border-l border-white/10 pl-4">
+                {events.length > 0 ? (
+                  events.map((event) => (
+                    <div key={event.id} className="relative">
+                      <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
+                      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                        <p className="text-sm font-semibold text-white">
+                          {resolveEventMessage(event)}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          {formatDateTime(event.createdAt, locale)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    {messages.timelineEmptyLabel}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

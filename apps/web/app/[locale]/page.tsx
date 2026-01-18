@@ -52,6 +52,8 @@ const DEFAULT_COUNTRY_BY_ASSET: Record<string, string> = {
   BTC: "GL",
 };
 
+const STORAGE_KEY = "clarisend.transferFlow.v1";
+
 const formatNumber = (value: number, digits = 2, locale: Locale = "en") =>
   new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
     minimumFractionDigits: digits,
@@ -219,6 +221,7 @@ export default function Home() {
   );
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const recommendationAbortRef = useRef<AbortController | null>(null);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   const expiresAtLabel = useMemo(() => {
     if (!quote?.expiresAt) {
@@ -286,6 +289,7 @@ export default function Home() {
   const sendStep = stepForDecimals(fromAssetMeta?.decimals ?? 2);
   const defaultRecipientCountry =
     DEFAULT_COUNTRY_BY_ASSET[displayToAsset] ?? "GH";
+  const isPrimaryCorridor = fromAsset === "USD" && toAsset === "GHS";
   const suggestionFrom = recommendation?.from ?? fromAsset;
   const suggestionTo = recommendation?.to ?? toAsset;
   const recommendationMap = useMemo(() => {
@@ -337,6 +341,150 @@ export default function Home() {
       active = false;
     };
   }, [messages.assetsLoadError]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+      setHasHydrated(true);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(stored) as Partial<{
+        sendAmount: string;
+        fromAsset: string;
+        toAsset: string;
+        rail: string;
+        marketRate: string;
+        fxMargin: string;
+        fixedFee: string;
+        percentFee: string;
+        quote: Quote | null;
+        quoteActive: boolean;
+        lockedQuoteId: string | null;
+        recipientName: string;
+        recipientCountry: string;
+        recipientPhone: string;
+        recipientLightningInvoice: string;
+        payoutRail: "" | "MOBILE_MONEY" | "BANK" | "LIGHTNING";
+        bankName: string;
+        bankAccount: string;
+        mobileMoneyProvider: string;
+        mobileMoneyNumber: string;
+        memo: string;
+        selectedRecipientId: string;
+        saveRecipient: boolean;
+        transferResult: { id: string; status: string } | null;
+      }>;
+
+      if (parsed.sendAmount) setSendAmount(parsed.sendAmount);
+      if (parsed.fromAsset) setFromAsset(parsed.fromAsset);
+      if (parsed.toAsset) setToAsset(parsed.toAsset);
+      if (parsed.rail) setRail(parsed.rail);
+      if (parsed.marketRate) setMarketRate(parsed.marketRate);
+      if (parsed.fxMargin) setFxMargin(parsed.fxMargin);
+      if (parsed.fixedFee) setFixedFee(parsed.fixedFee);
+      if (parsed.percentFee) setPercentFee(parsed.percentFee);
+      if (parsed.quote) {
+        setQuote(parsed.quote);
+        setQuoteActive(true);
+      }
+      if (typeof parsed.quoteActive === "boolean") {
+        setQuoteActive(parsed.quoteActive);
+      }
+      if (parsed.lockedQuoteId) setLockedQuoteId(parsed.lockedQuoteId);
+      if (parsed.recipientName) setRecipientName(parsed.recipientName);
+      if (parsed.recipientCountry) setRecipientCountry(parsed.recipientCountry);
+      if (parsed.recipientPhone) setRecipientPhone(parsed.recipientPhone);
+      if (parsed.recipientLightningInvoice) {
+        setRecipientLightningInvoice(parsed.recipientLightningInvoice);
+      }
+      if (parsed.payoutRail) setPayoutRail(parsed.payoutRail);
+      if (parsed.bankName) setBankName(parsed.bankName);
+      if (parsed.bankAccount) setBankAccount(parsed.bankAccount);
+      if (parsed.mobileMoneyProvider) {
+        setMobileMoneyProvider(parsed.mobileMoneyProvider);
+      }
+      if (parsed.mobileMoneyNumber) {
+        setMobileMoneyNumber(parsed.mobileMoneyNumber);
+      }
+      if (parsed.memo) setMemo(parsed.memo);
+      if (parsed.selectedRecipientId) {
+        setSelectedRecipientId(parsed.selectedRecipientId);
+      }
+      if (typeof parsed.saveRecipient === "boolean") {
+        setSaveRecipient(parsed.saveRecipient);
+      }
+      if (parsed.transferResult) {
+        setTransferResult(parsed.transferResult);
+      }
+    } catch {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } finally {
+      setHasHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydrated || typeof window === "undefined") {
+      return;
+    }
+    const payload = {
+      sendAmount,
+      fromAsset,
+      toAsset,
+      rail,
+      marketRate,
+      fxMargin,
+      fixedFee,
+      percentFee,
+      quote,
+      quoteActive,
+      lockedQuoteId,
+      recipientName,
+      recipientCountry,
+      recipientPhone,
+      recipientLightningInvoice,
+      payoutRail,
+      bankName,
+      bankAccount,
+      mobileMoneyProvider,
+      mobileMoneyNumber,
+      memo,
+      selectedRecipientId,
+      saveRecipient,
+      transferResult,
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }, [
+    hasHydrated,
+    sendAmount,
+    fromAsset,
+    toAsset,
+    rail,
+    marketRate,
+    fxMargin,
+    fixedFee,
+    percentFee,
+    quote,
+    quoteActive,
+    lockedQuoteId,
+    recipientName,
+    recipientCountry,
+    recipientPhone,
+    recipientLightningInvoice,
+    payoutRail,
+    bankName,
+    bankAccount,
+    mobileMoneyProvider,
+    mobileMoneyNumber,
+    memo,
+    selectedRecipientId,
+    saveRecipient,
+    transferResult,
+  ]);
 
   useEffect(() => {
     if (assetsList.length === 0) {
@@ -1066,6 +1214,11 @@ export default function Home() {
                 onSubmit={handleGetStarted}
                 countrySelectCopy={countrySelectCopy}
               />
+              <p className="mt-3 text-xs text-slate-500">
+                {isPrimaryCorridor
+                  ? messages.primaryCorridorNote
+                  : messages.secondaryCorridorNote}
+              </p>
             </div>
           </div>
           <div className="mt-10">
@@ -1337,6 +1490,11 @@ export default function Home() {
                   ) : null}
                   {lockError ? (
                     <p className="mt-3 text-xs text-amber-600">{lockError}</p>
+                  ) : null}
+                  {hasQuote && isExpired ? (
+                    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                      {messages.quoteExpiredNotice}
+                    </div>
                   ) : null}
                   <button
                     type="button"

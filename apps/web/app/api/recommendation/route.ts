@@ -131,74 +131,62 @@ export async function GET(req: Request) {
     };
   });
 
-  /**
-   * Smart recommendation algorithm with deterministic tie-breaking.
-   * Ensures three distinct routes whenever possible by:
-   * 1. Finding true cheapest (lowest total fee)
-   * 2. Finding true fastest (best ETA)
-   * 3. Finding best value (highest payout, excluding previous winners)
-   *
-   * Tie-breaking rules:
-   * - Cheapest: If fees equal, prefer faster route
-   * - Fastest: If ETA equal, prefer cheaper route
-   * - Best Value: Exclude cheapest and fastest, then pick highest payout
-   */
-
-  // Step 1: Find cheapest route (tie-break by speed)
-  const cheapestRoute = routes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
-    if (route.totalFee < best.totalFee) return route;
-    if (route.totalFee === best.totalFee && route.etaMaxMinutes < best.etaMaxMinutes) return route;
-    return best;
-  });
-
-  // Step 2: Find fastest route (tie-break by cost)
-  const fastestRoute = routes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
-    if (route.etaMaxMinutes < best.etaMaxMinutes) return route;
-    if (route.etaMaxMinutes === best.etaMaxMinutes) {
-      if (route.etaMinMinutes < best.etaMinMinutes) return route;
-      if (route.etaMinMinutes === best.etaMinMinutes && route.totalFee < best.totalFee) return route;
+  const sortedByFee = [...routes].sort((a, b) => {
+    if (a.totalFee !== b.totalFee) {
+      return a.totalFee - b.totalFee;
     }
-    return best;
+    return a.etaMaxMinutes - b.etaMaxMinutes;
+  });
+  const sortedByEta = [...routes].sort((a, b) => {
+    if (a.etaMaxMinutes !== b.etaMaxMinutes) {
+      return a.etaMaxMinutes - b.etaMaxMinutes;
+    }
+    if (a.etaMinMinutes !== b.etaMinMinutes) {
+      return a.etaMinMinutes - b.etaMinMinutes;
+    }
+    return a.totalFee - b.totalFee;
+  });
+  const sortedByPayout = [...routes].sort((a, b) => {
+    if (a.recipientGets !== b.recipientGets) {
+      return b.recipientGets - a.recipientGets;
+    }
+    return a.totalFee - b.totalFee;
   });
 
-  // Step 3: Find best value route (highest payout, excluding previous winners)
-  const usedRouteIds = new Set([cheapestRoute.id, fastestRoute.id]);
-  const remainingRoutes = routes.filter(r => !usedRouteIds.has(r.id));
+  const pickDistinct = (
+    candidates: typeof routes,
+    excluded: Set<string>
+  ) => candidates.find((route) => !excluded.has(route.id)) ?? null;
 
-  // If we have remaining routes, pick the one with highest payout
-  // Otherwise, fall back to the route with highest payout overall
-  const bestValueRoute = remainingRoutes.length > 0
-    ? remainingRoutes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
-        if (route.recipientGets > best.recipientGets) return route;
-        if (route.recipientGets === best.recipientGets && route.totalFee < best.totalFee) return route;
-        return best;
-      })
-    : routes.reduce((best: typeof routes[number], route: typeof routes[number]) => {
-        // Only use if different from cheapest and fastest
-        if (route.id === cheapestRoute.id || route.id === fastestRoute.id) return best;
-        if (route.recipientGets > best.recipientGets) return route;
-        return best;
-      }, routes[0]);
+  const cheapestRoute = sortedByFee[0];
+  const fastestRoute =
+    pickDistinct(sortedByEta, new Set([cheapestRoute.id])) ?? sortedByEta[0];
+  const bestValueRoute =
+    pickDistinct(sortedByPayout, new Set([cheapestRoute.id, fastestRoute.id])) ??
+    pickDistinct(sortedByPayout, new Set([cheapestRoute.id])) ??
+    pickDistinct(sortedByPayout, new Set([fastestRoute.id])) ??
+    sortedByPayout[0];
 
   const responseRoutes = routes.map((route: typeof routes[number]) => {
     const highlights: string[] = [];
     if (route.id === cheapestRoute.id) {
-      highlights.push("LOWEST_FEE");
+      highlights.push("LOWEST_TOTAL_FEE");
     }
     if (route.id === fastestRoute.id) {
-      highlights.push("FASTEST");
+      highlights.push("FASTEST_ETA");
     }
     if (route.id === bestValueRoute.id) {
-      highlights.push("BEST_VALUE");
+      highlights.push("HIGHEST_PAYOUT");
     }
-    const highlightLabels: Record<string, string> = {
-      LOWEST_FEE: "Lowest Fee",
-      FASTEST: "Fastest",
-      BEST_VALUE: "Best Value",
+    const explanationByHighlight: Record<string, string> = {
+      LOWEST_TOTAL_FEE: "Lowest total fee for this corridor.",
+      FASTEST_ETA: "Shortest ETA range for this corridor.",
+      HIGHEST_PAYOUT: "Highest recipient amount after fees.",
     };
-    const explanationParts = highlights
-      .map((code) => highlightLabels[code])
-      .filter(Boolean);
+    const explanation =
+      highlights.length > 0
+        ? highlights.map((code) => explanationByHighlight[code]).join(" ")
+        : "Active route for this corridor.";
 
     return {
       ...route,
@@ -206,10 +194,7 @@ export async function GET(req: Request) {
       appliedRate: round(route.appliedRate, 6),
       recipientGets: round(route.recipientGets, 2),
       effectiveCostPct: round(route.effectiveCostPct, 2),
-      explanation:
-        explanationParts.length > 0
-          ? explanationParts.join(" · ")
-          : "Active route",
+      explanation,
       highlights,
     };
   });
@@ -217,21 +202,21 @@ export async function GET(req: Request) {
   // Add recommendations array with clear labels
   const recommendations = [
     {
-      type: "LOWEST_FEE",
+      type: "LOWEST_TOTAL_FEE",
       label: "Lowest Fee",
-      description: "Minimize transfer costs",
+      description: "Lowest total fee for this corridor",
       route: responseRoutes.find((r) => r.id === cheapestRoute.id),
     },
     {
-      type: "FASTEST",
-      label: "Fastest",
-      description: "Get money there quickly",
+      type: "FASTEST_ETA",
+      label: "Fastest ETA",
+      description: "Shortest delivery range",
       route: responseRoutes.find((r) => r.id === fastestRoute.id),
     },
     {
-      type: "BEST_VALUE",
+      type: "HIGHEST_PAYOUT",
       label: "Best Value",
-      description: "Maximize recipient payout",
+      description: "Highest recipient payout after fees",
       route: responseRoutes.find((r) => r.id === bestValueRoute.id),
     },
   ];
