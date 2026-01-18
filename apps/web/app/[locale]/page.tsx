@@ -284,6 +284,7 @@ export default function Home() {
   const displayFromAsset = quote?.fromAsset.code ?? fromAsset;
   const displayToAsset = quote?.toAsset.code ?? toAsset;
   const displayRail = quote?.rail ?? rail;
+  const quoteLoading = isLoading || (quoteActive && !hasQuote);
   const fromAssetMeta = assetMap.get(fromAsset);
   const railMeta = payoutRailOptions.find((item) => item.code === displayRail);
   const sendStep = stepForDecimals(fromAssetMeta?.decimals ?? 2);
@@ -1154,7 +1155,8 @@ export default function Home() {
   const inputClassName =
     "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40";
   const cardClassName =
-    "rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)]";
+    "rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)] transition-shadow duration-200";
+  const skeletonClass = "inline-block h-4 w-20 rounded-full bg-slate-200/70 animate-pulse";
 
   return (
     <div className="bg-[var(--brand-surface)] text-slate-900">
@@ -1287,9 +1289,11 @@ export default function Home() {
                   </div>
                   <div className="mt-4">
                     <p className="font-[var(--font-display)] text-4xl leading-tight sm:text-5xl">
-                      {hasQuote
-                        ? formatAmount(recipientGets, displayToAsset)
-                        : "—"}
+                      {hasQuote ? (
+                        formatAmount(recipientGets, displayToAsset)
+                      ) : (
+                        <span className="inline-block h-10 w-48 rounded-2xl bg-white/10 animate-pulse" />
+                      )}
                     </p>
                     <p className="mt-2 text-sm text-slate-300">
                       {hasQuote
@@ -1318,71 +1322,95 @@ export default function Home() {
                     ) : null}
                   </div>
                   <div className="mt-4 grid gap-4">
-                    {suggestionCards.map((card) => (
-                      <div
-                        key={card.key}
-                        className={`rounded-2xl border px-4 py-4 text-sm text-slate-700 ${card.surface}`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span
-                            className={`rounded-full border px-2 py-1 text-[11px] font-medium ${card.accent}`}
+                    {recommendationLoading && !recommendation
+                      ? ["one", "two", "three"].map((key) => (
+                          <div
+                            key={key}
+                            className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700"
                           >
-                            {card.label}
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            {resolveRouteHighlights(card.route)}
-                          </span>
-                        </div>
-                        {card.route ? (
-                          <>
-                            <p className="mt-3 text-base font-semibold text-slate-900">
-                              {resolveRailName(card.route.rail)}
-                            </p>
-                            <p className="mt-2 text-xs text-slate-600">
-                              <span className="font-semibold text-slate-500">
-                                {messages.recommendationWhyLabel}:
-                              </span>{" "}
-                              {card.route.explanation}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {messages.etaRangeLabel(
-                                card.route.etaMinMinutes,
-                                card.route.etaMaxMinutes
-                              )}
-                            </p>
-                            <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
-                              <span>{messages.totalFeeRow}</span>
-                              <span>
-                                {formatAmount(
-                                  card.route.totalFee,
-                                  suggestionFrom
-                                )}
+                            <div className="flex items-center justify-between">
+                              <span className={`${skeletonClass} w-20`} />
+                              <span className={`${skeletonClass} w-12`} />
+                            </div>
+                            <div className="mt-4 space-y-3">
+                              <span className={`${skeletonClass} w-32`} />
+                              <span className={`${skeletonClass} w-40`} />
+                              <span className={`${skeletonClass} w-24`} />
+                            </div>
+                            <div className="mt-4 flex items-center justify-between">
+                              <span className={`${skeletonClass} w-16`} />
+                              <span className={`${skeletonClass} w-20`} />
+                            </div>
+                          </div>
+                        ))
+                      : suggestionCards.map((card) => (
+                          <div
+                            key={card.key}
+                            className={`rounded-2xl border px-4 py-4 text-sm text-slate-700 transition-shadow duration-200 ${card.surface}`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={`rounded-full border px-2 py-1 text-[11px] font-medium ${card.accent}`}
+                              >
+                                {card.label}
+                              </span>
+                              <span className="text-[11px] text-slate-400">
+                                {resolveRouteHighlights(card.route)}
                               </span>
                             </div>
-                            <div className="mt-1 flex items-center justify-between text-xs text-slate-600">
-                              <span>{messages.recipientGetsLabel}</span>
-                              <span>
-                                {formatAmount(
-                                  card.route.recipientGets,
-                                  suggestionTo
-                                )}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => card.route && applyRouteSuggestion(card.route)}
-                              className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-                            >
-                              {messages.useRouteButton}
-                            </button>
-                          </>
-                        ) : (
-                          <p className="mt-3 text-xs text-slate-600">
-                            {messages.recommendationEmpty}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                            {card.route ? (
+                              <>
+                                <p className="mt-3 text-base font-semibold text-slate-900">
+                                  {resolveRailName(card.route.rail)}
+                                </p>
+                                <p className="mt-2 text-xs text-slate-600">
+                                  <span className="font-semibold text-slate-500">
+                                    {messages.recommendationWhyLabel}:
+                                  </span>{" "}
+                                  {card.route.explanation}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {messages.etaRangeLabel(
+                                    card.route.etaMinMinutes,
+                                    card.route.etaMaxMinutes
+                                  )}
+                                </p>
+                                <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
+                                  <span>{messages.totalFeeRow}</span>
+                                  <span>
+                                    {formatAmount(
+                                      card.route.totalFee,
+                                      suggestionFrom
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="mt-1 flex items-center justify-between text-xs text-slate-600">
+                                  <span>{messages.recipientGetsLabel}</span>
+                                  <span>
+                                    {formatAmount(
+                                      card.route.recipientGets,
+                                      suggestionTo
+                                    )}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    card.route && applyRouteSuggestion(card.route)
+                                  }
+                                  disabled={recommendationLoading}
+                                  className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {messages.useRouteButton}
+                                </button>
+                              </>
+                            ) : (
+                              <p className="mt-3 text-xs text-slate-600">
+                                {messages.recommendationEmpty}
+                              </p>
+                            )}
+                          </div>
+                        ))}
                   </div>
                   {recommendationError ? (
                     <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
@@ -1399,26 +1427,38 @@ export default function Home() {
                     <div className="flex items-center justify-between">
                       <span>{messages.quoteIdLabel}</span>
                       <span className="font-semibold text-slate-900">
-                        {quote?.id ?? "—"}
+                        {quoteLoading ? (
+                          <span className={skeletonClass} />
+                        ) : (
+                          quote?.id ?? "—"
+                        )}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.expiresAtLabel}</span>
                       <span className="font-semibold text-slate-900">
-                        {expiresAtLabel}
+                        {quoteLoading ? (
+                          <span className={skeletonClass} />
+                        ) : (
+                          expiresAtLabel
+                        )}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.railDisplayLabel}</span>
                       <span className="font-semibold text-slate-900">
-                        {railMeta?.name ?? displayRail}
+                        {quoteLoading ? (
+                          <span className={skeletonClass} />
+                        ) : (
+                          railMeta?.name ?? displayRail
+                        )}
                       </span>
                     </div>
                   </div>
                   <div className="mt-4 grid gap-2 text-sm text-slate-600">
                     <div className="flex items-center justify-between">
                       <span>{messages.sendAmountRow}</span>
-                      <span>
+                      <span className="font-semibold text-slate-900">
                         {hasQuote
                           ? formatAmount(numericSend, displayFromAsset)
                           : "—"}
@@ -1426,15 +1466,21 @@ export default function Home() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.totalFeeRow}</span>
-                      <span>
+                      <span className="font-semibold text-slate-900">
                         {hasQuote
                           ? formatAmount(totalFee, displayFromAsset)
                           : "—"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
+                      <span>{messages.fxMarginRow}</span>
+                      <span className="font-semibold text-slate-900">
+                        {hasQuote ? formatPercent(numericFxMargin, locale) : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
                       <span>{messages.netConvertedRow}</span>
-                      <span>
+                      <span className="font-semibold text-slate-900">
                         {hasQuote
                           ? formatAmount(netConverted, displayFromAsset)
                           : "—"}
@@ -1442,7 +1488,7 @@ export default function Home() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.appliedRateRow}</span>
-                      <span>
+                      <span className="font-semibold text-slate-900">
                         {hasQuote
                           ? `1 ${displayFromAsset} = ${formatNumber(
                               appliedRate,
@@ -1453,14 +1499,8 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>{messages.fxMarginRow}</span>
-                      <span>
-                        {hasQuote ? formatPercent(numericFxMargin, locale) : "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
                       <span>{messages.effectiveRateRow}</span>
-                      <span>
+                      <span className="font-semibold text-slate-900">
                         {hasQuote
                           ? `1 ${displayFromAsset} = ${formatNumber(
                               effectiveRate,
@@ -1645,9 +1685,10 @@ export default function Home() {
                             </span>
                           </label>
                           {recipientsLoading ? (
-                            <p className="mt-2 text-xs text-slate-500">
-                              {messages.assetsLoading}
-                            </p>
+                            <div className="mt-2 space-y-2">
+                              <span className={`${skeletonClass} w-40`} />
+                              <span className={`${skeletonClass} w-24`} />
+                            </div>
                           ) : null}
                           {recipientsError ? (
                             <p className="mt-2 text-xs text-rose-600">
