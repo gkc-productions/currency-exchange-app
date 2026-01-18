@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LanguageSelect from "./LanguageSelect";
+import AuthStatus from "./AuthStatus";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 
 export default function Navbar({ locale }: { locale: Locale }) {
@@ -13,7 +14,7 @@ export default function Navbar({ locale }: { locale: Locale }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-4 sm:px-10">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-6 py-4 lg:px-8">
         <div className="flex items-center gap-6">
           <Link
             href={`/${locale}`}
@@ -49,6 +50,7 @@ export default function Navbar({ locale }: { locale: Locale }) {
           >
             {messages.navGetStartedLabel}
           </Link>
+          <AuthStatus locale={locale} />
           <LanguageSelect />
         </div>
       </div>

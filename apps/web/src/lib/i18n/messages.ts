@@ -8,6 +8,46 @@ export type Messages = {
   navSecurityLabel: string;
   navHelpLabel: string;
   navGetStartedLabel: string;
+  navDashboardLabel: string;
+  navSignInLabel: string;
+  navSignOutLabel: string;
+  loginTitle: string;
+  loginSubtitle: string;
+  loginEmailLabel: string;
+  loginEmailPlaceholder: string;
+  loginButton: string;
+  loginSentTitle: string;
+  loginSentDescription: string;
+  loginError: string;
+  dashboardTitle: string;
+  dashboardSubtitle: string;
+  dashboardEmptyTitle: string;
+  dashboardEmptyDescription: string;
+  recipientsTitle: string;
+  recipientsSubtitle: string;
+  recipientsEmptyTitle: string;
+  recipientsEmptyDescription: string;
+  recipientsCreateTitle: string;
+  recipientsSaveButton: string;
+  recipientRemoveButton: string;
+  recipientSelectLabel: string;
+  recipientSelectPlaceholder: string;
+  recipientSelectHelper: string;
+  recipientAuthHelper: string;
+  recipientSaveToggleLabel: string;
+  recipientSaveSuccess: string;
+  recipientSaveError: string;
+  recipientLoadError: string;
+  recipientLightningInvoiceLabel: string;
+  receiptResendButton: string;
+  receiptResendLoading: string;
+  receiptResendSuccess: string;
+  receiptResendError: string;
+  receiptResendRateLimited: string;
+  adminTitle: string;
+  adminSubtitle: string;
+  adminUnauthorizedTitle: string;
+  adminUnauthorizedDescription: string;
   heroTitle: string;
   heroSubtitle: string;
   sendCardTitle: string;
@@ -97,6 +137,7 @@ export type Messages = {
   recommendationLoading: string;
   recommendationEmpty: string;
   recommendationLoadError: string;
+  recommendationWhyLabel: string;
   quoteBreakdownLabel: string;
   quoteIdLabel: string;
   expiresAtLabel: string;
@@ -203,11 +244,58 @@ const EN_MESSAGES: Messages = {
   navSecurityLabel: "Security",
   navHelpLabel: "Help",
   navGetStartedLabel: "Get started",
-  heroTitle: "Send with clarity. Know the rate, fees, and arrival time upfront.",
+  navDashboardLabel: "Dashboard",
+  navSignInLabel: "Sign in",
+  navSignOutLabel: "Sign out",
+  loginTitle: "Sign in to ClariSend",
+  loginSubtitle:
+    "Get a secure magic link sent to your email. No passwords required.",
+  loginEmailLabel: "Work email",
+  loginEmailPlaceholder: "you@company.com",
+  loginButton: "Send magic link",
+  loginSentTitle: "Check your inbox",
+  loginSentDescription:
+    "We sent a secure sign-in link. It expires in 24 hours.",
+  loginError: "We could not send the link. Please try again.",
+  dashboardTitle: "Your transfers",
+  dashboardSubtitle: "Track every transfer and access receipts instantly.",
+  dashboardEmptyTitle: "No transfers yet",
+  dashboardEmptyDescription:
+    "Start a new quote to see your transfers appear here.",
+  recipientsTitle: "Recipients",
+  recipientsSubtitle: "Save recipients once and reuse them in future transfers.",
+  recipientsEmptyTitle: "No saved recipients yet",
+  recipientsEmptyDescription:
+    "Create a recipient to speed up your next transfer.",
+  recipientsCreateTitle: "Add a recipient",
+  recipientsSaveButton: "Save recipient",
+  recipientRemoveButton: "Remove",
+  recipientSelectLabel: "Saved recipients",
+  recipientSelectPlaceholder: "Select a recipient",
+  recipientSelectHelper: "Prefill details from a saved recipient.",
+  recipientAuthHelper: "Sign in to save recipients and reuse details faster.",
+  recipientSaveToggleLabel: "Save this recipient for next time",
+  recipientSaveSuccess: "Recipient saved to your list.",
+  recipientSaveError: "Unable to save recipient. Please try again.",
+  recipientLoadError: "Unable to load recipients. Try refreshing.",
+  recipientLightningInvoiceLabel: "Lightning invoice (optional)",
+  receiptResendButton: "Resend receipt",
+  receiptResendLoading: "Sending receipt...",
+  receiptResendSuccess: "Receipt sent. Check your inbox.",
+  receiptResendError: "Unable to send receipt. Please try again.",
+  receiptResendRateLimited:
+    "Please wait a moment before sending another receipt.",
+  adminTitle: "Admin console",
+  adminSubtitle: "Restricted access for ClariSend administrators.",
+  adminUnauthorizedTitle: "Access restricted",
+  adminUnauthorizedDescription:
+    "You do not have permission to view this page.",
+  heroTitle:
+    "Send with clarity. Know the rate, fees, and delivery time upfront.",
   heroSubtitle:
-    "ClariSend delivers transparent pricing, smart routing, and modern payout rails so every transfer stays predictable.",
+    "Transparent pricing, smart routing, and modern payout rails keep every transfer predictable for you and your recipient.",
   sendCardTitle: "Send money",
-  sendCardSubtitle: "Start a quote in seconds with clear fees.",
+  sendCardSubtitle: "Start a quote in seconds with clear fees and live rates.",
   sendFromLabel: "Sending from",
   sendToLabel: "Sending to",
   sendCtaLabel: "Get started",
@@ -300,9 +388,12 @@ const EN_MESSAGES: Messages = {
   routeActiveLabel: "Active route",
   etaRangeLabel: (minMinutes, maxMinutes) => `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Use this route",
-  recommendationLoading: "Fetching smart suggestions...",
-  recommendationEmpty: "No suggestion yet.",
-  recommendationLoadError: "Unable to load suggestions. Please try again.",
+  recommendationLoading: "Calculating the best routes...",
+  recommendationEmpty:
+    "Enter your amount to unlock personalized route suggestions.",
+  recommendationLoadError:
+    "We could not load suggestions. Please refresh or try again in a moment.",
+  recommendationWhyLabel: "Why this route",
   quoteBreakdownLabel: "Quote Breakdown",
   quoteIdLabel: "Quote ID",
   expiresAtLabel: "Expires at",
@@ -409,12 +500,62 @@ const FR_MESSAGES: Messages = {
   navSecurityLabel: "Sécurité",
   navHelpLabel: "Aide",
   navGetStartedLabel: "Commencer",
+  navDashboardLabel: "Tableau de bord",
+  navSignInLabel: "Connexion",
+  navSignOutLabel: "Deconnexion",
+  loginTitle: "Connectez-vous a ClariSend",
+  loginSubtitle:
+    "Recevez un lien securise par email. Aucun mot de passe.",
+  loginEmailLabel: "Email professionnel",
+  loginEmailPlaceholder: "vous@entreprise.com",
+  loginButton: "Envoyer le lien",
+  loginSentTitle: "Consultez votre boite mail",
+  loginSentDescription:
+    "Nous avons envoye un lien securise. Il expire sous 24 heures.",
+  loginError: "Impossible d'envoyer le lien. Veuillez reessayer.",
+  dashboardTitle: "Vos transferts",
+  dashboardSubtitle: "Suivez chaque transfert et accedez aux recus.",
+  dashboardEmptyTitle: "Aucun transfert pour le moment",
+  dashboardEmptyDescription:
+    "Lancez un devis pour voir vos transferts ici.",
+  recipientsTitle: "Beneficiaires",
+  recipientsSubtitle:
+    "Enregistrez vos beneficiaires pour accelerer vos transferts.",
+  recipientsEmptyTitle: "Aucun beneficiaire enregistre",
+  recipientsEmptyDescription:
+    "Ajoutez un beneficiaire pour votre prochain transfert.",
+  recipientsCreateTitle: "Ajouter un beneficiaire",
+  recipientsSaveButton: "Enregistrer le beneficiaire",
+  recipientRemoveButton: "Supprimer",
+  recipientSelectLabel: "Beneficiaires enregistrés",
+  recipientSelectPlaceholder: "Selectionner un beneficiaire",
+  recipientSelectHelper:
+    "Pre-remplissez les informations depuis un beneficiaire.",
+  recipientAuthHelper:
+    "Connectez-vous pour enregistrer et reutiliser vos beneficiaires.",
+  recipientSaveToggleLabel: "Enregistrer ce beneficiaire",
+  recipientSaveSuccess: "Beneficiaire enregistre.",
+  recipientSaveError: "Impossible d'enregistrer. Veuillez reessayer.",
+  recipientLoadError: "Impossible de charger les beneficiaires.",
+  recipientLightningInvoiceLabel: "Facture Lightning (facultatif)",
+  receiptResendButton: "Renvoyer le reçu",
+  receiptResendLoading: "Envoi du reçu...",
+  receiptResendSuccess: "Reçu envoyé. Verifiez votre email.",
+  receiptResendError: "Impossible d'envoyer le reçu. Veuillez reessayer.",
+  receiptResendRateLimited:
+    "Veuillez patienter avant de renvoyer le reçu.",
+  adminTitle: "Console admin",
+  adminSubtitle: "Acces reserve aux administrateurs ClariSend.",
+  adminUnauthorizedTitle: "Acces restreint",
+  adminUnauthorizedDescription:
+    "Vous n'avez pas les droits pour voir cette page.",
   heroTitle:
     "Envoyez en toute clarté. Connaissez le taux, les frais et le délai avant d'envoyer.",
   heroSubtitle:
-    "ClariSend propose des tarifs transparents, un routage intelligent et des rails modernes pour des transferts prévisibles.",
+    "Tarification transparente, routage intelligent et rails modernes pour des transferts previsibles.",
   sendCardTitle: "Envoyer de l'argent",
-  sendCardSubtitle: "Lancez un devis en quelques secondes avec des frais clairs.",
+  sendCardSubtitle:
+    "Lancez un devis en quelques secondes avec des frais clairs et des taux en direct.",
   sendFromLabel: "Envoi depuis",
   sendToLabel: "Envoi vers",
   sendCtaLabel: "Commencer",
@@ -510,9 +651,12 @@ const FR_MESSAGES: Messages = {
   etaRangeLabel: (minMinutes, maxMinutes) =>
     `${minMinutes}-${maxMinutes} min ETA`,
   useRouteButton: "Utiliser cet itinéraire",
-  recommendationLoading: "Chargement des suggestions...",
-  recommendationEmpty: "Aucune suggestion pour l’instant.",
-  recommendationLoadError: "Impossible de charger les suggestions. Veuillez réessayer.",
+  recommendationLoading: "Calcul des meilleures routes...",
+  recommendationEmpty:
+    "Entrez un montant pour afficher les suggestions personnalisees.",
+  recommendationLoadError:
+    "Impossible de charger les suggestions. Veuillez reessayer dans un instant.",
+  recommendationWhyLabel: "Pourquoi cette route",
   quoteBreakdownLabel: "Détail du devis",
   quoteIdLabel: "ID du devis",
   expiresAtLabel: "Expire le",

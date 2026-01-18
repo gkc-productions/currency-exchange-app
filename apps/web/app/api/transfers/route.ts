@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { createHash, randomInt } from "crypto";
 import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
+import { getServerAuthSession } from "@/src/lib/auth";
 
 const payoutRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING"]);
 const cryptoNetworks = new Set(["BTC_LIGHTNING", "BTC_ONCHAIN"]);
@@ -13,9 +14,11 @@ const maxReferenceAttempts = 6;
 type TransferPayload = {
   quoteId?: unknown;
   payoutRail?: unknown;
+  recipientId?: unknown;
   recipientName?: unknown;
   recipientCountry?: unknown;
   recipientPhone?: unknown;
+  recipientLightningInvoice?: unknown;
   bank?: unknown;
   mobileMoney?: unknown;
   memo?: unknown;
@@ -93,6 +96,7 @@ function buildTransferResponse(transfer: {
   recipientBankAccount: string | null;
   recipientMobileMoneyProvider: string | null;
   recipientMobileMoneyNumber: string | null;
+  recipientLightningInvoice: string | null;
   memo: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -110,6 +114,7 @@ function buildTransferResponse(transfer: {
     recipientBankAccount: transfer.recipientBankAccount,
     recipientMobileMoneyProvider: transfer.recipientMobileMoneyProvider,
     recipientMobileMoneyNumber: transfer.recipientMobileMoneyNumber,
+    recipientLightningInvoice: transfer.recipientLightningInvoice,
     memo: transfer.memo,
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
@@ -210,6 +215,9 @@ export async function POST(req: Request) {
   }
 
   const recipientPhone = readOptionalString(payload.recipientPhone);
+  const recipientLightningInvoice = readOptionalString(
+    payload.recipientLightningInvoice
+  );
   const memo = readOptionalString(payload.memo);
 
   let recipientBankName: string | null = null;
@@ -322,6 +330,27 @@ export async function POST(req: Request) {
       ? requestedAmountSats ?? fallbackAmountSats
       : null;
 
+  const session = await getServerAuthSession();
+  let userId: string | null = null;
+  if (session?.user?.email) {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+    userId = user?.id ?? null;
+  }
+
+  const recipientIdInput = readOptionalString(payload.recipientId);
+  let recipientId: string | null = null;
+  if (recipientIdInput && userId) {
+    const recipient = await prisma.recipient.findUnique({
+      where: { id: recipientIdInput },
+    });
+    if (recipient && recipient.userId === userId) {
+      recipientId = recipient.id;
+    }
+  }
+
   let transfer;
   try {
     for (let attempt = 0; attempt < maxReferenceAttempts; attempt += 1) {
@@ -349,6 +378,8 @@ export async function POST(req: Request) {
             quoteId,
             status: "READY",
             payoutRail: payoutRail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
+            userId,
+            recipientId,
             recipientName,
             recipientCountry,
             recipientPhone,
@@ -356,6 +387,7 @@ export async function POST(req: Request) {
             recipientBankAccount,
             recipientMobileMoneyProvider,
             recipientMobileMoneyNumber,
+            recipientLightningInvoice,
             memo,
             referenceCode,
             idempotencyKey,

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Fraunces, Space_Grotesk } from "next/font/google";
+import AuthSessionProvider from "@/components/SessionProvider";
+import { getServerAuthSession } from "@/src/lib/auth";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -29,13 +31,14 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const localeCookie = cookieStore.get("locale")?.value;
   const htmlLang = localeCookie === "fr" ? "fr" : "en";
+  const session = await getServerAuthSession();
 
   return (
     <html lang={htmlLang}>
       <body
         className={`${spaceGrotesk.variable} ${fraunces.variable} antialiased`}
       >
-        {children}
+        <AuthSessionProvider session={session}>{children}</AuthSessionProvider>
       </body>
     </html>
   );

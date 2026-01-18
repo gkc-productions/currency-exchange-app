@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function LocaleError({
   error,
@@ -35,7 +36,7 @@ export default function LocaleError({
           Something went wrong
         </h1>
         <p className="text-slate-600 mb-6">
-          We're having trouble loading this page. Please try again.
+          We are having trouble loading this page. Please try again.
         </p>
         <button
           onClick={reset}
@@ -43,12 +44,12 @@ export default function LocaleError({
         >
           Try again
         </button>
-        <a
+        <Link
           href="/"
           className="block mt-3 text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
         >
           Return to home
-        </a>
+        </Link>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
+import { sendReceiptEmail } from "@/src/lib/email";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -39,7 +40,15 @@ export async function POST(req: Request) {
 
   const transfer = await prisma.transfer.findUnique({
     where: { id: transferId },
-    include: { cryptoPayout: true },
+    include: {
+      cryptoPayout: true,
+      quote: {
+        include: {
+          fromAsset: { select: { code: true } },
+          toAsset: { select: { code: true } },
+        },
+      },
+    },
   });
 
   if (!transfer) {
@@ -111,6 +120,38 @@ export async function POST(req: Request) {
       { error: messages.transferUpdateError },
       { status: 500 }
     );
+  }
+
+  if (transfer.userId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: transfer.userId },
+        select: { email: true },
+      });
+      if (user?.email) {
+        const receiptUrl = `${process.env.NEXTAUTH_URL ?? "https://app.clarisend.co"}/en/transfer/${transfer.id}`;
+        await sendReceiptEmail({
+          to: user.email,
+          referenceCode: transfer.referenceCode,
+          status: "COMPLETED",
+          sendAmount: Number(transfer.quote.sendAmount),
+          totalFee: Number(transfer.quote.totalFee),
+          recipientGets: Number(transfer.quote.recipientGets),
+          fromAsset: transfer.quote.fromAsset.code,
+          toAsset: transfer.quote.toAsset.code,
+          receiptUrl,
+        });
+        await prisma.transfer.update({
+          where: { id: transfer.id },
+          data: {
+            receiptLastSentAt: new Date(),
+            receiptSendCount: { increment: 1 },
+          },
+        });
+      }
+    } catch {
+      // Ignore email errors in dev-only endpoint.
+    }
   }
 
   return NextResponse.json({ ok: true });

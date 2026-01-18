@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import SendCard from "@/components/SendCard";
 import { COUNTRY_OPTIONS } from "@/components/country-options";
 import { formatDateTime, formatMoney, formatPercent } from "@/src/lib/format";
@@ -133,6 +134,18 @@ type Recommendation = {
   routes: RecommendationRoute[];
 };
 
+type Recipient = {
+  id: string;
+  name: string;
+  country: string;
+  rail: "BANK" | "MOBILE_MONEY" | "LIGHTNING";
+  bankName: string | null;
+  bankAccount: string | null;
+  mobileMoneyProvider: string | null;
+  mobileMoneyNumber: string | null;
+  lightningInvoice: string | null;
+};
+
 export default function Home() {
   const params = useParams();
   const locale = useMemo<Locale>(() => {
@@ -143,6 +156,7 @@ export default function Home() {
     return value === "fr" ? "fr" : "en";
   }, [params]);
   const messages = getMessages(locale);
+  const { data: session } = useSession();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetsError, setAssetsError] = useState<string | null>(null);
   const [assetsLoading, setAssetsLoading] = useState(false);
@@ -168,6 +182,7 @@ export default function Home() {
   const [recipientName, setRecipientName] = useState("");
   const [recipientCountry, setRecipientCountry] = useState("GH");
   const [recipientPhone, setRecipientPhone] = useState("");
+  const [recipientLightningInvoice, setRecipientLightningInvoice] = useState("");
   const [payoutRail, setPayoutRail] = useState<
     "" | "MOBILE_MONEY" | "BANK" | "LIGHTNING"
   >("");
@@ -176,6 +191,12 @@ export default function Home() {
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState("");
   const [mobileMoneyNumber, setMobileMoneyNumber] = useState("");
   const [memo, setMemo] = useState("");
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [recipientsLoading, setRecipientsLoading] = useState(false);
+  const [recipientsError, setRecipientsError] = useState<string | null>(null);
+  const [selectedRecipientId, setSelectedRecipientId] = useState("");
+  const [saveRecipient, setSaveRecipient] = useState(false);
+  const [recipientNotice, setRecipientNotice] = useState<string | null>(null);
   const [transferResult, setTransferResult] = useState<{
     id: string;
     status: string;
@@ -331,10 +352,72 @@ export default function Home() {
   }, [assetsList, assetMap, fromAsset, toAsset]);
 
   useEffect(() => {
+    if (!session?.user) {
+      setRecipients([]);
+      setRecipientsError(null);
+      return;
+    }
+    let active = true;
+    setRecipientsLoading(true);
+    setRecipientsError(null);
+
+    fetch("/api/recipients")
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error("load_failed");
+        }
+        return (await res.json()) as Recipient[];
+      })
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+        setRecipients(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+        setRecipientsError(messages.recipientLoadError);
+      })
+      .finally(() => {
+        if (!active) {
+          return;
+        }
+        setRecipientsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [messages.recipientLoadError, session?.user]);
+
+  useEffect(() => {
     if (!transferTouched.country) {
       setRecipientCountry(defaultRecipientCountry);
     }
   }, [defaultRecipientCountry, transferTouched.country]);
+
+  useEffect(() => {
+    if (!selectedRecipientId) {
+      return;
+    }
+    const recipient = recipients.find(
+      (item) => item.id === selectedRecipientId
+    );
+    if (!recipient) {
+      return;
+    }
+    setRecipientName(recipient.name);
+    setRecipientCountry(recipient.country);
+    setPayoutRail(recipient.rail);
+    setBankName(recipient.bankName ?? "");
+    setBankAccount(recipient.bankAccount ?? "");
+    setMobileMoneyProvider(recipient.mobileMoneyProvider ?? "");
+    setMobileMoneyNumber(recipient.mobileMoneyNumber ?? "");
+    setRecipientLightningInvoice(recipient.lightningInvoice ?? "");
+    setRecipientNotice(null);
+  }, [recipients, selectedRecipientId]);
 
   const trimmedRecipientName = recipientName.trim();
   const trimmedRecipientCountry = recipientCountry.trim().toUpperCase();
@@ -548,12 +631,16 @@ export default function Home() {
     setRecipientName("");
     setRecipientCountry(defaultRecipientCountry);
     setRecipientPhone("");
+    setRecipientLightningInvoice("");
     setPayoutRail(rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING");
     setBankName("");
     setBankAccount("");
     setMobileMoneyProvider("");
     setMobileMoneyNumber("");
     setMemo("");
+    setSelectedRecipientId("");
+    setSaveRecipient(false);
+    setRecipientNotice(null);
     setTransferTouched({
       name: false,
       country: false,
@@ -613,6 +700,7 @@ export default function Home() {
     });
     setTransferError(null);
     setTransferResult(null);
+    setRecipientNotice(null);
 
     if (!lockedQuoteId || !quote) {
       setTransferError(messages.invalidQuoteError);
@@ -629,6 +717,45 @@ export default function Home() {
 
     setIsTransferSubmitting(true);
     try {
+      let resolvedRecipientId = selectedRecipientId || undefined;
+
+      if (saveRecipient) {
+        if (!session?.user) {
+          setTransferError(messages.recipientAuthHelper);
+          return;
+        }
+        const recipientRes = await fetch("/api/recipients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: trimmedRecipientName,
+            country: trimmedRecipientCountry,
+            rail: payoutRail,
+            bankName: bankName.trim() || undefined,
+            bankAccount: bankAccount.trim() || undefined,
+            mobileMoneyProvider: mobileMoneyProvider.trim() || undefined,
+            mobileMoneyNumber: mobileMoneyNumber.trim() || undefined,
+            lightningInvoice: recipientLightningInvoice.trim() || undefined,
+          }),
+        });
+        const recipientPayload = (await recipientRes.json().catch(() => null)) as
+          | Recipient
+          | { error?: string }
+          | null;
+        const recipientError =
+          recipientPayload && "error" in recipientPayload
+            ? recipientPayload.error
+            : null;
+        if (!recipientRes.ok || !recipientPayload || recipientError) {
+          setTransferError(recipientError ?? messages.recipientSaveError);
+          return;
+        }
+        const savedRecipient = recipientPayload as Recipient;
+        resolvedRecipientId = savedRecipient.id;
+        setRecipients((prev) => [savedRecipient, ...prev]);
+        setRecipientNotice(messages.recipientSaveSuccess);
+      }
+
       const payload: Record<string, unknown> = {
         quoteId: lockedQuoteId,
         payoutRail,
@@ -639,6 +766,14 @@ export default function Home() {
 
       if (trimmedRecipientPhone.length > 0) {
         payload.recipientPhone = trimmedRecipientPhone;
+      }
+
+      if (resolvedRecipientId) {
+        payload.recipientId = resolvedRecipientId;
+      }
+
+      if (recipientLightningInvoice.trim().length > 0) {
+        payload.recipientLightningInvoice = recipientLightningInvoice.trim();
       }
 
       if (payoutRail === "BANK") {
@@ -689,18 +824,25 @@ export default function Home() {
   }, [
     bankAccount,
     bankName,
+    mobileMoneyNumber,
+    mobileMoneyProvider,
     isExpired,
     isTransferValid,
     lockedQuoteId,
     memo,
     messages.invalidQuoteError,
     messages.quoteExpiredError,
+    messages.recipientAuthHelper,
+    messages.recipientSaveError,
+    messages.recipientSaveSuccess,
     messages.transferCreateError,
     messages.transferIncompleteMessage,
-    mobileMoneyNumber,
-    mobileMoneyProvider,
     payoutRail,
     quote,
+    recipientLightningInvoice,
+    saveRecipient,
+    selectedRecipientId,
+    session?.user,
     trimmedRecipientCountry,
     trimmedRecipientName,
     trimmedRecipientPhone,
@@ -803,18 +945,21 @@ export default function Home() {
       key: "cheapest",
       label: messages.cheapestLabel,
       accent: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
+      surface: "border-emerald-200/70 bg-emerald-50/50",
       route: cheapestRoute,
     },
     {
       key: "fastest",
       label: messages.fastestLabel,
       accent: "border-sky-200/70 bg-sky-50 text-sky-700",
+      surface: "border-sky-200/70 bg-sky-50/50",
       route: fastestRoute,
     },
     {
       key: "best",
       label: messages.bestValueLabel,
       accent: "border-amber-200/70 bg-amber-50 text-amber-700",
+      surface: "border-amber-200/70 bg-amber-50/50",
       route: bestValueRoute,
     },
   ];
@@ -861,14 +1006,14 @@ export default function Home() {
   const inputClassName =
     "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40";
   const cardClassName =
-    "rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]";
+    "rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.45)]";
 
   return (
     <div className="bg-[var(--brand-surface)] text-slate-900">
       <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#d9f3ee,_#f5f7fb_50%,_#fff4e6)]">
         <div className="pointer-events-none absolute -top-24 right-8 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl motion-safe:animate-[float-slow_12s_ease-in-out_infinite]" />
         <div className="pointer-events-none absolute -bottom-32 left-10 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl motion-safe:animate-[float-slow_14s_ease-in-out_infinite]" />
-        <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 lg:py-24">
+        <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="space-y-6">
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
@@ -952,7 +1097,7 @@ export default function Home() {
 
       {quoteActive ? (
         <section id="quote" className="border-y border-slate-200/70 bg-white">
-          <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
+          <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
@@ -1024,7 +1169,7 @@ export default function Home() {
                     {suggestionCards.map((card) => (
                       <div
                         key={card.key}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700"
+                        className={`rounded-2xl border px-4 py-4 text-sm text-slate-700 ${card.surface}`}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span
@@ -1040,6 +1185,12 @@ export default function Home() {
                           <>
                             <p className="mt-3 text-base font-semibold text-slate-900">
                               {resolveRailName(card.route.rail)}
+                            </p>
+                            <p className="mt-2 text-xs text-slate-600">
+                              <span className="font-semibold text-slate-500">
+                                {messages.recommendationWhyLabel}:
+                              </span>{" "}
+                              {card.route.explanation}
                             </p>
                             <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-500">
                               {messages.etaRangeLabel(
@@ -1074,7 +1225,7 @@ export default function Home() {
                             </button>
                           </>
                         ) : (
-                          <p className="mt-3 text-xs text-slate-500">
+                          <p className="mt-3 text-xs text-slate-600">
                             {messages.recommendationEmpty}
                           </p>
                         )}
@@ -1082,9 +1233,9 @@ export default function Home() {
                     ))}
                   </div>
                   {recommendationError ? (
-                    <p className="mt-3 text-xs text-rose-600">
+                    <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
                       {recommendationError}
-                    </p>
+                    </div>
                   ) : null}
                 </div>
 
@@ -1312,6 +1463,46 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      {session?.user ? (
+                        <div className="sm:col-span-2 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3">
+                          <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                            {messages.recipientSelectLabel}
+                            <select
+                              value={selectedRecipientId}
+                              onChange={(event) =>
+                                setSelectedRecipientId(event.target.value)
+                              }
+                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900"
+                            >
+                              <option value="">
+                                {messages.recipientSelectPlaceholder}
+                              </option>
+                              {recipients.map((recipient) => (
+                                <option key={recipient.id} value={recipient.id}>
+                                  {recipient.name} ({recipient.country})
+                                </option>
+                              ))}
+                            </select>
+                            <span className="text-[11px] normal-case tracking-normal text-slate-500">
+                              {messages.recipientSelectHelper}
+                            </span>
+                          </label>
+                          {recipientsLoading ? (
+                            <p className="mt-2 text-xs text-slate-500">
+                              {messages.assetsLoading}
+                            </p>
+                          ) : null}
+                          {recipientsError ? (
+                            <p className="mt-2 text-xs text-rose-600">
+                              {recipientsError}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="sm:col-span-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                          {messages.recipientAuthHelper}
+                        </div>
+                      )}
                       <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                         {messages.recipientNameLabel}
                         <input
@@ -1504,6 +1695,38 @@ export default function Home() {
                         ) : null}
                       </div>
                     ) : null}
+                    {payoutRail === "LIGHTNING" ? (
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <label className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          {messages.recipientLightningInvoiceLabel}
+                          <input
+                            type="text"
+                            value={recipientLightningInvoice}
+                            onChange={(event) =>
+                              setRecipientLightningInvoice(event.target.value)
+                            }
+                            className={inputClassName}
+                            aria-label={messages.recipientLightningInvoiceLabel}
+                          />
+                        </label>
+                      </div>
+                    ) : null}
+                    {session?.user ? (
+                      <label className="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        <input
+                          type="checkbox"
+                          checked={saveRecipient}
+                          onChange={(event) => setSaveRecipient(event.target.checked)}
+                          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus-visible:ring-emerald-500/40"
+                        />
+                        {messages.recipientSaveToggleLabel}
+                      </label>
+                    ) : null}
+                    {recipientNotice ? (
+                      <p className="mt-2 text-xs text-emerald-600">
+                        {recipientNotice}
+                      </p>
+                    ) : null}
                     <button
                       type="button"
                       disabled={!isTransferValid || isTransferSubmitting}
@@ -1567,7 +1790,7 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section id="features" className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
+      <section id="features" className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
             {messages.featuresLinkLabel}
@@ -1606,7 +1829,7 @@ export default function Home() {
         id="faq"
         className="border-t border-slate-200/70 bg-slate-50"
       >
-        <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
+        <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
           <div className="flex flex-col gap-3">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
               {messages.footerFaqLinkLabel}

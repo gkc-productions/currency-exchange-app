@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 
@@ -26,6 +27,7 @@ type TransferSummary = {
   recipientBankAccount: string | null;
   recipientMobileMoneyProvider: string | null;
   recipientMobileMoneyNumber: string | null;
+  recipientLightningInvoice: string | null;
   memo: string | null;
   createdAt: string;
   updatedAt: string;
@@ -108,6 +110,10 @@ export default function TransferReceiptPage() {
     null
   );
   const [isSimulating, setIsSimulating] = useState(false);
+  const [resendState, setResendState] = useState<
+    "idle" | "sending" | "sent" | "error" | "rate"
+  >("idle");
+  const { data: session } = useSession();
 
   const statusLabels = useMemo(
     () => ({
@@ -254,6 +260,29 @@ export default function TransferReceiptPage() {
     }
   }, [fetchReceipt, transferId]);
 
+  const handleResendReceipt = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    setResendState("sending");
+    try {
+      const res = await fetch(`/api/transfers/${transferId}/receipt`, {
+        method: "POST",
+      });
+      if (res.status === 429) {
+        setResendState("rate");
+        return;
+      }
+      if (!res.ok) {
+        setResendState("error");
+        return;
+      }
+      setResendState("sent");
+    } catch {
+      setResendState("error");
+    }
+  }, [transferId]);
+
   const activeState = requestState?.id === transferId ? requestState : null;
   const data = activeState?.data ?? null;
   const error = activeState?.error ?? null;
@@ -394,7 +423,30 @@ export default function TransferReceiptPage() {
                     ? messages.copiedLabel
                     : messages.copyLinkButton}
                 </button>
+                {session?.user ? (
+                  <button
+                    type="button"
+                    onClick={handleResendReceipt}
+                    disabled={resendState === "sending"}
+                    className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed"
+                  >
+                    {resendState === "sending"
+                      ? messages.receiptResendLoading
+                      : messages.receiptResendButton}
+                  </button>
+                ) : null}
               </div>
+              {session?.user && resendState !== "idle" ? (
+                <p className="text-xs text-slate-400">
+                  {resendState === "sent"
+                    ? messages.receiptResendSuccess
+                    : resendState === "rate"
+                      ? messages.receiptResendRateLimited
+                      : resendState === "error"
+                        ? messages.receiptResendError
+                        : null}
+                </p>
+              ) : null}
             </div>
           </div>
         </header>
@@ -495,6 +547,14 @@ export default function TransferReceiptPage() {
                     <span>{messages.mobileMoneyNumberLabel}</span>
                     <span className="font-semibold text-white">
                       {transfer.recipientMobileMoneyNumber}
+                    </span>
+                  </div>
+                ) : null}
+                {transfer.recipientLightningInvoice ? (
+                  <div className="flex items-center justify-between">
+                    <span>{messages.recipientLightningInvoiceLabel}</span>
+                    <span className="font-semibold text-white">
+                      {transfer.recipientLightningInvoice}
                     </span>
                   </div>
                 ) : null}

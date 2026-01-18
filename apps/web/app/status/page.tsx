@@ -30,23 +30,34 @@ export default function StatusPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
 
-  const fetchStatus = async () => {
-    try {
-      const res = await fetch("/api/status", { cache: "no-store" });
-      const data = await res.json();
-      setStatus(data);
-      setError(null);
-      setLastFetch(new Date());
-    } catch (err) {
-      setError("Failed to fetch status");
-      console.error("Status fetch error:", err);
-    }
-  };
-
   useEffect(() => {
-    fetchStatus();
+    let active = true;
+
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch("/api/status", { cache: "no-store" });
+        const data = await res.json();
+        if (!active) {
+          return;
+        }
+        setStatus(data);
+        setError(null);
+        setLastFetch(new Date());
+      } catch (err) {
+        if (!active) {
+          return;
+        }
+        setError("Failed to fetch status");
+        console.error("Status fetch error:", err);
+      }
+    };
+
+    void fetchStatus();
     const interval = setInterval(fetchStatus, 10000); // Poll every 10s
-    return () => clearInterval(interval);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const getStatusColor = (s: string) => {

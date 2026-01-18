@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
+import { sendReceiptEmail } from "@/src/lib/email";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -93,24 +94,25 @@ export async function GET(
     );
   }
 
-  return NextResponse.json({
-    transfer: {
-      id: transfer.id,
-      referenceCode: transfer.referenceCode,
-      quoteId: transfer.quoteId,
-      status: transfer.status,
-      payoutRail: transfer.payoutRail,
-      recipientName: transfer.recipientName,
-      recipientCountry: transfer.recipientCountry,
-      recipientPhone: transfer.recipientPhone,
-      recipientBankName: transfer.recipientBankName,
-      recipientBankAccount: transfer.recipientBankAccount,
-      recipientMobileMoneyProvider: transfer.recipientMobileMoneyProvider,
-      recipientMobileMoneyNumber: transfer.recipientMobileMoneyNumber,
-      memo: transfer.memo,
-      createdAt: transfer.createdAt,
-      updatedAt: transfer.updatedAt,
-    },
+    return NextResponse.json({
+      transfer: {
+        id: transfer.id,
+        referenceCode: transfer.referenceCode,
+        quoteId: transfer.quoteId,
+        status: transfer.status,
+        payoutRail: transfer.payoutRail,
+        recipientName: transfer.recipientName,
+        recipientCountry: transfer.recipientCountry,
+        recipientPhone: transfer.recipientPhone,
+        recipientBankName: transfer.recipientBankName,
+        recipientBankAccount: transfer.recipientBankAccount,
+        recipientMobileMoneyProvider: transfer.recipientMobileMoneyProvider,
+        recipientMobileMoneyNumber: transfer.recipientMobileMoneyNumber,
+        recipientLightningInvoice: transfer.recipientLightningInvoice,
+        memo: transfer.memo,
+        createdAt: transfer.createdAt,
+        updatedAt: transfer.updatedAt,
+      },
     cryptoPayout: transfer.cryptoPayout
       ? {
           id: transfer.cryptoPayout.id,
@@ -163,7 +165,14 @@ export async function PATCH(
 
   const transfer = await prisma.transfer.findUnique({
     where: { id: transferId },
-    include: { quote: true },
+    include: {
+      quote: {
+        include: {
+          fromAsset: { select: { code: true } },
+          toAsset: { select: { code: true } },
+        },
+      },
+    },
   });
 
   if (!transfer) {
@@ -233,6 +242,38 @@ export async function PATCH(
       { error: messages.transferUpdateError },
       { status: 500 }
     );
+  }
+
+  if (nextStatus === "COMPLETED" && transfer.userId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: transfer.userId },
+        select: { email: true },
+      });
+      if (user?.email) {
+        const receiptUrl = `${process.env.NEXTAUTH_URL ?? "https://app.clarisend.co"}/en/transfer/${transfer.id}`;
+        await sendReceiptEmail({
+          to: user.email,
+          referenceCode: transfer.referenceCode,
+          status: nextStatus,
+          sendAmount: Number(transfer.quote.sendAmount),
+          totalFee: Number(transfer.quote.totalFee),
+          recipientGets: Number(transfer.quote.recipientGets),
+          fromAsset: transfer.quote.fromAsset.code,
+          toAsset: transfer.quote.toAsset.code,
+          receiptUrl,
+        });
+        await prisma.transfer.update({
+          where: { id: transferId },
+          data: {
+            receiptLastSentAt: new Date(),
+            receiptSendCount: { increment: 1 },
+          },
+        });
+      }
+    } catch {
+      // Email failures should not block status updates.
+    }
   }
 
   return NextResponse.json(updated);
