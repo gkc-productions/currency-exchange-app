@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getMarketRate } from "@/src/lib/rates";
+import { enforceRateLimit } from "@/src/lib/rate-limit";
+import { getClientIp } from "@/src/lib/security";
 
 function parseOptionalNumber(value: string | null) {
   if (value === null) {
@@ -14,12 +16,43 @@ function parseOptionalNumber(value: string | null) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function parseNumber(value: string | null, fallback: number) {
+type NumberParamResult =
+  | { ok: true; value: number }
+  | { ok: false; error: string };
+
+function readNumberParam(
+  value: string | null,
+  fallback: number,
+  label: string,
+  { min }: { min?: number } = {}
+): NumberParamResult {
+  if (value === null) {
+    return { ok: true, value: fallback };
+  }
   const parsed = parseOptionalNumber(value);
-  return parsed ?? fallback;
+  if (parsed === null) {
+    return { ok: false, error: `${label} must be a number.` };
+  }
+  if (min !== undefined && parsed < min) {
+    return { ok: false, error: `${label} must be at least ${min}.` };
+  }
+  return { ok: true, value: parsed };
 }
 
 export async function GET(req: Request) {
+  const ip = getClientIp(req);
+  const rate = await enforceRateLimit({
+    key: `quote:${ip}`,
+    limit: 30,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many quote requests. Please wait a moment and try again." },
+      { status: 429 }
+    );
+  }
+
   const { searchParams } = new URL(req.url);
 
   const fromParam = searchParams.get("fromAsset") || searchParams.get("from");
@@ -46,7 +79,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: `We don't currently support ${to}. Please select a different currency.` }, { status: 400 });
   }
 
-  const sendAmount = parseNumber(searchParams.get("sendAmount"), 100);
+  const sendAmountResult = readNumberParam(
+    searchParams.get("sendAmount"),
+    100,
+    "sendAmount",
+    { min: 1 }
+  );
+  if (!sendAmountResult.ok) {
+    return NextResponse.json({ error: sendAmountResult.error }, { status: 400 });
+  }
+  const sendAmount = sendAmountResult.value;
   const marketRateInput = parseOptionalNumber(searchParams.get("marketRate"));
   let marketRate = marketRateInput ?? 0;
   let rateSource = "manual";
@@ -60,9 +102,37 @@ export async function GET(req: Request) {
     rateSource = marketRateQuote.source;
     rateTimestamp = marketRateQuote.timestamp;
   }
-  const fxMarginPct = parseNumber(searchParams.get("fxMarginPct"), 1.5);
-  const feeFixed = parseNumber(searchParams.get("feeFixed"), 1.0);
-  const feePct = parseNumber(searchParams.get("feePct"), 2.9);
+  const fxMarginResult = readNumberParam(
+    searchParams.get("fxMarginPct"),
+    1.5,
+    "fxMarginPct",
+    { min: 0 }
+  );
+  if (!fxMarginResult.ok) {
+    return NextResponse.json({ error: fxMarginResult.error }, { status: 400 });
+  }
+  const feeFixedResult = readNumberParam(
+    searchParams.get("feeFixed"),
+    1.0,
+    "feeFixed",
+    { min: 0 }
+  );
+  if (!feeFixedResult.ok) {
+    return NextResponse.json({ error: feeFixedResult.error }, { status: 400 });
+  }
+  const feePctResult = readNumberParam(
+    searchParams.get("feePct"),
+    2.9,
+    "feePct",
+    { min: 0 }
+  );
+  if (!feePctResult.ok) {
+    return NextResponse.json({ error: feePctResult.error }, { status: 400 });
+  }
+
+  const fxMarginPct = fxMarginResult.value;
+  const feeFixed = feeFixedResult.value;
+  const feePct = feePctResult.value;
 
   const feePercent = (feePct / 100) * sendAmount;
   const totalFee = feeFixed + feePercent;

@@ -5,6 +5,8 @@ import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
 import { getServerAuthSession } from "@/src/lib/auth";
 import { sendTransferStatusEmail } from "@/src/lib/email";
+import { enforceRateLimit } from "@/src/lib/rate-limit";
+import { getClientIp, isSameOrigin } from "@/src/lib/security";
 
 const payoutRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING"]);
 const cryptoNetworks = new Set(["BTC_LIGHTNING", "BTC_ONCHAIN"]);
@@ -54,14 +56,13 @@ function parsePositiveInt(value: unknown) {
   if (value === undefined || value === null) {
     return { provided: false, valid: true, value: null as number | null };
   }
-  if (typeof value === "string" && value.trim().length === 0) {
+  if (typeof value !== "number") {
     return { provided: true, valid: false, value: null as number | null };
   }
-  const parsed = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(parsed)) {
+  if (!Number.isFinite(value)) {
     return { provided: true, valid: false, value: null as number | null };
   }
-  const rounded = Math.round(parsed);
+  const rounded = Math.round(value);
   if (rounded <= 0) {
     return { provided: true, valid: false, value: null as number | null };
   }
@@ -123,6 +124,13 @@ function buildTransferResponse(transfer: {
 }
 
 export async function POST(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json(
+      { error: "This action is only available from the ClariSend app." },
+      { status: 403 }
+    );
+  }
+
   const idempotencyKey = readOptionalString(
     req.headers.get("idempotency-key")
   );
@@ -137,7 +145,14 @@ export async function POST(req: Request) {
 
   let payload: TransferPayload;
   try {
-    payload = (await req.json()) as TransferPayload;
+    const body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Invalid request payload." },
+        { status: 400 }
+      );
+    }
+    payload = body as TransferPayload;
   } catch {
     return NextResponse.json({ error: "We couldn't process your request. Please try again." }, { status: 400 });
   }
@@ -345,6 +360,19 @@ export async function POST(req: Request) {
       select: { id: true },
     });
     userId = user?.id ?? null;
+  }
+
+  const rateKey = userId ? `transfer:user:${userId}` : `transfer:ip:${getClientIp(req)}`;
+  const rate = await enforceRateLimit({
+    key: rateKey,
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many transfer requests. Please wait a moment and try again." },
+      { status: 429 }
+    );
   }
 
   const recipientIdInput = readOptionalString(payload.recipientId);

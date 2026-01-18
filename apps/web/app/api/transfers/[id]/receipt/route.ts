@@ -2,16 +2,25 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
 import { sendReceiptEmail } from "@/src/lib/email";
+import { enforceRateLimit } from "@/src/lib/rate-limit";
+import { getClientIp, isSameOrigin } from "@/src/lib/security";
 
 const RESEND_COOLDOWN_MS = 60 * 1000;
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   const session = await getServerAuthSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!isSameOrigin(req)) {
+    return NextResponse.json(
+      { error: "This action is only available from the ClariSend app." },
+      { status: 403 }
+    );
   }
 
   const resolvedParams = await Promise.resolve(params);
@@ -26,6 +35,19 @@ export async function POST(
 
   if (!user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateKey = `receipt:${user.id ?? getClientIp(req)}`;
+  const rate = await enforceRateLimit({
+    key: rateKey,
+    limit: 3,
+    windowMs: 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "You're sending receipts too quickly. Please wait a minute and try again." },
+      { status: 429 }
+    );
   }
 
   const transfer = await prisma.transfer.findUnique({

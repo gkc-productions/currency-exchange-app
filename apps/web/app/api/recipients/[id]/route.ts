@@ -1,14 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
+import { isSameOrigin } from "@/src/lib/security";
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   const session = await getServerAuthSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!isSameOrigin(req)) {
+    return NextResponse.json(
+      { error: "This action is only available from the ClariSend app." },
+      { status: 403 }
+    );
   }
 
   const resolvedParams = await Promise.resolve(params);

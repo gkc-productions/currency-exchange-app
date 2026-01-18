@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
+import { isSameOrigin } from "@/src/lib/security";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -51,6 +52,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!isSameOrigin(req)) {
+    return NextResponse.json(
+      { error: "This action is only available from the ClariSend app." },
+      { status: 403 }
+    );
+  }
+
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
   });
@@ -71,7 +79,11 @@ export async function POST(req: Request) {
   };
 
   try {
-    payload = (await req.json()) as typeof payload;
+    const body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    payload = body as typeof payload;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }

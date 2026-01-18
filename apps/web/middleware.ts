@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 const SUPPORTED_LOCALES = ["en", "fr"] as const;
 const DEFAULT_LOCALE = "en";
 const PUBLIC_FILE = /\.(.*)$/;
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 function createRequestId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -57,7 +58,12 @@ export function middleware(req: NextRequest) {
   const locale = pathname.split("/")[1] ?? DEFAULT_LOCALE;
   const response = NextResponse.next();
   if (SUPPORTED_LOCALES.includes(locale as (typeof SUPPORTED_LOCALES)[number])) {
-    response.cookies.set("locale", locale, { path: "/", sameSite: "lax" });
+    response.cookies.set("locale", locale, {
+      path: "/",
+      sameSite: "lax",
+      httpOnly: true,
+      secure: IS_PRODUCTION,
+    });
   }
   return response;
 }
