@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Fraunces, Space_Grotesk } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-brand-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-brand-display",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -40,11 +34,7 @@ export default async function RootLayout({
 
   return (
     <html lang={htmlLang}>
-      <body
-        className={`${spaceGrotesk.variable} ${fraunces.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <body className={`${spaceGrotesk.variable} antialiased`}>{children}</body>
     </html>
   );
 }

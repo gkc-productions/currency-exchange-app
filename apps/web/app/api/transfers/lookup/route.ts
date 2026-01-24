@@ -61,7 +61,7 @@ export async function GET(req: Request) {
   }
 
   const transfer = await prisma.transfer.findUnique({
-    where: { reference },
+    where: { referenceCode: reference },
     include: {
       quote: {
         include: {
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     transfer: {
-      reference: transfer.reference,
+      reference: transfer.referenceCode,
       status: transfer.status,
       payoutRail: transfer.payoutRail,
       createdAt: transfer.createdAt,

@@ -1,0 +1,23 @@
+[Unit]
+Description=ClariSend Web (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=gkc
+WorkingDirectory=/opt/apps/currency-exchange-app/apps/web
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=-/etc/clarisend/clarisend-web.env
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGINT
+NoNewPrivileges=yes
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

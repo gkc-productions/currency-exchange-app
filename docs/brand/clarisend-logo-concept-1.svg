@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200" fill="none">
+  <rect width="900" height="200" fill="none"/>
+  <g transform="translate(20 20)">
+    <path d="M20 120 A60 60 0 0 1 120 20" stroke="#1E8E8B" stroke-width="10" stroke-linecap="round"/>
+    <path d="M40 140 A80 80 0 0 1 140 40" stroke="#0B1F2A" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="132" cy="28" r="6" fill="#1E8E8B"/>
+  </g>
+  <text x="220" y="118" fill="#0B1F2A" font-family="Sohne, 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="0.5">ClariSend</text>
+  <text x="224" y="152" fill="#2E4A5A" font-family="Sohne, 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="20" letter-spacing="1">by GKC Financial Technologies</text>
+</svg>

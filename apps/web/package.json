@@ -5,12 +5,16 @@
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0 --port 3000",
     "build": "next build",
-    "start": "next start",
+    "start": "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://127.0.0.1:3000} NEXT_PUBLIC_MARKETING_URL=${NEXT_PUBLIC_MARKETING_URL:-https://clarisend.co} node scripts/check-env.cjs && next start",
+    "start:prod": "bash -lc 'if [ ! -f .next/BUILD_ID ]; then echo \"Build not found. Running npm run build...\"; npm run build; fi; next start --hostname ${HOSTNAME:-0.0.0.0} --port ${PORT:-3000}'",
+    "pm2:prod": "bash ../../ops/port-guard.sh && pm2 start ../../ops/ecosystem.config.cjs --env production",
+    "pm2:stop": "pm2 stop clarisend-web || true",
+    "pm2:restart": "pm2 restart clarisend-web || pm2 start ../../ops/ecosystem.config.cjs --env production",
     "lint": "eslint .",
     "smoke": "bash scripts/smoke.sh",
-    "test:e2e": "PLAYWRIGHT_WEB_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost:3000 playwright test",
-    "audit:ui": "playwright test --reporter=line",
-    "audit:ui:headed": "playwright test --headed"
+    "test:e2e": "PLAYWRIGHT_WEB_SERVER=1 PLAYWRIGHT_BASE_URL=http://localhost:3000 bash scripts/run-playwright.sh test",
+    "audit:ui": "bash scripts/run-playwright.sh test --reporter=line",
+    "audit:ui:headed": "bash scripts/run-playwright.sh test --headed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

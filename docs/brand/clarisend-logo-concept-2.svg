@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200" fill="none">
+  <rect width="900" height="200" fill="none"/>
+  <g transform="translate(20 10)">
+    <path d="M120 40 A60 60 0 1 0 120 160" stroke="#0B1F2A" stroke-width="12" stroke-linecap="round"/>
+    <line x1="70" y1="100" x2="150" y2="100" stroke="#1E8E8B" stroke-width="10" stroke-linecap="round"/>
+    <polyline points="140 88 160 100 140 112" fill="none" stroke="#1E8E8B" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="220" y="118" fill="#0B1F2A" font-family="Sohne, 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="0.5">ClariSend</text>
+</svg>

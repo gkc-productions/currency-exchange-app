@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+/test-results
+
+# playwright local runtime
+/.playwright-libs
+/.apt
 
 # next.js
 /.next/
@@ -41,3 +46,7 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# audit artifacts
+/audit/screenshots/*
+!/audit/screenshots/.gitkeep

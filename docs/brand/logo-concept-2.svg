@@ -1,0 +1,8 @@
+<svg width="800" height="240" viewBox="0 0 800 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="240" fill="white"/>
+  <text x="24" y="140" font-family="Sohne, Manrope, 'Source Sans 3', sans-serif" font-size="88" font-weight="500" fill="#0B1F2A">Clari</text>
+  <text x="300" y="140" font-family="Sohne, Manrope, 'Source Sans 3', sans-serif" font-size="88" font-weight="700" fill="#1F6F78">Send</text>
+  <line x1="340" y1="70" x2="420" y2="70" stroke="#0B1F2A" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="340" cy="70" r="6" fill="#0B1F2A"/>
+  <circle cx="420" cy="70" r="6" fill="#0B1F2A"/>
+</svg>

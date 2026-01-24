@@ -171,6 +171,12 @@ async function createTransfer(request: APIRequestContext, rail: string) {
       number: "+233240000000",
     };
   }
+  if (rail === "LIGHTNING") {
+    payload.crypto = {
+      network: "BTC_LIGHTNING",
+      amountSats: 5000,
+    };
+  }
 
   const transferResponse = await request.post("/api/transfers", {
     data: payload,
@@ -208,8 +214,9 @@ test.describe("UI audit", () => {
       recordStep(`Open country selector on /${locale}`);
       const selectorButton = page.locator('button[aria-haspopup="dialog"]').first();
       await selectorButton.click();
-      await expect(page.getByRole("dialog")).toBeVisible();
-      await expect(page.getByText("USD", { exact: false })).toBeVisible();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      await expect(dialog.locator('input[type="search"]')).toBeVisible();
       await page.keyboard.press("Escape");
 
       recordStep(`Request quotes for USD→GHS and USD→XOF (${locale})`);

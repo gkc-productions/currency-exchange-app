@@ -1,62 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ClariSend Web
 
-## UI structure
+## First-time setup
 
-- AppShell lives in `app/[locale]/layout.tsx` and composes `components/Navbar.tsx` and `components/Footer.tsx`.
-- The landing funnel and quote flow live in `app/[locale]/page.tsx` with reusable UI in `components/`.
-- Transfer receipts remain in `app/[locale]/transfer/[id]/page.tsx`.
+```bash
+npm ci
+npx prisma generate
+npm run build
+pm2 start ops/ecosystem.config.cjs --env production
+pm2 save
+```
 
-## Routes
-
-- `/{locale}`: landing funnel + quote/recommendation flow
-- `/{locale}/transfer/[id]`: transfer receipt page
-- `/{locale}/about`, `/{locale}/security`, `/{locale}/fees`, `/{locale}/help`: placeholder brand pages
-
-## Brand usage
-
-- Primary logo: `public/brand/clarisend-logo-full.svg`; use `public/brand/clarisend-logo-white.svg` on dark surfaces.
-- Abstract mark: `public/brand/clarisend-mark.svg` for icons or tight spaces.
-- Keep clear space around the logo equal to the mark width; minimum logo width 120px.
-- Use Tailwind tokens (`text-brand-ink`, `bg-brand-surface`, `bg-brand-accent`) for UI color alignment.
-- Favicons and app icons live in `public/` (`favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `icon-512.png`).
-
-## Testing
-
-- Smoke: `npm run smoke` (requires the dev server running; or set `BASE_URL`).
-- E2E: `npm run test:e2e` (starts a local dev server via Playwright).
-- UI audit: `npm run audit:ui` (targets `http://10.0.0.105:3000`).
-
-## Getting Started
-
-First, run the development server:
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Production
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Build and start:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start:prod
+```
 
-## Learn More
+Production expects:
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_MARKETING_URL`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`DATABASE_URL` is required for DB-backed features. If it is missing, the server
+still starts and `/api/status` reports `db.ok=false`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+You can supply env values via `/etc/clarisend/clarisend-web.env`.
 
-## Deploy on Vercel
+## PM2
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Start or reload:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pm2 start ops/ecosystem.config.cjs --env production
+pm2 reload clarisend-web --update-env
+```
+
+Status and logs:
+
+```bash
+pm2 status
+pm2 logs clarisend-web
+```
+
+Default log locations:
+
+- `~/.pm2/logs/clarisend-web-out.log`
+- `~/.pm2/logs/clarisend-web-error.log`
+
+## Deploy
+
+```bash
+bash scripts/deploy.sh
+```
+
+## Smoke Checks
+
+```bash
+bash scripts/smoke.sh
+```
+
+Smoke checks expect:
+
+- `/en` and `/fr` return 200 or 307
+- `/api/assets` returns 200
+- `/api/status` returns 200 JSON (can be degraded; `db.ok` may be false)
+
+Set `BASE_URL` to target a non-default host or port.

@@ -77,22 +77,22 @@ export default function Footer({ locale }: { locale: Locale }) {
 
   return (
     <footer className="border-t border-brand-border/70 bg-brand-mist">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-12 sm:px-10 lg:grid-cols-[1.2fr_2.2fr]">
-        <div className="space-y-4">
-          <div className="space-y-2">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-12 px-6 py-16 sm:px-8 lg:grid-cols-[1.2fr_2.2fr] lg:px-10 lg:py-24">
+        <div className="space-y-6">
+          <div className="space-y-3">
             <img
               src="/brand/clarisend-logo-full.svg"
               alt="ClariSend"
               className="h-9 w-auto"
             />
-            <p className="text-xs uppercase tracking-[0.24em] text-brand-muted">
+            <p className="text-sm uppercase tracking-[0.22em] text-brand-muted">
               {messages.tagline}
             </p>
           </div>
-          <p className="max-w-sm text-sm text-brand-muted">
+          <p className="max-w-sm text-sm leading-relaxed text-brand-muted">
             {messages.footerTagline}
           </p>
-          <div className="flex items-center gap-3 text-brand-muted">
+          <div className="flex items-center gap-4 text-brand-muted">
             {SOCIAL_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -106,17 +106,17 @@ export default function Footer({ locale }: { locale: Locale }) {
               </a>
             ))}
           </div>
-          <p className="text-xs text-brand-muted">
+          <p className="text-sm text-brand-muted">
             © {year} GKC Financial Technologies
           </p>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {columns.map((column) => (
             <div key={column.title}>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-muted">
                 {column.title}
               </p>
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="mt-4 flex flex-col gap-3">
                 {column.links.map((link) => (
                   <Link
                     key={link.label}

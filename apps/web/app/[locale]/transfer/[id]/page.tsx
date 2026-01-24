@@ -93,6 +93,31 @@ export default function TransferReceiptPage() {
     return value === "fr" ? "fr" : "en";
   }, [params]);
   const messages = getMessages(locale);
+  const receiptCopy = useMemo(
+    () =>
+      locale === "fr"
+        ? {
+            cryptoPayoutLabel: "Paiement crypto",
+            cryptoNetworkLabel: "Réseau",
+            cryptoCreatedAtLabel: "Créé le",
+            mockPayProcessingLabel: "Traitement...",
+            shareTransferLabel: "Partager le transfert",
+            shareTransferLinkLabel: "Lien de partage",
+            transferHelpSubtitle:
+              "Besoin de modifier le bénéficiaire ou comprendre un retard ? Notre équipe peut aider.",
+          }
+        : {
+            cryptoPayoutLabel: "Crypto payout",
+            cryptoNetworkLabel: "Network",
+            cryptoCreatedAtLabel: "Created at",
+            mockPayProcessingLabel: "Processing...",
+            shareTransferLabel: "Share transfer",
+            shareTransferLinkLabel: "Share link",
+            transferHelpSubtitle:
+              "Need to update recipient details or understand a delay? Our team can help.",
+          },
+    [locale]
+  );
   const transferId = useMemo(() => {
     const value = params?.id;
     if (Array.isArray(value)) {
@@ -111,7 +136,7 @@ export default function TransferReceiptPage() {
   const [isSimulating, setIsSimulating] = useState(false);
   const transferCompletedLogged = useRef(false);
 
-  const statusLabels = useMemo(
+  const statusLabels = useMemo<Record<string, string>>(
     () => ({
       READY: messages.statusReadyLabel,
       PROCESSING: messages.statusProcessingLabel,
@@ -139,11 +164,17 @@ export default function TransferReceiptPage() {
       | TransferReceiptResponse
       | { error?: string; expired?: boolean }
       | null;
+    const expired = Boolean(
+      payload &&
+        typeof payload === "object" &&
+        "expired" in payload &&
+        (payload as { expired?: boolean }).expired
+    );
     if (!res.ok) {
       if (res.status === 404) {
         throw new Error("not_found");
       }
-      if (res.status === 410 || payload?.expired) {
+      if (res.status === 410 || expired) {
         throw new Error("expired");
       }
       throw new Error("generic");
@@ -219,420 +250,512 @@ export default function TransferReceiptPage() {
 
   const handleCopy = async (value: string, kind: "code" | "link") => {
     const success = await copyText(value);
-    setCopied(success ? kind : null);
+    if (success) {
+      setCopied(kind);
+    }
   };
 
-  const handleCopyInvoice = async (value: string) => {
-    const success = await copyText(value);
-    setCopied(success ? "invoice" : null);
+  const handleCopyInvoice = async () => {
+    if (!requestState?.data?.cryptoPayout?.invoice) {
+      return;
+    }
+    const success = await copyText(requestState.data.cryptoPayout.invoice);
+    if (success) {
+      setCopied("invoice");
+    }
   };
 
-  const handleSimulatePayment = useCallback(async () => {
-    if (!transferId) {
+  const handleMockPay = useCallback(async () => {
+    if (!requestState?.data?.cryptoPayout?.id) {
       return;
     }
     setIsSimulating(true);
     try {
-      const res = await fetch("/api/crypto/mock-pay", {
+      await fetch("/api/crypto/mock-pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transferId }),
+        body: JSON.stringify({ payoutId: requestState.data.cryptoPayout.id }),
       });
-      if (!res.ok) {
-        return;
-      }
-      const updated = await fetchReceipt(transferId);
-      setRequestState({ id: transferId, data: updated, error: null });
+      void fetchReceipt(requestState.id).then((payload) => {
+        setRequestState({ id: requestState.id, data: payload, error: null });
+      });
     } catch {
-      // Ignore dev-only failures.
+      // No-op.
     } finally {
       setIsSimulating(false);
     }
-  }, [fetchReceipt, transferId]);
+  }, [fetchReceipt, requestState]);
 
-  const activeState = requestState?.id === transferId ? requestState : null;
-  const data = activeState?.data ?? null;
-  const error = activeState?.error ?? null;
-  const resolvedError = transferId ? error : "not_found";
-  const isLoading = Boolean(transferId) && !activeState;
-  const isDev = process.env.NODE_ENV !== "production";
+  const payload = requestState?.data ?? null;
+  const transfer = payload?.transfer ?? null;
+  const quote = payload?.quote ?? null;
+  const events = payload?.events ?? [];
+  const cryptoPayout = payload?.cryptoPayout ?? null;
+  const statusLabel = transfer?.status
+    ? statusLabels[transfer.status] ?? transfer.status
+    : "—";
+  const statusStyle = transfer?.status
+    ? statusStyles[transfer.status] ?? "bg-slate-200 text-slate-700"
+    : "bg-slate-200 text-slate-700";
+  const payoutLabel = transfer?.payoutRail
+    ? payoutRailLabels[transfer.payoutRail as keyof typeof payoutRailLabels] ??
+      transfer.payoutRail
+    : "—";
+  const isComplete = transfer?.status === "COMPLETED";
+  const isFailed = transfer?.status === "FAILED";
+  const isExpired = requestState?.error === "expired";
 
   useEffect(() => {
-    if (!data?.transfer || transferCompletedLogged.current) {
+    if (!transfer || !isComplete || transferCompletedLogged.current) {
       return;
     }
-    if (data.transfer.status === "COMPLETED") {
-      transferCompletedLogged.current = true;
-      console.info("TransferCompleted", {
-        transferId: data.transfer.id,
-        status: data.transfer.status,
-      });
-    }
-  }, [data?.transfer]);
+    transferCompletedLogged.current = true;
+  }, [isComplete, transfer]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
-          <div className="animate-pulse rounded-3xl border border-white/10 bg-white/5 p-8">
-            <div className="h-4 w-32 rounded bg-white/10" />
-            <div className="mt-4 h-10 w-52 rounded bg-white/10" />
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="h-24 rounded-2xl bg-white/10" />
-              <div className="h-24 rounded-2xl bg-white/10" />
-            </div>
-            <div className="mt-6 h-48 rounded-2xl bg-white/10" />
+  const summaryRows = transfer && quote
+    ? [
+        {
+          label: messages.transferStatusLabel,
+          value: (
+            <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${statusStyle}`}>
+              {statusLabel}
+            </span>
+          ),
+        },
+        {
+          label: messages.referenceCodeLabel,
+          value: (
+            <span className="text-sm font-semibold text-slate-900">
+              {transfer.reference}
+            </span>
+          ),
+        },
+        {
+          label: messages.transferCreatedLabel,
+          value: (
+            <span className="text-sm text-slate-700">
+              {formatDateTime(transfer.createdAt, locale)}
+            </span>
+          ),
+        },
+        {
+          label: messages.payoutSummaryLabel,
+          value: (
+            <span className="text-sm text-slate-700">{payoutLabel}</span>
+          ),
+        },
+        {
+          label: messages.recipientNameLabel,
+          value: (
+            <span className="text-sm text-slate-700">{transfer.recipientName}</span>
+          ),
+        },
+        {
+          label: messages.recipientCountryLabel,
+          value: (
+            <span className="text-sm text-slate-700">{transfer.recipientCountry}</span>
+          ),
+        },
+        {
+          label: messages.recipientPhoneLabel,
+          value: (
+            <span className="text-sm text-slate-700">
+              {transfer.recipientPhone ?? "—"}
+            </span>
+          ),
+        },
+        {
+          label: messages.bankNameLabel,
+          value: (
+            <span className="text-sm text-slate-700">
+              {transfer.recipientBankName ?? "—"}
+            </span>
+          ),
+        },
+        {
+          label: messages.bankAccountLabel,
+          value: (
+            <span className="text-sm text-slate-700">
+              {transfer.recipientBankAccount ?? "—"}
+            </span>
+          ),
+        },
+        {
+          label: messages.mobileMoneyNumberLabel,
+          value: (
+            <span className="text-sm text-slate-700">
+              {transfer.recipientMobileMoneyNumber ?? "—"}
+            </span>
+          ),
+        },
+        {
+          label: messages.memoLabel,
+          value: (
+            <span className="text-sm text-slate-700">{transfer.memo ?? "—"}</span>
+          ),
+        },
+      ]
+    : [];
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e6f7f1,_#f8fafc_55%,_#fff)] text-slate-900">
+      <main className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+              {messages.transferReceiptTitle}
+            </p>
+            <h1 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">
+              {messages.transferReceiptTitle}
+            </h1>
           </div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-            {messages.receiptLoadingLabel}
-          </p>
-        </main>
-      </div>
-    );
-  }
-
-  if (resolvedError) {
-    const errorMessage =
-      resolvedError === "not_found"
-        ? messages.receiptNotFoundLabel
-        : resolvedError === "expired"
-          ? messages.receiptExpiredLabel
-          : messages.receiptLoadError;
-
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <main className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 px-6 py-16 text-center">
-          <h1 className="text-2xl font-semibold">{errorMessage}</h1>
           <Link
             href={`/${locale}`}
-            className="rounded-full border border-white/20 bg-white/10 px-6 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-white/20"
+            className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
           >
             {messages.receiptBackHomeButton}
           </Link>
-        </main>
-      </div>
-    );
-  }
+        </div>
 
-  if (!data) {
-    return null;
-  }
-
-  const { transfer, quote, events, cryptoPayout } = data;
-  const lightningStatusLabel = cryptoPayout
-    ? cryptoPayout.status === "PAID"
-      ? messages.lightningPaidLabel
-      : cryptoPayout.status === "CREATED" || cryptoPayout.status === "REQUESTED"
-        ? messages.lightningWaitingLabel
-        : cryptoPayout.status.replaceAll("_", " ")
-    : null;
-  const canSimulatePayment =
-    isDev &&
-    cryptoPayout &&
-    !["PAID", "EXPIRED", "FAILED"].includes(cryptoPayout.status);
-  const resolveEventMessage = (event: TransferEvent) => {
-    switch (event.type) {
-      case "CREATED":
-        return messages.transferCreatedEvent;
-      case "QUOTE_LOCKED":
-        return messages.quoteLockedEvent(formatDateTime(quote.expiresAt, locale));
-      case "INVOICE_ISSUED":
-        return messages.invoiceIssuedEvent;
-      case "PAID":
-        return messages.transferPaidEvent;
-      case "PROCESSING":
-        return messages.transferProcessingEvent;
-      case "COMPLETED":
-        return messages.transferCompletedEvent;
-      case "FAILED":
-        return messages.transferFailedEvent;
-      case "CANCELED":
-        return messages.transferCanceledEvent;
-      default:
-        return event.message;
-    }
-  };
-  const statusStyle = statusStyles[transfer.status] ?? "bg-slate-200 text-slate-700";
-  const statusLabel =
-    statusLabels[transfer.status as keyof typeof statusLabels] ??
-    transfer.status.replaceAll("_", " ");
-  const referenceCode = transfer.reference;
-  const shareLink =
-    typeof window === "undefined"
-      ? `/${locale}/transfer/${transfer.id}`
-      : `${window.location.origin}/${locale}/transfer/${transfer.id}`;
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
-        <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-8 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.9)]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-500">
-                {messages.transferReceiptTitle}
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">
-                {referenceCode}
-              </h1>
-              <p className="mt-2 text-sm text-slate-400">
-                {messages.referenceCodeLabel}
-              </p>
-            </div>
-            <div className="flex flex-col items-start gap-3 sm:items-end">
-              <span
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${statusStyle}`}
+        {requestState?.error === "not_found" ? (
+          <div className="mt-10 rounded-3xl border border-white/15 bg-white/10 p-8 text-white">
+            <p className="text-sm uppercase tracking-[0.28em] text-white/70">
+              {messages.receiptNotFoundLabel}
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold">
+              {messages.receiptNotFoundLabel}
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm text-white/70">
+              {messages.receiptLoadError}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href={`/${locale}/track`}
+                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
               >
-                {statusLabel}
-              </span>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(referenceCode, "code")}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
-                >
-                  {copied === "code"
-                    ? messages.copiedLabel
-                    : messages.copyReferenceButton}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCopy(shareLink, "link")}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
-                >
-                  {copied === "link"
-                    ? messages.copiedLabel
-                    : messages.copyLinkButton}
-                </button>
-                <Link
-                  href={`/${locale}/track?reference=${referenceCode}`}
-                  className="rounded-full border border-emerald-300/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-50 transition hover:bg-emerald-500/30"
-                >
-                  {messages.trackTransferLinkLabel}
-                </Link>
-              </div>
+                {messages.trackTransferLinkLabel}
+              </Link>
+              <Link
+                href={`/${locale}`}
+                className="rounded-full border border-emerald-300/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-50 transition hover:bg-emerald-500/30"
+              >
+                {messages.receiptBackHomeButton}
+              </Link>
             </div>
           </div>
-        </header>
+        ) : null}
 
-        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {messages.timelineLabel}
-              </p>
-              <span className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                {events.length}
-              </span>
-            </div>
-            <div className="mt-5 space-y-4 border-l border-white/10 pl-4">
-              {events.length > 0 ? (
-                events.map((event) => (
-                  <div key={event.id} className="relative">
-                    <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <p className="text-sm font-semibold text-white">
-                        {resolveEventMessage(event)}
-                      </p>
-                      <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                        {formatDateTime(event.createdAt, locale)}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400">
-                  {messages.timelineEmptyLabel}
-                </p>
-              )}
+        {isExpired ? (
+          <div className="mt-10 rounded-3xl border border-white/15 bg-white/10 p-8 text-white">
+            <p className="text-sm uppercase tracking-[0.28em] text-white/70">
+              {messages.receiptExpiredLabel}
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold">
+              {messages.receiptExpiredLabel}
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm text-white/70">
+              {messages.quoteExpiredError}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href={`/${locale}`}
+                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20"
+              >
+                {messages.receiptBackHomeButton}
+              </Link>
             </div>
           </div>
+        ) : null}
 
-          <div className="flex flex-col gap-6">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {messages.recipientSummaryLabel}
-              </p>
-              <div className="mt-4 space-y-3 text-sm text-slate-200">
+        {payload && transfer && quote ? (
+          <section className="mt-10 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-6">
+              <div className="rounded-3xl bg-slate-900 px-6 py-7 text-white shadow-[0_25px_60px_-40px_rgba(15,23,42,0.6)]">
                 <div className="flex items-center justify-between">
-                  <span>{messages.recipientNameLabel}</span>
-                  <span className="font-semibold text-white">
-                    {transfer.recipientName}
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    {messages.transferDetailsLabel}
+                  </p>
+                  <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${statusStyle}`}>
+                    {statusLabel}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.recipientCountryLabel}</span>
-                  <span className="font-semibold text-white">
-                    {transfer.recipientCountry}
-                  </span>
-                </div>
-                {transfer.recipientPhone ? (
-                  <div className="flex items-center justify-between">
-                    <span>{messages.recipientPhoneLabel}</span>
-                    <span className="font-semibold text-white">
-                      {transfer.recipientPhone}
-                    </span>
-                  </div>
-                ) : null}
-                <div className="flex items-center justify-between">
-                  <span>{messages.payoutSummaryLabel}</span>
-                  <span className="font-semibold text-white">
-                    {payoutRailLabels[
-                      transfer.payoutRail as keyof typeof payoutRailLabels
-                    ] ?? transfer.payoutRail}
-                  </span>
-                </div>
-                {transfer.recipientBankName ? (
-                  <div className="flex items-center justify-between">
-                    <span>{messages.bankNameLabel}</span>
-                    <span className="font-semibold text-white">
-                      {transfer.recipientBankName}
-                    </span>
-                  </div>
-                ) : null}
-                {transfer.recipientBankAccount ? (
-                  <div className="flex items-center justify-between">
-                    <span>{messages.bankAccountLabel}</span>
-                    <span className="font-semibold text-white">
-                      {transfer.recipientBankAccount}
-                    </span>
-                  </div>
-                ) : null}
-                {transfer.recipientMobileMoneyProvider ? (
-                  <div className="flex items-center justify-between">
-                    <span>{messages.mobileMoneyProviderLabel}</span>
-                    <span className="font-semibold text-white">
-                      {transfer.recipientMobileMoneyProvider}
-                    </span>
-                  </div>
-                ) : null}
-                {transfer.recipientMobileMoneyNumber ? (
-                  <div className="flex items-center justify-between">
-                    <span>{messages.mobileMoneyNumberLabel}</span>
-                    <span className="font-semibold text-white">
-                      {transfer.recipientMobileMoneyNumber}
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {cryptoPayout ? (
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  {messages.lightningInvoiceLabel}
-                </p>
-                <div className="mt-4 space-y-3 text-sm text-slate-200">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <p className="break-all font-mono text-xs text-slate-100">
-                      {cryptoPayout.invoice ?? "—"}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>{messages.lightningAmountLabel}</span>
-                    <span className="font-semibold text-white">
-                      {formatNumber(cryptoPayout.amountSats, 0, locale)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>{messages.lightningStatusLabel}</span>
-                    <span className="font-semibold text-white">
-                      {lightningStatusLabel}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleCopyInvoice(cryptoPayout.invoice ?? "")}
-                    disabled={!cryptoPayout.invoice}
-                    className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {copied === "invoice"
-                      ? messages.copiedLabel
-                      : messages.copyInvoiceButton}
-                  </button>
-                  {isDev ? (
-                    <button
-                      type="button"
-                      onClick={handleSimulatePayment}
-                      disabled={isSimulating || !canSimulatePayment}
-                      className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {messages.simulatePaymentButton}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {messages.lockedQuoteSummaryLabel}
-              </p>
-              <div className="mt-4 space-y-3 text-sm text-slate-200">
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptSendAmountLabel}</span>
-                  <span className="font-semibold text-white">
-                    {formatMoney(
-                      quote.sendAmount,
-                      quote.fromAsset.code,
-                      locale,
-                      quote.fromAsset.decimals
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptAppliedRateLabel}</span>
-                  <span className="font-semibold text-white">
-                    1 {quote.fromAsset.code} ={" "}
-                    {formatNumber(quote.appliedRate, 4, locale)}{" "}
-                    {quote.toAsset.code}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptTotalFeesLabel}</span>
-                  <span className="font-semibold text-white">
-                    {formatMoney(
-                      quote.totalFee,
-                      quote.fromAsset.code,
-                      locale,
-                      quote.fromAsset.decimals
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptRecipientGetsLabel}</span>
-                  <span className="font-semibold text-white">
+                <div className="mt-4">
+                  <p className="font-[var(--font-display)] text-4xl leading-tight sm:text-5xl">
                     {formatMoney(
                       quote.recipientGets,
                       quote.toAsset.code,
                       locale,
                       quote.toAsset.decimals
                     )}
-                  </span>
+                  </p>
+                  <p className="mt-2 text-sm text-slate-300">
+                    {messages.receiptRecipientGetsLabel}: {" "}
+                    {formatMoney(
+                      quote.sendAmount,
+                      quote.fromAsset.code,
+                      locale,
+                      quote.fromAsset.decimals
+                    )}
+                  </p>
                 </div>
-                <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                  {messages.rateLockedAtLabel}:{" "}
-                  {formatDateTime(quote.rateTimestamp, locale)}
+              </div>
+
+              <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  {messages.lockedQuoteSummaryLabel}
+                </p>
+                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                  <div className="flex items-center justify-between">
+                    <span>{messages.receiptSendAmountLabel}</span>
+                    <span className="font-semibold text-slate-900">
+                      {formatMoney(
+                        quote.sendAmount,
+                        quote.fromAsset.code,
+                        locale,
+                        quote.fromAsset.decimals
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{messages.receiptAppliedRateLabel}</span>
+                    <span className="font-semibold text-slate-900">
+                      {formatNumber(quote.appliedRate, 4, locale)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{messages.receiptTotalFeesLabel}</span>
+                    <span className="font-semibold text-slate-900">
+                      {formatMoney(
+                        quote.totalFee,
+                        quote.fromAsset.code,
+                        locale,
+                        quote.fromAsset.decimals
+                      )}
+                    </span>
+                  </div>
+                  <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                    {messages.rateLockedAtLabel}: {" "}
+                    {formatDateTime(quote.rateTimestamp, locale)}
+                  </div>
                 </div>
-                <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                  {messages.expiresAtLabel}:{" "}
-                  {formatDateTime(quote.expiresAt, locale)}
+              </div>
+
+              <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  {messages.timelineLabel}
+                </p>
+                <div className="mt-4 space-y-4 border-l border-slate-200 pl-4">
+                  {events.length > 0 ? (
+                    events.map((event) => (
+                      <div key={event.id} className="relative">
+                        <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {event.message}
+                          </p>
+                          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                            {formatDateTime(event.createdAt, locale)}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {messages.timelineEmptyLabel}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {messages.trustSignalsLabel}
-              </p>
-              <div className="mt-4 space-y-2 text-sm text-slate-200">
-                <p>{messages.feeRefundGuaranteeCopy}</p>
-                <p>{messages.complianceCopy}</p>
+            <div className="space-y-6">
+              <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  {messages.transferDetailsLabel}
+                </p>
+                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                  {summaryRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex items-center justify-between gap-4"
+                    >
+                      <span>{row.label}</span>
+                      <span className="text-right">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {cryptoPayout ? (
+                <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                    {receiptCopy.cryptoPayoutLabel}
+                  </p>
+                  <div className="mt-4 space-y-3 text-sm text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span>{receiptCopy.cryptoNetworkLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {cryptoPayout.network}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.lightningAmountLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {cryptoPayout.amountSats.toLocaleString(locale)} sats
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.lightningStatusLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {cryptoPayout.status}
+                      </span>
+                    </div>
+                    <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                      {receiptCopy.cryptoCreatedAtLabel}: {" "}
+                      {formatDateTime(cryptoPayout.createdAt, locale)}
+                    </div>
+                  </div>
+                  <div className="mt-5 space-y-3">
+                    {cryptoPayout.invoice ? (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {messages.lightningInvoiceLabel}
+                        </p>
+                        <p className="mt-2 break-all text-xs text-slate-700">
+                          {cryptoPayout.invoice}
+                        </p>
+                      </div>
+                    ) : null}
+                    <div className="flex flex-wrap gap-3">
+                      {cryptoPayout.invoice ? (
+                        <button
+                          type="button"
+                          onClick={handleCopyInvoice}
+                          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                        >
+                          {copied === "invoice"
+                            ? messages.copiedLabel
+                            : messages.copyInvoiceButton}
+                        </button>
+                      ) : null}
+                      {cryptoPayout.invoice ? (
+                        <button
+                          type="button"
+                          onClick={handleMockPay}
+                          disabled={isSimulating}
+                          className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {isSimulating
+                            ? receiptCopy.mockPayProcessingLabel
+                            : messages.simulatePaymentButton}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  {receiptCopy.shareTransferLabel}
+                </p>
+                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                  <div className="flex items-center justify-between gap-4">
+                    <span>{messages.referenceCodeLabel}</span>
+                    <span className="font-semibold text-slate-900">
+                      {transfer.reference}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span>{receiptCopy.shareTransferLinkLabel}</span>
+                    <span className="font-semibold text-slate-900">
+                      {`${window.location.origin}/${locale}/transfer/${transfer.id}`}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(transfer.reference, "code")}
+                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                  >
+                    {copied === "code"
+                      ? messages.copiedLabel
+                      : messages.copyReferenceButton}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopy(
+                        `${window.location.origin}/${locale}/transfer/${transfer.id}`,
+                        "link"
+                      )
+                    }
+                    className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-100 transition hover:bg-emerald-500/30"
+                  >
+                    {copied === "link"
+                      ? messages.copiedLabel
+                      : messages.copyLinkButton}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  {messages.navHelpLabel}
+                </p>
+                <p className="mt-3 text-sm text-slate-600">
+                  {receiptCopy.transferHelpSubtitle}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link
+                    href={`/${locale}/help`}
+                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                  >
+                    {messages.footerContactLinkLabel}
+                  </Link>
+                  {isComplete ? (
+                    <Link
+                      href={`/${locale}`}
+                      className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-100 transition hover:bg-emerald-500/30"
+                    >
+                      {messages.navGetStartedLabel}
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             </div>
+          </section>
+        ) : null}
+
+        {!payload && !requestState?.error ? (
+          <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-6">
+              <div className="h-36 rounded-3xl bg-white/10" />
+              <div className="h-40 rounded-3xl bg-white/10" />
+            </div>
+            <div className="space-y-6">
+              <div className="h-48 rounded-3xl bg-white/10" />
+              <div className="h-40 rounded-3xl bg-white/10" />
+            </div>
           </div>
-        </section>
+        ) : null}
+
+        {isFailed ? (
+          <div className="mt-10 rounded-3xl border border-rose-200/60 bg-rose-50 px-6 py-5">
+            <div className="flex flex-col gap-2 text-rose-700">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em]">
+                {messages.transferFailedEvent}
+              </p>
+              <p className="text-base font-semibold">
+                {messages.transferFailedEvent}
+              </p>
+              <p className="text-sm text-rose-600">
+                {messages.transferUpdateError}
+              </p>
+            </div>
+          </div>
+        ) : null}
       </main>
     </div>
   );

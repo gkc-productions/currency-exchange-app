@@ -1,30 +1,34 @@
 # UI Audit
 
 - Base URL: http://10.0.0.105:3000
-- Timestamp: Pending run
+- Timestamp: 2026-01-17T08:17:36.447Z
 
 ## Steps
-- Load /en and /fr landing pages
-- Verify assets endpoint and dropdown population
-- Fetch quotes for USD→GHS and USD→XOF
-- Validate smart suggestions show distinct routes when multiple exist
-- Create mobile money and lightning transfers (if enabled)
-- Load receipt pages for /en and /fr
+- Load /en landing page
+- Open country selector on /en
+- Request quotes for USD→GHS and USD→XOF (en)
+- Trigger quote + recommendations on /en
+- Create transfers and load receipts (en)
+- Load /fr landing page
+- Open country selector on /fr
+- Request quotes for USD→GHS and USD→XOF (fr)
+- Trigger quote + recommendations on /fr
+- Create transfers and load receipts (fr)
 
 ## Failing URLs
-- None (pending run)
+- None
 
 ## Console Errors
-- None (pending run)
+- None
 
 ## Page Errors
-- None (pending run)
+- None
 
 ## Request Failures
-- None (pending run)
+- None
 
 ## Response Failures
-- None (pending run)
+- None
 
 ## Failure Screenshots
-- None (pending run)
+- None

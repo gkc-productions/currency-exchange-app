@@ -73,7 +73,7 @@ export default function TrackTransferPage() {
   const [result, setResult] = useState<TransferLookupResponse | null>(null);
   const [error, setError] = useState<LookupError | null>(null);
 
-  const statusLabels = useMemo(
+  const statusLabels = useMemo<Record<string, string>>(
     () => ({
       READY: messages.statusReadyLabel,
       PROCESSING: messages.statusProcessingLabel,
@@ -328,7 +328,7 @@ export default function TrackTransferPage() {
                     </span>
                   </div>
                   <div className="pt-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-                    {messages.rateLockedAtLabel}:{" "}
+                    {messages.rateLockedAtLabel}: {" "}
                     {formatDateTime(result.quote.rateTimestamp, locale)}
                   </div>
                 </div>

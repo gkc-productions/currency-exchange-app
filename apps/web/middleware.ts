@@ -46,7 +46,9 @@ export function middleware(req: NextRequest) {
     if (limitedPath) {
       const forwardedFor = req.headers.get("x-forwarded-for");
       const clientIp =
-        req.ip ?? forwardedFor?.split(",")[0]?.trim() ?? "unknown";
+        (req as { ip?: string }).ip ??
+        forwardedFor?.split(",")[0]?.trim() ??
+        "unknown";
       const key = `${clientIp}:${limitedPath}`;
       const now = Date.now();
       const entry = rateLimitStore.get(key);

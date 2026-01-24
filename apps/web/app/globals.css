@@ -13,6 +13,11 @@
   --brand-accent-soft: #e7f1f3;
   --brand-mist: #e7f1f3;
   --brand-sand: #f5f2ea;
+  --layout-max-width: 1200px;
+  --space-section-desktop: 96px;
+  --space-section-mobile: 64px;
+  --space-component: 28px;
+  --space-text: 12px;
   --background: var(--brand-surface);
   --foreground: var(--brand-ink);
 }
@@ -36,10 +41,36 @@
   --font-display: var(--font-brand-display);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
 body {
+  min-height: 100%;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-brand-sans), "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  --font-brand-display: var(--font-brand-sans);
+}
+
+.text-xs,
+.text-\[10px\],
+.text-\[11px\] {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.max-w-6xl {
+  max-width: var(--layout-max-width);
 }
 
 @keyframes float-slow {

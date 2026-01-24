@@ -1,0 +1,11 @@
+{
+  "name": "currency-exchange-app",
+  "private": true,
+  "scripts": {
+    "smoke": "cd apps/web && npm run smoke",
+    "test:e2e": "cd apps/web && npm run test:e2e",
+    "audit:ui": "cd apps/web && npm run audit:ui",
+    "audit:ui:headed": "cd apps/web && npm run audit:ui:headed",
+    "dev": "cd apps/web && npm run dev"
+  }
+}

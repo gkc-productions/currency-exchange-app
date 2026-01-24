@@ -98,7 +98,7 @@ export async function GET(
   return NextResponse.json({
     transfer: {
       id: transfer.id,
-      reference: transfer.reference,
+      reference: transfer.referenceCode,
       quoteId: transfer.quoteId,
       status: transfer.status,
       payoutRail: transfer.payoutRail,
@@ -219,41 +219,24 @@ export async function PATCH(
   const eventMessage = statusEventMessage[nextStatus];
   if (!eventMessage) {
     return NextResponse.json(
-      { error: messages.transferUpdateError },
-      { status: 500 }
+      { error: "Invalid status transition" },
+      { status: 409 }
     );
   }
 
-  let updated;
-  try {
-    [updated] = await prisma.$transaction([
-      prisma.transfer.update({
-        where: { id: transferId },
-        data: { status: nextStatus },
-      }),
-      prisma.transferEvent.create({
-        data: {
-          transferId,
-          type: nextStatus,
-          message: eventMessage,
-        },
-      }),
-    ]);
-  } catch {
-    return NextResponse.json(
-      { error: messages.transferUpdateError },
-      { status: 500 }
-    );
-  }
+  const [updatedTransfer] = await prisma.$transaction([
+    prisma.transfer.update({
+      where: { id: transferId },
+      data: { status: nextStatus },
+    }),
+    prisma.transferEvent.create({
+      data: {
+        transferId,
+        type: nextStatus,
+        message: eventMessage,
+      },
+    }),
+  ]);
 
-  console.info(
-    JSON.stringify({
-      event: "transfer_status_changed",
-      transferId,
-      fromStatus: transfer.status,
-      toStatus: nextStatus,
-      at: new Date().toISOString(),
-    })
-  );
-  return NextResponse.json(updated);
+  return NextResponse.json({ transfer: updatedTransfer });
 }

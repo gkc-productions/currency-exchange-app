@@ -22,6 +22,28 @@ type TransferPayload = {
   crypto?: unknown;
 };
 
+type IdempotencyKeyRecord = {
+  key: string;
+  requestHash: string;
+  responseJson: Prisma.JsonValue;
+};
+
+const prismaWithIdempotency = prisma as typeof prisma & {
+  idempotencyKey: {
+    findUnique: (args: {
+      where: { key: string };
+    }) => Promise<IdempotencyKeyRecord | null>;
+    create: (args: {
+      data: {
+        key: string;
+        route: string;
+        requestHash: string;
+        responseJson: Prisma.JsonValue;
+      };
+    }) => Promise<IdempotencyKeyRecord>;
+  };
+};
+
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
     return null;
@@ -82,7 +104,7 @@ function createLightningInvoice({
 
 function buildTransferResponse(transfer: {
   id: string;
-  reference: string;
+  referenceCode: string;
   quoteId: string;
   status: string;
   payoutRail: string;
@@ -99,7 +121,7 @@ function buildTransferResponse(transfer: {
 }) {
   return {
     id: transfer.id,
-    reference: transfer.reference,
+    reference: transfer.referenceCode,
     quoteId: transfer.quoteId,
     status: transfer.status,
     payoutRail: transfer.payoutRail,
@@ -135,7 +157,7 @@ export async function POST(req: Request) {
       .update(JSON.stringify(payload))
       .digest("hex");
 
-    const existingKey = await prisma.idempotencyKey.findUnique({
+    const existingKey = await prismaWithIdempotency.idempotencyKey.findUnique({
       where: { key: idempotencyKey },
     });
     if (existingKey) {
@@ -344,10 +366,10 @@ export async function POST(req: Request) {
   let transfer;
   try {
     for (let attempt = 0; attempt < maxReferenceAttempts; attempt += 1) {
-      const reference = createReferenceCode();
+      const referenceCode = createReferenceCode();
       const lightningInvoice =
         payoutRail === "LIGHTNING" && amountSats
-          ? createLightningInvoice({ reference, amountSats })
+          ? createLightningInvoice({ reference: referenceCode, amountSats })
           : null;
       const events = [
         { type: "CREATED", message: messages.transferCreatedEvent },
@@ -376,7 +398,7 @@ export async function POST(req: Request) {
             recipientMobileMoneyProvider,
             recipientMobileMoneyNumber,
             memo,
-            reference,
+            referenceCode,
             idempotencyKey,
             cryptoPayout:
               payoutRail === "LIGHTNING" && amountSats && lightningInvoice
@@ -408,7 +430,7 @@ export async function POST(req: Request) {
             continue;
           }
           if (idempotencyKey && targets.includes("idempotencyKey")) {
-            const existingKey = await prisma.idempotencyKey.findUnique({
+            const existingKey = await prismaWithIdempotency.idempotencyKey.findUnique({
               where: { key: idempotencyKey },
             });
             if (existingKey) {
@@ -448,7 +470,7 @@ export async function POST(req: Request) {
 
   if (idempotencyKey && requestHash) {
     try {
-      await prisma.idempotencyKey.create({
+      await prismaWithIdempotency.idempotencyKey.create({
         data: {
           key: idempotencyKey,
           route: "/api/transfers",
@@ -461,7 +483,7 @@ export async function POST(req: Request) {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        const existingKey = await prisma.idempotencyKey.findUnique({
+        const existingKey = await prismaWithIdempotency.idempotencyKey.findUnique({
           where: { key: idempotencyKey },
         });
         if (existingKey?.requestHash === requestHash) {

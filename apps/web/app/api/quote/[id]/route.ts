@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 
 // curl -s http://127.0.0.1:3000/api/quote/<quoteId>
@@ -56,10 +56,11 @@ function quoteToResponse(quote: {
 }
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const quoteId = params.id?.trim();
+  const { id } = await params;
+  const quoteId = id?.trim();
   if (!quoteId || /[<>]/.test(quoteId)) {
     return NextResponse.json({ error: "Invalid quote id" }, { status: 400 });
   }
