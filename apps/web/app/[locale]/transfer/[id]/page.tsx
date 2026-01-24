@@ -43,6 +43,9 @@ type QuoteSummary = {
   appliedRate: number;
   totalFee: number;
   recipientGets: number;
+  fxMarginPct: number;
+  rateSource: string;
+  rateTimestamp: string;
   expiresAt: string;
   createdAt: string;
 };
@@ -377,6 +380,12 @@ export default function TransferReceiptPage() {
   const statusLabel =
     statusLabels[transfer.status as keyof typeof statusLabels] ??
     transfer.status.replaceAll("_", " ");
+  const flowSteps = [
+    messages.flowStepQuote,
+    messages.flowStepReview,
+    messages.flowStepTransfer,
+    messages.flowStepReceipt,
+  ];
   const referenceCode = transfer.referenceCode;
   const shareLink =
     typeof window === "undefined"
@@ -547,10 +556,46 @@ export default function TransferReceiptPage() {
               ) : null}
             </div>
           </div>
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+              {messages.trustEncryptionLabel}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+              {messages.trustSecureConnectionLabel}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+              {messages.trustRegulatoryIntentLabel}
+            </span>
+          </div>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col gap-6">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <p className="text-xs font-medium text-slate-400">
+                {messages.flowStepsTitle}
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                {flowSteps.map((label, index) => {
+                  const isActive = index === 3;
+                  const isComplete = index < 3;
+                  return (
+                    <div
+                      key={label}
+                      className={`rounded-2xl border px-3 py-2 text-xs font-medium ${
+                        isActive
+                          ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+                          : isComplete
+                            ? "border-white/10 bg-white/5 text-slate-200"
+                            : "border-white/5 bg-white/5 text-slate-500"
+                      }`}
+                    >
+                      {label}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-slate-400">
@@ -780,6 +825,12 @@ export default function TransferReceiptPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
+                  <span>{messages.fxMarginRow}</span>
+                  <span className="font-semibold text-white">
+                    {formatNumber(quote.fxMarginPct, 2, locale)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
                   <span>{messages.receiptTotalFeesLabel}</span>
                   <span className="font-semibold text-white">
                     {formatMoney(
@@ -801,9 +852,16 @@ export default function TransferReceiptPage() {
                     )}
                   </span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span>{messages.rateSourceLabel}</span>
+                  <span className="font-semibold text-white">
+                    {quote.rateSource}
+                  </span>
+                </div>
                 <div className="pt-2 text-xs text-slate-500">
-                  {messages.expiresAtLabel}:{" "}
-                  {formatDateTime(quote.expiresAt, locale)}
+                  {messages.expiresAtLabel}: {formatDateTime(quote.expiresAt, locale)}
+                  {" · "}
+                  {messages.rateUpdatedLabel}: {formatDateTime(quote.rateTimestamp, locale)}
                 </div>
               </div>
             </div>

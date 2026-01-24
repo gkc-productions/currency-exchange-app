@@ -61,6 +61,14 @@ export type Messages = {
   trustItemTransparent: string;
   trustItemFast: string;
   trustItemSecure: string;
+  trustEncryptionLabel: string;
+  trustSecureConnectionLabel: string;
+  trustRegulatoryIntentLabel: string;
+  flowStepsTitle: string;
+  flowStepQuote: string;
+  flowStepReview: string;
+  flowStepTransfer: string;
+  flowStepReceipt: string;
   featuresTitle: string;
   featuresSubtitle: string;
   featuresLinkLabel: string;
@@ -144,6 +152,8 @@ export type Messages = {
   quoteBreakdownLabel: string;
   quoteIdLabel: string;
   expiresAtLabel: string;
+  rateSourceLabel: string;
+  rateUpdatedLabel: string;
   railDisplayLabel: string;
   sendAmountRow: string;
   totalFeeRow: string;
@@ -333,6 +343,14 @@ const EN_MESSAGES: Messages = {
   trustItemTransparent: "Transparent pricing",
   trustItemFast: "Predictable delivery",
   trustItemSecure: "Security-first controls",
+  trustEncryptionLabel: "End-to-end encryption",
+  trustSecureConnectionLabel: "Secure connection",
+  trustRegulatoryIntentLabel: "Compliance-ready processes",
+  flowStepsTitle: "Transfer steps",
+  flowStepQuote: "Quote",
+  flowStepReview: "Review",
+  flowStepTransfer: "Transfer",
+  flowStepReceipt: "Receipt",
   featuresTitle: "Built for dependable transfers",
   featuresSubtitle:
     "Clear pricing, real-time updates, and rails that keep transfers on track.",
@@ -429,6 +447,8 @@ const EN_MESSAGES: Messages = {
   quoteBreakdownLabel: "Quote Breakdown",
   quoteIdLabel: "Quote ID",
   expiresAtLabel: "Expires at",
+  rateSourceLabel: "Rate source",
+  rateUpdatedLabel: "Rate updated",
   railDisplayLabel: "Rail",
   sendAmountRow: "Send amount",
   totalFeeRow: "Total fee",
@@ -622,6 +642,14 @@ const FR_MESSAGES: Messages = {
   trustItemTransparent: "Tarification transparente",
   trustItemFast: "Livraison previsible",
   trustItemSecure: "Controles de securite",
+  trustEncryptionLabel: "Chiffrement de bout en bout",
+  trustSecureConnectionLabel: "Connexion securisee",
+  trustRegulatoryIntentLabel: "Processus prets pour la conformite",
+  flowStepsTitle: "Etapes du transfert",
+  flowStepQuote: "Devis",
+  flowStepReview: "Revue",
+  flowStepTransfer: "Transfert",
+  flowStepReceipt: "Recu",
   featuresTitle: "Concu pour des transferts fiables",
   featuresSubtitle:
     "Tarification claire, mises a jour en temps reel et rails fiables.",
@@ -721,6 +749,8 @@ const FR_MESSAGES: Messages = {
   quoteBreakdownLabel: "Détail du devis",
   quoteIdLabel: "ID du devis",
   expiresAtLabel: "Expire le",
+  rateSourceLabel: "Source du taux",
+  rateUpdatedLabel: "Taux mis a jour",
   railDisplayLabel: "Rail",
   sendAmountRow: "Montant envoyé",
   totalFeeRow: "Frais totaux",

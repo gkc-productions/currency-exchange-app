@@ -31,6 +31,9 @@ function quoteSummary(quote: {
   appliedRate: unknown;
   totalFee: unknown;
   recipientGets: unknown;
+  fxMarginPct: unknown;
+  rateSource: string;
+  rateTimestamp: Date;
   expiresAt: Date;
   createdAt: Date;
   fromAsset: { code: string; name: string; decimals: number };
@@ -53,6 +56,9 @@ function quoteSummary(quote: {
     appliedRate: Number(quote.appliedRate),
     totalFee: Number(quote.totalFee),
     recipientGets: Number(quote.recipientGets),
+    fxMarginPct: Number(quote.fxMarginPct),
+    rateSource: quote.rateSource,
+    rateTimestamp: quote.rateTimestamp,
     expiresAt: quote.expiresAt,
     createdAt: quote.createdAt,
   };

@@ -285,6 +285,19 @@ export default function Home() {
   const displayToAsset = quote?.toAsset.code ?? toAsset;
   const displayRail = quote?.rail ?? rail;
   const quoteLoading = isLoading || (quoteActive && !hasQuote);
+  const flowSteps = [
+    messages.flowStepQuote,
+    messages.flowStepReview,
+    messages.flowStepTransfer,
+    messages.flowStepReceipt,
+  ];
+  const flowStepIndex = transferResult
+    ? 3
+    : lockedQuoteId
+      ? 2
+      : hasQuote
+        ? 1
+        : 0;
   const fromAssetMeta = assetMap.get(fromAsset);
   const railMeta = payoutRailOptions.find((item) => item.code === displayRail);
   const sendStep = stepForDecimals(fromAssetMeta?.decimals ?? 2);
@@ -1271,9 +1284,45 @@ export default function Home() {
                 {messages.editSendDetailsLabel}
               </Link>
             </div>
+            <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
+                {messages.trustEncryptionLabel}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
+                {messages.trustSecureConnectionLabel}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
+                {messages.trustRegulatoryIntentLabel}
+              </span>
+            </div>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200/80 bg-slate-50 px-6 py-5">
+                  <p className="text-xs font-medium text-slate-500">
+                    {messages.flowStepsTitle}
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                    {flowSteps.map((label, index) => {
+                      const isActive = index === flowStepIndex;
+                      const isComplete = index < flowStepIndex;
+                      return (
+                        <div
+                          key={label}
+                          className={`rounded-2xl border px-3 py-2 text-xs font-medium ${
+                            isActive
+                              ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+                              : isComplete
+                                ? "border-slate-200 bg-white text-slate-700"
+                                : "border-slate-200/70 bg-white/70 text-slate-400"
+                          }`}
+                        >
+                          {label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="rounded-3xl bg-slate-900 px-6 py-7 text-white shadow-[0_25px_60px_-40px_rgba(15,23,42,0.5)]">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-medium text-slate-300">
@@ -1451,6 +1500,28 @@ export default function Home() {
                           <span className={skeletonClass} />
                         ) : (
                           railMeta?.name ?? displayRail
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.rateSourceLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {quoteLoading ? (
+                          <span className={skeletonClass} />
+                        ) : (
+                          quote?.rateSource ?? "—"
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.rateUpdatedLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {quoteLoading ? (
+                          <span className={skeletonClass} />
+                        ) : quote?.rateTimestamp ? (
+                          formatDateTime(quote.rateTimestamp, locale)
+                        ) : (
+                          "—"
                         )}
                       </span>
                     </div>
@@ -1639,6 +1710,11 @@ export default function Home() {
                             locale
                           )} ${displayToAsset}`
                         : messages.appliedRatePending}
+                    </span>
+                    <span>
+                      {hasQuote
+                        ? `${messages.rateSourceLabel}: ${quote?.rateSource ?? "—"}`
+                        : `${messages.rateSourceLabel}: —`}
                     </span>
                   </div>
                 </div>
