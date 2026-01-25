@@ -35,7 +35,7 @@ export default function Header({ locale }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/90 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center gap-2.5 group">
@@ -46,7 +46,7 @@ export default function Header({ locale }: HeaderProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-6">
             <Link
               href={`/${locale}/how-it-works`}
               className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
@@ -74,7 +74,7 @@ export default function Header({ locale }: HeaderProps) {
           </nav>
 
           {/* CTA & Language Selector */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-6">
             <select
               value={locale}
               onChange={(e) => {
@@ -136,7 +136,7 @@ export default function Header({ locale }: HeaderProps) {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-slate-100">
-            <nav className="flex flex-col gap-1">
+            <nav className="flex flex-col gap-3">
               <Link
                 href={`/${locale}/how-it-works`}
                 className="px-3 py-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"

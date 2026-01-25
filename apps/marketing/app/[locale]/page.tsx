@@ -323,26 +323,26 @@ export default async function HomePage({
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30" />
-        <div className="relative max-w-6xl mx-auto px-6 lg:px-8 py-20 lg:py-28">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
             <div className="max-w-2xl">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight mt-6 mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-tight mt-6 mb-6">
                 {t.hero.title}
               </h1>
-              <p className="text-lg sm:text-xl text-slate-600 leading-relaxed mb-8">
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed mb-8">
                 {t.hero.description}
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <TrackedLink
                   href={appLocaleUrl}
-                  event="cta_start_transfer"
+                  event="cta_start_sending"
                   className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3.5 rounded-lg"
                 >
                   {t.hero.primaryCta}
                 </TrackedLink>
                 <TrackedLink
                   href={`/${validLocale}/pricing`}
-                  event="cta_view_fees"
+                  event="cta_see_how_it_works"
                   className="inline-flex items-center justify-center text-slate-700 hover:text-slate-900 font-medium px-6 py-3.5 rounded-lg border border-slate-200 hover:border-slate-300"
                 >
                   {t.hero.secondaryCta}
@@ -377,21 +377,21 @@ export default async function HomePage({
       </section>
 
       {/* Problem */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-white py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             {t.problem.label ? (
               <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
                 {t.problem.label}
               </p>
             ) : null}
-            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-6">
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-6">
               {t.problem.title}
             </h2>
           </div>
           <div className="grid lg:grid-cols-3 gap-8 mt-10">
             {t.problem.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="text-slate-600 leading-relaxed text-base">
+              <p key={paragraph} className="text-base sm:text-lg text-slate-600 leading-relaxed">
                 {paragraph}
               </p>
             ))}
@@ -400,15 +400,15 @@ export default async function HomePage({
       </section>
 
       {/* Difference */}
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-slate-50 py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             {t.difference.label ? (
               <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
                 {t.difference.label}
               </p>
             ) : null}
-            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-12">
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-12">
               {t.difference.title}
             </h2>
           </div>
@@ -419,7 +419,7 @@ export default async function HomePage({
                 className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm"
               >
                 <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{item.description}</p>
+                <p className="text-base sm:text-lg text-slate-600 leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
@@ -427,15 +427,15 @@ export default async function HomePage({
       </section>
 
       {/* How it works */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-white py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             {t.howItWorks.label ? (
               <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
                 {t.howItWorks.label}
               </p>
             ) : null}
-            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-10">
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-10">
               {t.howItWorks.title}
             </h2>
           </div>
@@ -446,7 +446,7 @@ export default async function HomePage({
                 className="border border-slate-200 rounded-2xl p-6 lg:p-8 bg-slate-50"
               >
                 <h3 className="text-lg font-semibold mb-3">{step.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{step.description}</p>
+                <p className="text-base sm:text-lg text-slate-600 leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
@@ -454,21 +454,21 @@ export default async function HomePage({
       </section>
 
       {/* Transparency */}
-      <section className="bg-slate-900 py-20 text-white">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-slate-900 py-16 sm:py-20 text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             {t.transparency.label ? (
               <p className="text-sm font-semibold text-emerald-300 uppercase tracking-[0.2em]">
                 {t.transparency.label}
               </p>
             ) : null}
-            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-10">
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-10">
               {t.transparency.title}
             </h2>
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
             {t.transparency.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="text-slate-200 leading-relaxed">
+              <p key={paragraph} className="text-base sm:text-lg text-slate-200 leading-relaxed">
                 {paragraph}
               </p>
             ))}
@@ -477,8 +477,8 @@ export default async function HomePage({
       </section>
 
       {/* Transfer tracking */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-white py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-12">
             <div>
               {t.tracking.label ? (
@@ -486,15 +486,15 @@ export default async function HomePage({
                   {t.tracking.label}
                 </p>
               ) : null}
-              <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-6">
+              <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-6">
                 {t.tracking.title}
               </h2>
-              <p className="text-slate-600 leading-relaxed mb-6">
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed mb-6">
                 {t.tracking.stagesTitle}
               </p>
               <div className="space-y-4">
                 {t.tracking.paragraphs.map((paragraph) => (
-                  <p key={paragraph} className="text-slate-600 leading-relaxed">
+                  <p key={paragraph} className="text-base sm:text-lg text-slate-600 leading-relaxed">
                     {paragraph}
                   </p>
                 ))}
@@ -519,21 +519,21 @@ export default async function HomePage({
       </section>
 
       {/* Recipient experience */}
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-slate-50 py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             {t.recipient.label ? (
               <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
                 {t.recipient.label}
               </p>
             ) : null}
-            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-8">
               {t.recipient.title}
             </h2>
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
             {t.recipient.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="text-slate-600 leading-relaxed">
+              <p key={paragraph} className="text-base sm:text-lg text-slate-600 leading-relaxed">
                 {paragraph}
               </p>
             ))}
@@ -542,21 +542,21 @@ export default async function HomePage({
       </section>
 
       {/* Trust & Safety */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-white py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             {t.trust.label ? (
               <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
                 {t.trust.label}
               </p>
             ) : null}
-            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-8">
               {t.trust.title}
             </h2>
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
             {t.trust.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="text-slate-600 leading-relaxed">
+              <p key={paragraph} className="text-base sm:text-lg text-slate-600 leading-relaxed">
                 {paragraph}
               </p>
             ))}
@@ -565,21 +565,21 @@ export default async function HomePage({
       </section>
 
       {/* Support */}
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+      <section className="bg-slate-50 py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             {t.support.label ? (
               <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
                 {t.support.label}
               </p>
             ) : null}
-            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-4 mb-8">
               {t.support.title}
             </h2>
           </div>
           <div className="grid lg:grid-cols-3 gap-8">
             {t.support.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="text-slate-600 leading-relaxed">
+              <p key={paragraph} className="text-base sm:text-lg text-slate-600 leading-relaxed">
                 {paragraph}
               </p>
             ))}
@@ -588,14 +588,14 @@ export default async function HomePage({
       </section>
 
       {/* CTA */}
-      <section className="bg-white py-20">
-        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-semibold mb-4">
+      <section className="bg-white py-16 sm:py-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl sm:text-3xl font-semibold mb-6">
             {t.cta.title}
           </h2>
           <TrackedLink
             href={appLocaleUrl}
-            event="cta_primary_footer"
+            event="cta_get_started"
             className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-8 py-3.5 rounded-lg"
           >
             {t.cta.button}
