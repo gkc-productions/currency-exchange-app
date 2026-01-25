@@ -10,6 +10,7 @@ type HeaderProps = {
 
 export default function Header({ locale }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const appLocaleUrl = `https://app.clarisend.co/${locale}`;
 
   const messages = {
     en: {
@@ -88,13 +89,13 @@ export default function Header({ locale }: HeaderProps) {
               <option value="fr">FR</option>
             </select>
             <a
-              href="https://app.clarisend.co"
+              href={appLocaleUrl}
               className="text-sm text-slate-600 hover:text-slate-900 px-4 py-2 rounded-lg transition-colors"
             >
               {t.login}
             </a>
             <TrackedLink
-              href="https://app.clarisend.co"
+              href={appLocaleUrl}
               event="cta_get_started"
               className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
@@ -181,13 +182,13 @@ export default function Header({ locale }: HeaderProps) {
               </div>
               <div className="flex flex-col gap-2 mt-3">
                 <a
-                  href="https://app.clarisend.co"
+                  href={appLocaleUrl}
                   className="text-center text-slate-600 hover:text-slate-900 py-2.5 rounded-lg border border-slate-200 transition-colors"
                 >
                   {t.login}
                 </a>
                 <TrackedLink
-                  href="https://app.clarisend.co"
+                  href={appLocaleUrl}
                   event="cta_get_started"
                   className="text-center bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition-colors"
                 >

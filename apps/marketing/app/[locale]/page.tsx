@@ -11,15 +11,15 @@ export async function generateMetadata({
 
   const metadataByLocale = {
     en: {
-      title: "International transfers with total transparency",
+      title: "Send money home without the anxiety",
       description:
-        "Compare rates across providers, lock in the best route, and send money abroad with zero hidden fees.",
+        "Most remittance apps compete on speed or price, then leave you guessing what actually happened. ClariSend shows you exactly what you're paying, where your money is, and when it will arrive.",
       path: "/en",
     },
     fr: {
-      title: "Transferts internationaux en toute transparence",
+      title: "Envoyez avec clarté",
       description:
-        "Comparez les taux, choisissez la meilleure route et envoyez de l'argent a l'international sans frais caches.",
+        "Une expérience simple pour suivre vos transferts et comprendre les frais.",
       path: "/fr",
     },
   } as const;
@@ -65,294 +65,360 @@ export default async function HomePage({
   const { locale } = await params;
   const validLocale: "en" | "fr" = locale === "fr" ? "fr" : "en";
 
-  const messages = {
+  const content = {
     en: {
       hero: {
-        badge: "Transparent transfers, end to end",
-        title: "International transfers,",
-        titleAccent: "clearly priced",
+        title: "Send money home without the anxiety.",
         description:
-          "Compare routes across providers, lock the rate, and send with fees shown upfront.",
-        cta: "Start sending",
-        secondaryCta: "See how it works",
-        preview: {
-          title: "Transfer preview",
-          subtitle: "Sending $500 to Nigeria",
-          rows: [
-            { label: "Transfer fee", value: "$4.99" },
-            { label: "Exchange rate", value: "1 USD = 1,580 NGN" },
-            { label: "Delivery time", value: "Within 1 business day" },
-          ],
-          totalLabel: "Recipient gets",
-          totalValue: "782,015.80 NGN",
-          note: "Final amounts locked at checkout.",
-        },
+          "Most remittance apps compete on speed or price, then leave you guessing what actually happened. ClariSend shows you exactly what you're paying, where your money is, and when it will arrive.",
+        primaryCta: "Start a transfer",
+        secondaryCta: "View fees",
+        cardTitle: "Transfer tracking",
+        cardItems: [
+          "Confirmed",
+          "Payment Received",
+          "Sent to Partner Bank",
+          "Received by Partner Bank",
+          "Ready for Recipient",
+        ],
       },
-      stats: {
-        countries: "50+ destinations",
-        countriesLabel: "Corridors supported",
-        saved: "Clear fees",
-        savedLabel: "Upfront cost breakdowns",
-        transfers: "Reliable delivery",
-        transfersLabel: "Consistent payout tracking",
+      problem: {
+        label: "Problem statement",
+        title: "You send money home every month, and every month it's the same frustration.",
+        paragraphs: [
+          "You see one exchange rate when you start, another when you confirm, and the amount your family receives never quite matches what you expected. The fees are split across multiple line items with vague labels, and you're never sure if you're seeing the full cost.",
+          "After you send, the app goes quiet. You get a generic \"processing\" message that stays unchanged for days. Your family calls asking when the money will arrive, and you have no answer. You check the app again and see the same status. No one tells you what's actually happening.",
+          "When something does go wrong, support can't see your transfer details. You repeat your confirmation number multiple times. They ask you to send screenshots. They promise to \"escalate\" your issue. Days pass. The money is somewhere in the system, but no one can tell you where or why it's stuck.",
+        ],
       },
-      trust: {
-        title: "Why people choose ClariSend",
+      difference: {
+        label: "",
+        title: "How ClariSend is different",
         items: [
           {
-            title: "Complete transparency",
-            description: "See the full cost breakdown before you send. No surprises, no hidden charges.",
+            title: "Hidden fees",
+            description:
+              "ClariSend shows you the total cost before you confirm. One number that includes the transfer fee, the exchange rate markup, and any intermediary charges. What you see is what you pay.",
           },
           {
-            title: "Competitive routes",
-            description: "We compare routes in real-time so you can choose the best balance of price and speed.",
+            title: "Vague status updates",
+            description:
+              "Every transfer has a timeline with specific stages: confirmed, sent to partner bank, received by partner bank, ready for pickup or deposit. Each stage updates in real time with a timestamp. You always know where your money is.",
           },
           {
-            title: "Security-first operations",
-            description: "Encryption at every step with partners that meet strict compliance standards.",
+            title: "Recipients don't know what's happening",
+            description:
+              "ClariSend sends your recipient a text message when you initiate the transfer, another when funds are ready, and instructions for pickup or deposit. They're informed in their language before they ask you.",
+          },
+          {
+            title: "Support can't see your transfer",
+            description:
+              "When you contact ClariSend support, the agent sees your full transfer history, current status, and transaction details. They don't need screenshots or repeated explanations. They can resolve issues without escalation loops.",
           },
         ],
       },
       howItWorks: {
-        label: "How it works",
-        title: "Send money in three steps",
+        label: "",
+        title: "How it works",
         steps: [
           {
-            step: "1",
-            title: "Enter your transfer",
-            description: "Choose currencies and amount. We show available routes instantly.",
+            title: "Step 1: See the full cost",
+            description:
+              "Enter the amount you want to send. ClariSend shows you the exchange rate, all fees, and the exact amount your recipient will receive. This quote is locked for 30 minutes.",
           },
           {
-            step: "2",
-            title: "Compare and choose",
-            description: "See fees, rates, and delivery times side-by-side. Pick what works for you.",
+            title: "Step 2: Confirm and send",
+            description:
+              "Choose your payment method and confirm. Your recipient gets a text message immediately with an estimated arrival time and instructions.",
           },
           {
-            step: "3",
-            title: "Send securely",
-            description: "Confirm payment and track your transfer until delivery.",
+            title: "Step 3: Track your transfer",
+            description:
+              "Watch your transfer move through each stage. You'll see when ClariSend receives your funds, when they're sent to the partner bank, and when they're ready for your recipient.",
+          },
+          {
+            title: "Step 4: Your recipient gets paid",
+            description:
+              "Your recipient receives a text with pickup or deposit instructions. If they have questions, the message includes a reference number and local support contact.",
           },
         ],
       },
-      security: {
-        label: "Security & Compliance",
-        title: "Your money is protected",
-        description: "We work with regulated partners and apply strict controls to keep transfers secure.",
-        features: [
-          "End-to-end encryption",
-          "Regulated payment partners",
-          "KYC/AML-aligned controls",
-          "Real-time fraud monitoring",
+      transparency: {
+        label: "",
+        title: "Transparency section",
+        paragraphs: [
+          "ClariSend locks your exchange rate and fees when you confirm your transfer. If the rate changes while you're entering your information, you'll see the update before you pay. There are no post-confirmation adjustments.",
+          "The total cost you see includes everything: the transfer fee, the difference between the market rate and the rate you're getting, and any charges from partner banks or payment networks. ClariSend doesn't hide markup in the exchange rate and claim zero fees.",
+          "If your transfer requires additional information or documentation to complete, ClariSend will tell you before you pay, not after. You won't confirm a transfer only to find out later that it can't be processed.",
+        ],
+      },
+      tracking: {
+        label: "",
+        title: "Transfer tracking",
+        stagesTitle: "Your transfer has five stages: Confirmed, Payment Received, Sent to Partner Bank, Received by Partner Bank, and Ready for Recipient. Each stage shows a timestamp and updates automatically.",
+        paragraphs: [
+          "You can check status anytime in the app or on the web. If a transfer is delayed, you'll see why. Common reasons include bank holidays, recipient information that needs verification, or holds required by local regulations. ClariSend shows you the specific reason and what happens next.",
+          "You don't have to wonder if checking the app will give you new information. If the status has changed, you'll get a notification. If it hasn't changed, the app will tell you when to expect the next update.",
+        ],
+      },
+      recipient: {
+        label: "",
+        title: "Recipient experience",
+        paragraphs: [
+          "When you send money, your recipient gets a text message in their local language. The message tells them how much they're receiving, when it will be available, and how to collect it.",
+          "If the money is being deposited directly, the message confirms the account number and expected deposit time. If it's a cash pickup, the message includes the pickup location, required ID, and a reference number.",
+          "Recipients can reply to the message if they have questions. Responses go to local support staff who can see the transfer details and help resolve issues without asking the recipient to contact you first.",
+        ],
+      },
+      trust: {
+        label: "",
+        title: "Trust & Safety",
+        paragraphs: [
+          "ClariSend holds your funds in segregated accounts at regulated financial institutions. Your money is separated from ClariSend's operating funds and can only be used to complete your transfer.",
+          "If a transfer cannot be completed, ClariSend refunds the full amount you paid, including all fees. Refunds are processed to your original payment method within 3-5 business days.",
+          "Every transfer is monitored for compliance with anti-money laundering regulations and sanctions lists. If a transfer requires additional verification, ClariSend will request specific documents and explain why they're needed. Verification happens before your money is sent, not while it's in transit.",
+        ],
+      },
+      support: {
+        label: "",
+        title: "Support",
+        paragraphs: [
+          "Contact support when you need to cancel a transfer, update recipient information, or understand why a transfer is delayed. Support agents can see your transfer timeline, payment status, and any holds or verification requirements.",
+          "Most issues are resolved in the first conversation because the support agent has the same information you see in the app, plus backend details about partner bank processing. They don't need to ask other teams for updates.",
+          "If a transfer is stuck at the partner bank, ClariSend support contacts the partner directly and updates you with specific information, not generic status messages. You'll know what the partner bank is doing and when they expect to resolve the issue.",
         ],
       },
       cta: {
-        title: "Ready to send with clarity?",
-        description: "See rates, fees, and delivery times before you commit.",
-        button: "Get started",
-        note: "Clear pricing. No hidden fees.",
+        title: "Send your first transfer and see what clarity feels like.",
+        button: "Start a transfer",
       },
     },
     fr: {
       hero: {
-        badge: "Transferts transparents de bout en bout",
-        title: "Transferts internationaux,",
-        titleAccent: "prix clairs",
+        title: "Envoyez avec clarté.",
         description:
-          "Comparez les routes, bloquez le taux et envoyez avec des frais visibles.",
-        cta: "Commencer",
-        secondaryCta: "Comment ca marche",
-        preview: {
-          title: "Apercu du transfert",
-          subtitle: "Envoi de 500$ vers le Nigeria",
-          rows: [
-            { label: "Frais de transfert", value: "4,99$" },
-            { label: "Taux de change", value: "1 USD = 1 580 NGN" },
-            { label: "Delai de livraison", value: "Sous 1 jour ouvrable" },
-          ],
-          totalLabel: "Le destinataire recoit",
-          totalValue: "782 015,80 NGN",
-          note: "Montants finaux bloques a la validation.",
-        },
+          "Une expérience simple pour comprendre les frais, suivre le statut, et savoir quand l'argent arrive.",
+        primaryCta: "Commencer un transfert",
+        secondaryCta: "Voir les frais",
+        cardTitle: "Suivi du transfert",
+        cardItems: [
+          "Confirme",
+          "Paiement recu",
+          "Envoye a la banque partenaire",
+          "Recu par la banque partenaire",
+          "Pret pour le destinataire",
+        ],
       },
-      stats: {
-        countries: "50+ destinations",
-        countriesLabel: "Corridors supportes",
-        saved: "Frais clairs",
-        savedLabel: "Couts affiches avant envoi",
-        transfers: "Suivi fiable",
-        transfersLabel: "Statuts de paiement a jour",
+      problem: {
+        label: "Probleme",
+        title: "Les transferts devraient etre clairs du debut a la fin.",
+        paragraphs: [
+          "Frais et taux doivent etre visibles avant la confirmation.",
+          "Le statut doit evoluer avec des etapes precises et datees.",
+          "Le support doit avoir le contexte complet pour agir vite.",
+        ],
       },
-      trust: {
-        title: "Pourquoi choisir ClariSend",
+      difference: {
+        label: "",
+        title: "Pourquoi ClariSend",
         items: [
           {
-            title: "Transparence complete",
-            description: "Voyez la repartition complete des couts avant d'envoyer. Pas de surprises.",
+            title: "Frais regroupes",
+            description: "Un montant total avant de payer, sans ligne cachee.",
           },
           {
-            title: "Routes competitives",
-            description: "Nous comparons les routes en temps reel pour equilibrer cout et rapidite.",
+            title: "Statuts explicites",
+            description: "Des etapes precises avec heure et progression.",
           },
           {
-            title: "Securite en continu",
-            description: "Chiffrement a chaque etape et partenaires soumis aux exigences reglementaires.",
+            title: "Destinataires informes",
+            description: "Messages en langue locale avec instructions utiles.",
+          },
+          {
+            title: "Support contextualise",
+            description: "Acces direct aux details du transfert.",
           },
         ],
       },
       howItWorks: {
-        label: "Comment ca marche",
-        title: "Envoyez de l'argent en trois etapes",
+        label: "",
+        title: "Comment ca marche",
         steps: [
           {
-            step: "1",
-            title: "Entrez votre transfert",
-            description: "Choisissez les devises et le montant. Nous affichons les routes disponibles.",
+            title: "Etape 1: Voir le cout total",
+            description: "Taux, frais, et montant recu avant validation.",
           },
           {
-            step: "2",
-            title: "Comparez et choisissez",
-            description: "Voyez les frais, taux et delais cote a cote. Choisissez ce qui vous convient.",
+            title: "Etape 2: Confirmer et envoyer",
+            description: "Paiement confirme et notification immediate au destinataire.",
           },
           {
-            step: "3",
-            title: "Envoyez en securite",
-            description: "Effectuez le paiement et suivez le transfert jusqu'a la reception.",
+            title: "Etape 3: Suivre le transfert",
+            description: "Chaque etape s'affiche avec un horodatage.",
+          },
+          {
+            title: "Etape 4: Reception",
+            description: "Instructions claires pour retrait ou depot.",
           },
         ],
       },
-      security: {
-        label: "Securite & Conformite",
-        title: "Votre argent est protege",
-        description: "Nous travaillons avec des partenaires reglementes et appliquons des controles stricts.",
-        features: [
-          "Chiffrement de bout en bout",
-          "Partenaires reglementes",
-          "Controles KYC/AML",
-          "Surveillance des fraudes en temps reel",
+      transparency: {
+        label: "",
+        title: "Transparence",
+        paragraphs: [
+          "Le taux et les frais sont confirmes avant validation.",
+          "Le total affiche inclut tous les couts essentiels.",
+          "Aucune demande tardive apres confirmation.",
+        ],
+      },
+      tracking: {
+        label: "",
+        title: "Suivi du transfert",
+        stagesTitle:
+          "Cinq etapes visibles avec horodatage automatique.",
+        paragraphs: [
+          "Le statut est consultable dans l'app ou sur le web.",
+          "Les notifications previennent lorsque le statut change.",
+        ],
+      },
+      recipient: {
+        label: "",
+        title: "Experience destinataire",
+        paragraphs: [
+          "Message local avec montant, disponibilite, et mode de retrait.",
+          "Confirmation pour depot ou lieu de retrait pour cash.",
+          "Reponses gerees par le support local avec le contexte.",
+        ],
+      },
+      trust: {
+        label: "",
+        title: "Confiance & Securite",
+        paragraphs: [
+          "Fonds separes et conserves chez des institutions reglementees.",
+          "Remboursement integral en cas d'echec.",
+          "Verification AML/KYC avant envoi des fonds.",
+        ],
+      },
+      support: {
+        label: "",
+        title: "Support",
+        paragraphs: [
+          "Annulation, mise a jour, ou statut: tout est visible.",
+          "Resolution rapide avec acces aux details complets.",
+          "Contact direct des partenaires si un blocage survient.",
         ],
       },
       cta: {
-        title: "Pret a envoyer en toute clarte?",
-        description: "Taux, frais et delais visibles avant validation.",
-        button: "Commencer",
-        note: "Tarifs clairs, sans frais caches.",
+        title: "Envoyez un premier transfert avec clarte.",
+        button: "Commencer un transfert",
       },
     },
   };
 
-  const t = messages[validLocale];
+  const t = content[validLocale];
+  const appLocaleUrl = `https://app.clarisend.co/${validLocale}`;
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-white overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-emerald-50/20" />
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
-            <div className="max-w-2xl lg:max-w-none">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-100 bg-emerald-50/70 mb-6">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                <span className="text-sm text-emerald-700 font-medium">{t.hero.badge}</span>
-              </div>
-
-              {/* Headline */}
-              <h1 className="text-4xl sm:text-4xl lg:text-5xl font-semibold text-slate-900 tracking-tight mb-6">
+    <div className="bg-white text-slate-900">
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30" />
+        <div className="relative max-w-6xl mx-auto px-6 lg:px-8 py-20 lg:py-28">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
+            <div className="max-w-2xl">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight mt-6 mb-6">
                 {t.hero.title}
-                <br />
-                <span className="text-emerald-600">{t.hero.titleAccent}</span>
               </h1>
-
-              {/* Description */}
-              <p className="text-lg text-slate-600 leading-relaxed mb-8">
+              <p className="text-lg sm:text-xl text-slate-600 leading-relaxed mb-8">
                 {t.hero.description}
               </p>
-
-              {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-3">
-              <TrackedLink
-                href="https://app.clarisend.co"
-                event="cta_start_sending"
-                className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3 rounded-lg transition-colors"
-              >
-                {t.hero.cta}
-                <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </TrackedLink>
-              <TrackedLink
-                href={`/${validLocale}/how-it-works`}
-                event="cta_see_how_it_works"
-                className="inline-flex items-center justify-center text-slate-700 hover:text-slate-900 font-medium px-6 py-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
-              >
-                {t.hero.secondaryCta}
-              </TrackedLink>
+                <TrackedLink
+                  href={appLocaleUrl}
+                  event="cta_start_transfer"
+                  className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-3.5 rounded-lg"
+                >
+                  {t.hero.primaryCta}
+                </TrackedLink>
+                <TrackedLink
+                  href={`/${validLocale}/pricing`}
+                  event="cta_view_fees"
+                  className="inline-flex items-center justify-center text-slate-700 hover:text-slate-900 font-medium px-6 py-3.5 rounded-lg border border-slate-200 hover:border-slate-300"
+                >
+                  {t.hero.secondaryCta}
+                </TrackedLink>
               </div>
             </div>
-            <div className="w-full max-w-lg lg:justify-self-end">
-              <div className="bg-white/90 backdrop-blur border border-slate-200 rounded-2xl shadow-sm p-6 lg:p-8">
-                <div className="mb-6">
-                  <p className="text-sm text-slate-500">{t.hero.preview.title}</p>
-                  <p className="text-xl font-semibold text-slate-900">{t.hero.preview.subtitle}</p>
-                </div>
-                <div className="space-y-4">
-                  {t.hero.preview.rows.map((row, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm text-slate-600">
-                      <span>{row.label}</span>
-                      <span className="text-slate-900 font-medium">{row.value}</span>
+            <div className="w-full max-w-lg">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 lg:p-8">
+                <p className="text-sm text-slate-500">{t.hero.cardTitle}</p>
+                <div className="space-y-3">
+                  {t.hero.cardItems.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center justify-between text-sm text-slate-600 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
+                    >
+                      <span>{item}</span>
+                      <span className="text-emerald-600 font-medium">●</span>
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 flex items-center justify-between">
-                  <span className="text-sm text-emerald-700 font-medium">{t.hero.preview.totalLabel}</span>
-                  <span className="text-lg font-semibold text-emerald-700">{t.hero.preview.totalValue}</span>
+                <div className="mt-6 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                  <p className="text-sm text-emerald-700 font-medium">
+                    {validLocale === "en"
+                      ? "Each stage updates in real time with a timestamp."
+                      : "Chaque etape se met a jour avec un horodatage."}
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500 mt-4">{t.hero.preview.note}</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="bg-slate-50 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
-          <div className="grid sm:grid-cols-3 gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-semibold text-slate-900">{t.stats.countries}</p>
-              <p className="text-sm text-slate-500 mt-1">{t.stats.countriesLabel}</p>
-            </div>
-            <div className="text-center sm:border-x sm:border-slate-200">
-              <p className="text-2xl font-semibold text-slate-900">{t.stats.saved}</p>
-              <p className="text-sm text-slate-500 mt-1">{t.stats.savedLabel}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-semibold text-slate-900">{t.stats.transfers}</p>
-              <p className="text-sm text-slate-500 mt-1">{t.stats.transfersLabel}</p>
-            </div>
+      {/* Problem */}
+      <section className="bg-white py-20">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl">
+            {t.problem.label ? (
+              <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
+                {t.problem.label}
+              </p>
+            ) : null}
+            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-6">
+              {t.problem.title}
+            </h2>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8 mt-10">
+            {t.problem.paragraphs.map((paragraph) => (
+              <p key={paragraph} className="text-slate-600 leading-relaxed text-base">
+                {paragraph}
+              </p>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="bg-white py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900">
-              {t.trust.title}
+      {/* Difference */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl">
+            {t.difference.label ? (
+              <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
+                {t.difference.label}
+              </p>
+            ) : null}
+            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-12">
+              {t.difference.title}
             </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            {t.trust.items.map((item, index) => (
-              <div key={index} className="text-center md:text-left">
-                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 mx-auto md:mx-0">
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    {index === 0 && <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />}
-                    {index === 1 && <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />}
-                    {index === 2 && <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />}
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{item.title}</h3>
+          <div className="grid md:grid-cols-2 gap-8">
+            {t.difference.items.map((item) => (
+              <div
+                key={item.title}
+                className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm"
+              >
+                <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
                 <p className="text-slate-600 leading-relaxed">{item.description}</p>
               </div>
             ))}
@@ -360,51 +426,90 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="bg-slate-50 py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12 lg:mb-16">
-            <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.howItWorks.label}</span>
-            <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900">{t.howItWorks.title}</h2>
+      {/* How it works */}
+      <section className="bg-white py-20">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl">
+            {t.howItWorks.label ? (
+              <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
+                {t.howItWorks.label}
+              </p>
+            ) : null}
+            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-10">
+              {t.howItWorks.title}
+            </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {t.howItWorks.steps.map((step, index) => (
-              <div key={index} className="relative">
-                {index < 2 && (
-                  <div className="hidden md:block absolute top-8 left-full w-full h-px bg-slate-200 -translate-x-1/2" />
-                )}
-                <div className="bg-white rounded-xl border border-slate-200 p-6 lg:p-8 relative">
-                  <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center text-sm font-semibold mb-4">
-                    {step.step}
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{step.title}</h3>
-                  <p className="text-slate-600">{step.description}</p>
-                </div>
+          <div className="grid lg:grid-cols-2 gap-8">
+            {t.howItWorks.steps.map((step) => (
+              <div
+                key={step.title}
+                className="border border-slate-200 rounded-2xl p-6 lg:p-8 bg-slate-50"
+              >
+                <h3 className="text-lg font-semibold mb-3">{step.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Security Section */}
-      <section className="bg-white py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 lg:p-12">
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-              <div>
-                <span className="text-sm font-medium text-emerald-600 mb-2 block">{t.security.label}</span>
-                <h2 className="text-2xl lg:text-3xl font-semibold text-slate-900 mb-4">{t.security.title}</h2>
-                <p className="text-slate-600 leading-relaxed">{t.security.description}</p>
+      {/* Transparency */}
+      <section className="bg-slate-900 py-20 text-white">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl">
+            {t.transparency.label ? (
+              <p className="text-sm font-semibold text-emerald-300 uppercase tracking-[0.2em]">
+                {t.transparency.label}
+              </p>
+            ) : null}
+            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-10">
+              {t.transparency.title}
+            </h2>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {t.transparency.paragraphs.map((paragraph) => (
+              <p key={paragraph} className="text-slate-200 leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Transfer tracking */}
+      <section className="bg-white py-20">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-12">
+            <div>
+              {t.tracking.label ? (
+                <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
+                  {t.tracking.label}
+                </p>
+              ) : null}
+              <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-6">
+                {t.tracking.title}
+              </h2>
+              <p className="text-slate-600 leading-relaxed mb-6">
+                {t.tracking.stagesTitle}
+              </p>
+              <div className="space-y-4">
+                {t.tracking.paragraphs.map((paragraph) => (
+                  <p key={paragraph} className="text-slate-600 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                {t.security.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 lg:p-8">
+              <div className="space-y-4">
+                {t.hero.cardItems.map((stage, index) => (
+                  <div key={stage} className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-full border border-emerald-200 bg-emerald-50 flex items-center justify-center text-emerald-700 text-sm font-semibold">
+                      {index + 1}
                     </div>
-                    <span className="text-sm text-slate-700">{feature}</span>
+                    <div>
+                      <p className="text-slate-800 font-medium">{stage}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -413,19 +518,88 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-slate-50 py-16 lg:py-24">
+      {/* Recipient experience */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl">
+            {t.recipient.label ? (
+              <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
+                {t.recipient.label}
+              </p>
+            ) : null}
+            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-8">
+              {t.recipient.title}
+            </h2>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {t.recipient.paragraphs.map((paragraph) => (
+              <p key={paragraph} className="text-slate-600 leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Safety */}
+      <section className="bg-white py-20">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl">
+            {t.trust.label ? (
+              <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
+                {t.trust.label}
+              </p>
+            ) : null}
+            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-8">
+              {t.trust.title}
+            </h2>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {t.trust.paragraphs.map((paragraph) => (
+              <p key={paragraph} className="text-slate-600 leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Support */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-6xl mx-auto px-6 lg:px-8">
+          <div className="max-w-3xl">
+            {t.support.label ? (
+              <p className="text-sm font-semibold text-emerald-600 uppercase tracking-[0.2em]">
+                {t.support.label}
+              </p>
+            ) : null}
+            <h2 className="text-3xl sm:text-4xl font-semibold mt-4 mb-8">
+              {t.support.title}
+            </h2>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {t.support.paragraphs.map((paragraph) => (
+              <p key={paragraph} className="text-slate-600 leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-white py-20">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-4">{t.cta.title}</h2>
-          <p className="text-lg text-slate-600 mb-8">{t.cta.description}</p>
+          <h2 className="text-3xl sm:text-4xl font-semibold mb-4">
+            {t.cta.title}
+          </h2>
           <TrackedLink
-            href="https://app.clarisend.co"
-            event="cta_get_started"
-            className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-8 py-3.5 rounded-lg transition-colors"
+            href={appLocaleUrl}
+            event="cta_primary_footer"
+            className="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white font-medium px-8 py-3.5 rounded-lg"
           >
             {t.cta.button}
           </TrackedLink>
-          <p className="text-sm text-slate-500 mt-4">{t.cta.note}</p>
         </div>
       </section>
     </div>
