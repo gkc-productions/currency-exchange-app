@@ -9,7 +9,6 @@ import { COUNTRY_OPTIONS } from "@/components/country-options";
 import { formatDateTime, formatMoney, formatPercent } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 
-const MARKET_RATE = 12.65;
 const FX_MARGIN_PCT = 1.8;
 const FIXED_FEE_DEFAULT = 2.5;
 const PERCENT_FEE_PCT = 1.2;
@@ -60,6 +59,19 @@ const formatNumber = (value: number, digits = 2, locale: Locale = "en") =>
     maximumFractionDigits: digits,
   }).format(value);
 
+const ratePrecision = (rate: number) => {
+  if (!Number.isFinite(rate)) {
+    return 4;
+  }
+  if (rate >= 100) {
+    return 2;
+  }
+  if (rate >= 1) {
+    return 4;
+  }
+  return 6;
+};
+
 const stepForDecimals = (decimals: number) => {
   if (decimals <= 0) {
     return "1";
@@ -89,8 +101,10 @@ type Quote = {
   toAsset: QuoteAsset;
   rail: string;
   provider: string;
-  rateSource: string;
-  rateTimestamp: string;
+  rateSource?: string | null;
+  rateTimestamp?: string | null;
+  source?: string | null;
+  timestamp?: string | null;
   sendAmount: number;
   marketRate: number;
   fxMarginPct: number;
@@ -128,8 +142,10 @@ type Recommendation = {
   toAsset?: QuoteAsset;
   sendAmount: number;
   marketRate: number;
-  rateSource: string;
-  rateTimestamp: string;
+  rateSource?: string | null;
+  rateTimestamp?: string | null;
+  source?: string | null;
+  timestamp?: string | null;
   cheapestRouteId: string;
   fastestRouteId: string;
   bestValueRouteId: string;
@@ -166,7 +182,8 @@ export default function Home() {
   const [fromAsset, setFromAsset] = useState("USD");
   const [toAsset, setToAsset] = useState("GHS");
   const [rail, setRail] = useState("MOBILE_MONEY");
-  const [marketRate, setMarketRate] = useState(String(MARKET_RATE));
+  const [marketRate, setMarketRate] = useState("");
+  const [manualOverrideEnabled, setManualOverrideEnabled] = useState(false);
   const [fxMargin, setFxMargin] = useState(String(FX_MARGIN_PCT));
   const [fixedFee, setFixedFee] = useState(String(FIXED_FEE_DEFAULT));
   const [percentFee, setPercentFee] = useState(String(PERCENT_FEE_PCT));
@@ -285,6 +302,43 @@ export default function Home() {
   const displayToAsset = quote?.toAsset.code ?? toAsset;
   const displayRail = quote?.rail ?? rail;
   const quoteLoading = isLoading || (quoteActive && !hasQuote);
+
+  const resolvedRateSource = useMemo(() => {
+    return (
+      quote?.rateSource ??
+      quote?.source ??
+      recommendation?.rateSource ??
+      recommendation?.source ??
+      null
+    );
+  }, [quote, recommendation]);
+  const resolvedRateTimestamp = useMemo(() => {
+    return (
+      quote?.rateTimestamp ??
+      quote?.timestamp ??
+      recommendation?.rateTimestamp ??
+      recommendation?.timestamp ??
+      null
+    );
+  }, [quote, recommendation]);
+
+  const manualRateInfo = useMemo(() => {
+    const trimmed = marketRate.trim();
+    if (trimmed.length === 0) {
+      return { trimmed, value: null, valid: false };
+    }
+    const value = Number(trimmed);
+    const valid = Number.isFinite(value) && value > 0 && value < 1e9;
+    return { trimmed, value, valid };
+  }, [marketRate]);
+
+  const manualRateError =
+    manualOverrideEnabled && manualRateInfo.trimmed.length > 0 && !manualRateInfo.valid
+      ? "Enter a valid market rate."
+      : null;
+
+  const shouldSendManualRate = manualOverrideEnabled && manualRateInfo.valid;
+
   const flowSteps = [
     messages.flowStepQuote,
     messages.flowStepReview,
@@ -692,11 +746,13 @@ export default function Home() {
         to: toAsset,
         rail,
         sendAmount: sendAmount.trim(),
-        marketRate: marketRate.trim(),
         fxMarginPct: fxMargin.trim(),
         feeFixed: fixedFee.trim(),
         feePct: percentFee.trim(),
       });
+      if (shouldSendManualRate && manualRateInfo.value !== null) {
+        params.set("marketRate", manualRateInfo.value.toString());
+      }
       const res = await fetch(`/api/quote?${params.toString()}`, {
         signal: controller.signal,
       });
@@ -716,7 +772,6 @@ export default function Home() {
     return null;
   }, [
     sendAmount,
-    marketRate,
     fxMargin,
     fixedFee,
     percentFee,
@@ -724,6 +779,8 @@ export default function Home() {
     toAsset,
     rail,
     messages.quoteLoadError,
+    shouldSendManualRate,
+    manualRateInfo.value,
   ]);
 
   const fetchRecommendation = useCallback(async () => {
@@ -749,6 +806,9 @@ export default function Home() {
         to: toAsset,
         sendAmount: amountValue.toString(),
       });
+      if (shouldSendManualRate && manualRateInfo.value !== null) {
+        params.set("marketRate", manualRateInfo.value.toString());
+      }
       const res = await fetch(`/api/recommendation?${params.toString()}`, {
         signal: controller.signal,
       });
@@ -773,7 +833,14 @@ export default function Home() {
       setRecommendationLoading(false);
     }
     return null;
-  }, [fromAsset, messages.recommendationLoadError, sendAmount, toAsset]);
+  }, [
+    fromAsset,
+    messages.recommendationLoadError,
+    sendAmount,
+    toAsset,
+    shouldSendManualRate,
+    manualRateInfo.value,
+  ]);
 
   const handleGetStarted = useCallback(() => {
     if (!quoteActive) {
@@ -787,6 +854,15 @@ export default function Home() {
         .getElementById("quote")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
+  }, [fetchQuote, fetchRecommendation, quoteActive]);
+
+  const handleResetManualRate = useCallback(() => {
+    setMarketRate("");
+    setManualOverrideEnabled(false);
+    if (quoteActive) {
+      fetchQuote();
+      fetchRecommendation();
+    }
   }, [fetchQuote, fetchRecommendation, quoteActive]);
 
   const resetTransferForm = useCallback(() => {
@@ -1503,28 +1579,30 @@ export default function Home() {
                         )}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span>{messages.rateSourceLabel}</span>
-                      <span className="font-semibold text-slate-900">
-                        {quoteLoading ? (
-                          <span className={skeletonClass} />
-                        ) : (
-                          quote?.rateSource ?? "—"
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>{messages.rateUpdatedLabel}</span>
-                      <span className="font-semibold text-slate-900">
-                        {quoteLoading ? (
-                          <span className={skeletonClass} />
-                        ) : quote?.rateTimestamp ? (
-                          formatDateTime(quote.rateTimestamp, locale)
-                        ) : (
-                          "—"
-                        )}
-                      </span>
-                    </div>
+                    {resolvedRateSource ? (
+                      <div className="flex items-center justify-between">
+                        <span>{messages.rateSourceLabel}</span>
+                        <span className="font-semibold text-slate-900">
+                          {quoteLoading ? (
+                            <span className={skeletonClass} />
+                          ) : (
+                            resolvedRateSource
+                          )}
+                        </span>
+                      </div>
+                    ) : null}
+                    {resolvedRateTimestamp ? (
+                      <div className="flex items-center justify-between">
+                        <span>{messages.rateUpdatedLabel}</span>
+                        <span className="font-semibold text-slate-900">
+                          {quoteLoading ? (
+                            <span className={skeletonClass} />
+                          ) : (
+                            formatDateTime(resolvedRateTimestamp, locale)
+                          )}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                   <div className="mt-4 grid gap-2 text-sm text-slate-600">
                     <div className="flex items-center justify-between">
@@ -1563,7 +1641,7 @@ export default function Home() {
                         {hasQuote
                           ? `1 ${displayFromAsset} = ${formatNumber(
                               appliedRate,
-                              4,
+                              ratePrecision(appliedRate),
                               locale
                             )} ${displayToAsset}`
                           : "—"}
@@ -1575,7 +1653,7 @@ export default function Home() {
                         {hasQuote
                           ? `1 ${displayFromAsset} = ${formatNumber(
                               effectiveRate,
-                              4,
+                              ratePrecision(effectiveRate),
                               locale
                             )} ${displayToAsset}`
                           : "—"}
@@ -1638,20 +1716,151 @@ export default function Home() {
                   <p className="mt-2 text-sm text-slate-500">
                     {messages.pricingControlsSubtitle}
                   </p>
+
+                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-4">
+                    <p className="text-xs font-semibold text-slate-700">
+                      Pricing transparency
+                    </p>
+                    <div className="mt-3 space-y-2 text-xs text-slate-600">
+                      <div className="flex items-center justify-between">
+                        <span>
+                          {messages.marketRateLabel} ({displayToAsset} per 1{" "}
+                          {displayFromAsset})
+                        </span>
+                        <span className="font-semibold text-slate-900">
+                          {hasQuote
+                            ? `1 ${displayFromAsset} = ${formatNumber(
+                                numericMarketRate,
+                                ratePrecision(numericMarketRate),
+                                locale
+                              )} ${displayToAsset} ${messages.marketRateSuffix}`
+                            : messages.marketRatePending}
+                        </span>
+                      </div>
+                      {resolvedRateSource ? (
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span>Source</span>
+                          <span className="font-medium text-slate-700">
+                            {resolvedRateSource}
+                          </span>
+                        </div>
+                      ) : null}
+                      {resolvedRateTimestamp ? (
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span>Updated</span>
+                          <span className="font-medium text-slate-700">
+                            {formatDateTime(resolvedRateTimestamp, locale)}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-4 grid gap-2 text-xs text-slate-600">
+                      <div className="flex items-center justify-between">
+                        <span>{messages.appliedRateRow}</span>
+                        <span className="font-semibold text-slate-900">
+                          {hasQuote
+                            ? `1 ${displayFromAsset} = ${formatNumber(
+                                appliedRate,
+                                ratePrecision(appliedRate),
+                                locale
+                              )} ${displayToAsset}`
+                            : messages.appliedRatePending}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>{messages.fxMarginRow}</span>
+                        <span className="font-semibold text-slate-900">
+                          {hasQuote ? formatPercent(numericFxMargin, locale) : "—"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Applied rate = market rate × (1 − margin).
+                      </p>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 text-xs text-slate-600">
+                      <div className="flex items-center justify-between">
+                        <span>{messages.sendAmountRow}</span>
+                        <span className="font-semibold text-slate-900">
+                          {hasQuote
+                            ? formatAmount(numericSend, displayFromAsset)
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>{messages.totalFeeRow}</span>
+                        <span className="font-semibold text-slate-900">
+                          {hasQuote
+                            ? formatAmount(totalFee, displayFromAsset)
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>{messages.recipientGetsLabel}</span>
+                        <span className="font-semibold text-slate-900">
+                          {hasQuote
+                            ? formatAmount(recipientGets, displayToAsset)
+                            : "—"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        What you pay is the send amount plus fees; recipient gets is after fees.
+                      </p>
+                    </div>
+
+                    <details className="mt-4 rounded-xl border border-slate-200 bg-white px-3 py-3">
+                      <summary className="cursor-pointer text-xs font-semibold text-slate-700">
+                        Advanced: manual market rate override
+                      </summary>
+                      <div className="mt-3 space-y-3 text-xs text-slate-600">
+                        <label className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                          <input
+                            type="checkbox"
+                            checked={manualOverrideEnabled}
+                            onChange={(event) =>
+                              setManualOverrideEnabled(event.target.checked)
+                            }
+                            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus-visible:ring-emerald-500/40"
+                          />
+                          Enable manual override
+                        </label>
+                        {manualOverrideEnabled ? (
+                          <label className="flex flex-col gap-2 text-[11px] font-medium text-slate-500">
+                            Manual market rate ({displayToAsset} per 1{" "}
+                            {displayFromAsset})
+                            <input
+                              inputMode="decimal"
+                              type="number"
+                              min="0"
+                              step="0.0001"
+                              value={marketRate}
+                              onChange={(event) => setMarketRate(event.target.value)}
+                              className={inputClassName}
+                              aria-label={`Manual market rate in ${displayToAsset}`}
+                            />
+                          </label>
+                        ) : null}
+                        <p className="text-[11px] text-amber-700">
+                          Manual rate override is for testing; real quotes use live market rate.
+                        </p>
+                        {manualRateError ? (
+                          <p className="text-[11px] text-rose-600">
+                            {manualRateError}
+                          </p>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={handleResetManualRate}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-medium text-slate-700 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                        >
+                          Reset to live rate
+                        </button>
+                      </div>
+                    </details>
+                  </div>
+
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
-                      {messages.marketRateLabel} ({toAsset} per 1 {fromAsset})
-                      <input
-                        inputMode="decimal"
-                        type="number"
-                        min="0"
-                        step="0.0001"
-                        value={marketRate}
-                        onChange={(event) => setMarketRate(event.target.value)}
-                        className={inputClassName}
-                        aria-label={`Market rate in ${toAsset}`}
-                      />
-                    </label>
                     <label className="flex flex-col gap-2 text-xs font-medium text-slate-500">
                       {messages.fxMarginLabel}
                       <input
@@ -1691,31 +1900,6 @@ export default function Home() {
                         aria-label={messages.percentFeeLabelWithAsset(fromAsset)}
                       />
                     </label>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-                    <span>
-                      {hasQuote
-                        ? `1 ${displayFromAsset} = ${formatNumber(
-                            numericMarketRate,
-                            4,
-                            locale
-                          )} ${displayToAsset} ${messages.marketRateSuffix}`
-                        : messages.marketRatePending}
-                    </span>
-                    <span>
-                      {hasQuote
-                        ? `${messages.appliedRateRow}: 1 ${displayFromAsset} = ${formatNumber(
-                            appliedRate,
-                            4,
-                            locale
-                          )} ${displayToAsset}`
-                        : messages.appliedRatePending}
-                    </span>
-                    <span>
-                      {hasQuote
-                        ? `${messages.rateSourceLabel}: ${quote?.rateSource ?? "—"}`
-                        : `${messages.rateSourceLabel}: —`}
-                    </span>
                   </div>
                 </div>
 
@@ -2131,3 +2315,4 @@ export default function Home() {
     </div>
   );
 }
+
