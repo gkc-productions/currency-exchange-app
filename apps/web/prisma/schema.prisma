@@ -146,6 +146,10 @@ model Transfer {
   recipientMobileMoneyNumber  String?
   recipientLightningInvoice   String?
   memo                        String?
+  receiptIssuedAt             DateTime?
+  receiptUrl                  String?
+  receiptEmailSendingAt       DateTime?
+  receiptEmailSentAt          DateTime?
   receiptLastSentAt           DateTime?
   receiptSendCount            Int            @default(0)
   createdAt                   DateTime       @default(now())
