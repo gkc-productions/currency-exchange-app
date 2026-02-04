@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { getServerSession, type NextAuthOptions } from "next-auth";
+import { getServerSession, type NextAuthOptions, type Session } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import { prisma } from "@/src/lib/prisma";
 import { sendMagicLinkEmail } from "@/src/lib/email";
@@ -84,4 +84,25 @@ export const authOptions: NextAuthOptions = {
 
 export function getServerAuthSession() {
   return getServerSession(authOptions);
+}
+
+export function resolveAdminEmails() {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+type EmailSessionLike = {
+  user?: {
+    email?: string | null;
+  } | null;
+} | null | undefined;
+
+export function isAdminSession(session: Session | EmailSessionLike) {
+  const email = session?.user?.email?.toLowerCase();
+  if (!email) {
+    return false;
+  }
+  return resolveAdminEmails().includes(email);
 }

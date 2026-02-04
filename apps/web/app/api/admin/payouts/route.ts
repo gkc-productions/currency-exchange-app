@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import { Prisma, TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
-import { getServerAuthSession } from "@/src/lib/auth";
+import { getServerAuthSession, isAdminSession } from "@/src/lib/auth";
 
 const DEV_BYPASS_HEADER = "x-dev-bypass-auth";
 const DEV_EMAIL_HEADER = "x-dev-user-email";
 
 type SessionLike = { user?: { email?: string | null } | null } | null;
-
-function resolveAdminEmails() {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
 
 function readDevBypassSession(req: Request): SessionLike {
   if (process.env.NODE_ENV === "production") {
@@ -73,10 +66,7 @@ function parseProvider(value: string | null) {
 
 export async function GET(req: Request) {
   const session = readDevBypassSession(req) ?? (await getServerAuthSession());
-  const email = session?.user?.email?.toLowerCase();
-  const adminEmails = resolveAdminEmails();
-
-  if (!email || !adminEmails.includes(email)) {
+  if (!isAdminSession(session)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
