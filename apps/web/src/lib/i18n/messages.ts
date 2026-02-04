@@ -44,6 +44,12 @@ export type Messages = {
   receiptResendSuccess: string;
   receiptResendError: string;
   receiptResendRateLimited: string;
+  receiptGetButtonLabel: string;
+  receiptGetPromptLabel: string;
+  receiptAvailableAfterCompletionLabel: string;
+  receiptSnapshotUnavailableLabel: string;
+  receiptUnauthorizedLabel: string;
+  receiptReadyLabel: string;
   adminTitle: string;
   adminSubtitle: string;
   adminUnauthorizedTitle: string;
@@ -271,6 +277,25 @@ export type Messages = {
   transferUpdateError: string;
   quoteExpiredError: string;
   invalidQuoteError: string;
+  pricingTransparencyTitle: string;
+  pricingTransparencySourceLabel: string;
+  pricingTransparencyUpdatedLabel: string;
+  pricingTransparencyAppliedRateFormula: string;
+  pricingTransparencyPayVsGetNote: string;
+  pricingTransparencyAdvancedTitle: string;
+  pricingTransparencyEnableManualLabel: string;
+  pricingTransparencyManualRateLabel: (toAsset: string, fromAsset: string) => string;
+  pricingTransparencyManualRateWarning: string;
+  pricingTransparencyResetLiveRate: string;
+  pricingTransparencyManualRateInvalid: string;
+  pricingTransparencyOverrideHelper: string;
+  pricingTransparencyRateMethodologyTitle: string;
+  pricingTransparencyRateMethodologyBody: string;
+  pricingTransparencyFeesExplainedTitle: string;
+  pricingTransparencyFeesExplainedBody: string;
+  quoteIntegrityVerifiedLabel: string;
+  quoteIntegrityLocksUntilLabel: (expiresAt: string) => string;
+  quoteIntegrityExpiredLabel: string;
 };
 
 const EN_MESSAGES: Messages = {
@@ -322,6 +347,12 @@ const EN_MESSAGES: Messages = {
   receiptResendError: "We couldn't resend the receipt. Please try again.",
   receiptResendRateLimited:
     "Please wait a moment before sending another receipt.",
+  receiptGetButtonLabel: "Get receipt",
+  receiptGetPromptLabel: "Issue the receipt to view or share it.",
+  receiptAvailableAfterCompletionLabel: "Receipt available after completion.",
+  receiptSnapshotUnavailableLabel: "Snapshot unavailable.",
+  receiptUnauthorizedLabel: "Unauthorized",
+  receiptReadyLabel: "Receipt ready to view.",
   adminTitle: "Admin console",
   adminSubtitle: "Restricted access for ClariSend administrators.",
   adminUnauthorizedTitle: "Access restricted",
@@ -517,30 +548,30 @@ const EN_MESSAGES: Messages = {
   lifecycleCompletedLabel: "COMPLETED",
   lifecycleFailedLabel: "FAILED",
   lifecycleExpiredLabel: "EXPIRED",
-  lifecycleCreatedDescription: "We received your transfer request.",
-  lifecycleQuotedDescription: "Your quote was locked at the confirmed rate.",
-  lifecycleInitiatedDescription: "Recipient details were confirmed and sent to payout.",
-  lifecyclePendingDescription: "Payout is in progress with the selected rail.",
-  lifecycleCompletedDescription: "Transfer completed and receipt issued.",
-  lifecycleFailedDescription: "Transfer failed before payout completed.",
-  lifecycleExpiredDescription: "Quote expired before payout could complete.",
-  nextStepTitle: "What happens next",
-  nextStepReady: "We are preparing payout with the selected rail.",
-  nextStepProcessing: "Payout is in progress. We will update you when it completes.",
+  lifecycleCreatedDescription: "We have received your transfer request.",
+  lifecycleQuotedDescription: "The quote is locked at the confirmed rate.",
+  lifecycleInitiatedDescription: "Recipient details have been submitted.",
+  lifecyclePendingDescription: "Payment is moving through the selected rail.",
+  lifecycleCompletedDescription: "Transfer completed and receipt available.",
+  lifecycleFailedDescription: "Transfer failed before delivery.",
+  lifecycleExpiredDescription: "The quote expired before delivery.",
+  nextStepTitle: "Next step",
+  nextStepReady: "We are preparing payout on the selected rail.",
+  nextStepProcessing: "Payment is processing. We'll notify you on completion.",
   nextStepCompleted: "Transfer completed. Your receipt is ready.",
-  nextStepFailed: "Transfer failed. Please contact support for next steps.",
-  nextStepExpired: "Quote expired. Start a new transfer to continue.",
+  nextStepFailed: "Transfer failed. Contact support.",
+  nextStepExpired: "Quote expired. Start a new transfer.",
   lightningInvoiceLabel: "Lightning invoice",
   lightningAmountLabel: "Invoice amount (sats)",
   lightningStatusLabel: "Lightning status",
-  lightningWaitingLabel: "Waiting for payment",
+  lightningWaitingLabel: "Awaiting payment",
   lightningPaidLabel: "Paid",
   copyInvoiceButton: "Copy invoice",
   simulatePaymentButton: "Simulate payment",
   transferCreatedEvent: "Transfer created",
   invoiceIssuedEvent: "Lightning invoice issued",
   quoteLockedEvent: (expiresAt) => `Quote locked until ${expiresAt}`,
-  transferProcessingEvent: "Transfer is being processed",
+  transferProcessingEvent: "Transfer is processing",
   transferCompletedEvent: "Transfer completed successfully",
   transferPaidEvent: "Lightning invoice paid",
   transferFailedEvent: "Transfer failed",
@@ -566,6 +597,31 @@ const EN_MESSAGES: Messages = {
   transferUpdateError: "We couldn't update the transfer. Please try again.",
   quoteExpiredError: "That quote expired. Refresh and lock a new one.",
   invalidQuoteError: "Please lock a valid quote before continuing.",
+  pricingTransparencyTitle: "Pricing transparency",
+  pricingTransparencySourceLabel: "Source",
+  pricingTransparencyUpdatedLabel: "Updated",
+  pricingTransparencyAppliedRateFormula: "Applied rate = market rate × (1 − margin).",
+  pricingTransparencyPayVsGetNote:
+    "What you pay is the send amount plus fees; recipient gets is after fees.",
+  pricingTransparencyAdvancedTitle: "Advanced: manual market rate override",
+  pricingTransparencyEnableManualLabel: "Enable manual override",
+  pricingTransparencyManualRateLabel: (toAsset, fromAsset) =>
+    `Manual market rate (${toAsset} per 1 ${fromAsset})`,
+  pricingTransparencyManualRateWarning:
+    "Manual rate override is for testing; real quotes use live market rate.",
+  pricingTransparencyResetLiveRate: "Reset to live rate",
+  pricingTransparencyManualRateInvalid: "Enter a valid market rate.",
+  pricingTransparencyOverrideHelper:
+    "Override the market rate used by /api/quote and /api/recommendation for preview/testing.",
+  pricingTransparencyRateMethodologyTitle: "Rate methodology",
+  pricingTransparencyRateMethodologyBody:
+    "Market rate is fetched live from providers. Applied rate = market rate × (1 − margin). The timestamp shows when the rate was last updated. Rates can change until a quote is locked.",
+  pricingTransparencyFeesExplainedTitle: "Fees explained",
+  pricingTransparencyFeesExplainedBody:
+    "Fixed fee covers operational costs, while the percent fee scales with the amount. Total fee = fixed fee + percent fee amount. Fees are shown before the quote is locked.",
+  quoteIntegrityVerifiedLabel: "Verified quote",
+  quoteIntegrityLocksUntilLabel: (expiresAt) => `Locks until ${expiresAt}`,
+  quoteIntegrityExpiredLabel: "Quote expired — refresh required",
 };
 
 const FR_MESSAGES: Messages = {
@@ -620,6 +676,12 @@ const FR_MESSAGES: Messages = {
   receiptResendError: "Impossible de renvoyer le reçu. Veuillez reessayer.",
   receiptResendRateLimited:
     "Veuillez patienter avant de renvoyer le reçu.",
+  receiptGetButtonLabel: "Obtenir le reçu",
+  receiptGetPromptLabel: "Emettez le reçu pour l'afficher ou le partager.",
+  receiptAvailableAfterCompletionLabel: "Reçu disponible après la fin.",
+  receiptSnapshotUnavailableLabel: "Instantané indisponible.",
+  receiptUnauthorizedLabel: "Non autorisé",
+  receiptReadyLabel: "Reçu prêt à consulter.",
   adminTitle: "Console admin",
   adminSubtitle: "Acces reserve aux administrateurs ClariSend.",
   adminUnauthorizedTitle: "Acces restreint",
@@ -868,6 +930,33 @@ const FR_MESSAGES: Messages = {
   transferUpdateError: "Impossible de mettre à jour le transfert. Veuillez réessayer.",
   quoteExpiredError: "Ce devis a expiré. Actualisez et verrouillez un nouveau devis.",
   invalidQuoteError: "Verrouillez un devis valide avant de continuer.",
+  pricingTransparencyTitle: "Transparence des prix",
+  pricingTransparencySourceLabel: "Source",
+  pricingTransparencyUpdatedLabel: "Mis à jour",
+  pricingTransparencyAppliedRateFormula:
+    "Taux appliqué = taux du marché × (1 − marge).",
+  pricingTransparencyPayVsGetNote:
+    "Vous payez le montant envoyé plus les frais ; le bénéficiaire reçoit après frais.",
+  pricingTransparencyAdvancedTitle:
+    "Avancé : remplacement manuel du taux du marché",
+  pricingTransparencyEnableManualLabel: "Activer le remplacement manuel",
+  pricingTransparencyManualRateLabel: (toAsset, fromAsset) =>
+    `Taux du marché manuel (${toAsset} pour 1 ${fromAsset})`,
+  pricingTransparencyManualRateWarning:
+    "Le remplacement manuel est destiné aux tests ; les devis réels utilisent le taux du marché en direct.",
+  pricingTransparencyResetLiveRate: "Réinitialiser au taux en direct",
+  pricingTransparencyManualRateInvalid: "Saisissez un taux du marché valide.",
+  pricingTransparencyOverrideHelper:
+    "Remplace le taux du marché utilisé par /api/quote et /api/recommendation pour prévisualisation/tests.",
+  pricingTransparencyRateMethodologyTitle: "Méthodologie du taux",
+  pricingTransparencyRateMethodologyBody:
+    "Le taux du marché est récupéré en direct auprès des fournisseurs. Taux appliqué = taux du marché × (1 − marge). L’horodatage indique la dernière mise à jour. Les taux peuvent changer jusqu’au verrouillage du devis.",
+  pricingTransparencyFeesExplainedTitle: "Frais expliqués",
+  pricingTransparencyFeesExplainedBody:
+    "Le frais fixe couvre les coûts opérationnels et le frais en pourcentage varie selon le montant. Frais totaux = frais fixe + montant du frais en pourcentage. Les frais sont affichés avant le verrouillage du devis.",
+  quoteIntegrityVerifiedLabel: "Devis vérifié",
+  quoteIntegrityLocksUntilLabel: (expiresAt) => `Verrouillé jusqu’au ${expiresAt}`,
+  quoteIntegrityExpiredLabel: "Devis expiré — actualisation requise",
 };
 
 export function getMessages(locale: Locale) {

@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
+import { resolveReceiptUiState } from "@/src/lib/receipt-ui";
 
 type TransferEvent = {
   id: string;
@@ -70,7 +71,31 @@ type TransferReceiptResponse = {
   events: TransferEvent[];
 };
 
+type ReceiptSnapshot = {
+  sendAmount: number;
+  fromAsset: string;
+  toAsset: string;
+  appliedRate: number;
+  marketRate: number;
+  fxMarginPct: number;
+  fixedFee: number;
+  percentFee: number;
+  totalFees: number;
+  recipientGets: number;
+  rateSource: string;
+  lockedAt: string;
+};
+
+type ReceiptApiResponse = {
+  transferId: string;
+  referenceCode: string;
+  status: string;
+  receiptUrl?: string | null;
+  snapshot?: ReceiptSnapshot | null;
+};
+
 type ReceiptError = "not_found" | "expired" | "generic";
+type ReceiptFetchError = "unauthorized" | "not_found" | "snapshot_missing" | "generic";
 
 const statusStyles: Record<string, string> = {
   READY: "bg-amber-100 text-amber-800",
@@ -117,6 +142,18 @@ export default function TransferReceiptPage() {
   const [resendState, setResendState] = useState<
     "idle" | "sending" | "sent" | "error" | "rate"
   >("idle");
+  const [receiptState, setReceiptState] = useState<{
+    id: string;
+    data: ReceiptApiResponse | null;
+    error: ReceiptFetchError | null;
+  } | null>(null);
+  const [receiptActionState, setReceiptActionState] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [receiptActionError, setReceiptActionError] = useState<string | null>(
+    null
+  );
+  const [issuedReceiptUrl, setIssuedReceiptUrl] = useState<string | null>(null);
   const { data: session } = useSession();
 
   const statusLabels = useMemo(
@@ -165,6 +202,26 @@ export default function TransferReceiptPage() {
     return payload as TransferReceiptResponse;
   }, []);
 
+  const fetchReceiptSnapshot = useCallback(async (id: string) => {
+    const res = await fetch(`/api/transfers/${id}/receipt`, {
+      cache: "no-store",
+    });
+    const payload = (await res.json().catch(() => null)) as
+      | ReceiptApiResponse
+      | { error?: string }
+      | null;
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("unauthorized");
+      }
+      if (res.status === 404) {
+        throw new Error("not_found");
+      }
+      throw new Error("generic");
+    }
+    return payload as ReceiptApiResponse;
+  }, []);
+
   useEffect(() => {
     if (!transferId) {
       return undefined;
@@ -194,6 +251,40 @@ export default function TransferReceiptPage() {
       active = false;
     };
   }, [fetchReceipt, transferId]);
+
+  useEffect(() => {
+    if (!transferId) {
+      return undefined;
+    }
+    let active = true;
+
+    fetchReceiptSnapshot(transferId)
+      .then((payload) => {
+        if (!active) {
+          return;
+        }
+        setReceiptState({ id: transferId, data: payload, error: null });
+      })
+      .catch((err) => {
+        if (!active) {
+          return;
+        }
+        const code = (err as { message?: string }).message;
+        if (code === "unauthorized" || code === "not_found" || code === "generic") {
+          setReceiptState({
+            id: transferId,
+            data: null,
+            error: code as ReceiptFetchError,
+          });
+          return;
+        }
+        setReceiptState({ id: transferId, data: null, error: "generic" });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [fetchReceiptSnapshot, transferId]);
 
   useEffect(() => {
     if (!copied) {
@@ -287,10 +378,53 @@ export default function TransferReceiptPage() {
     }
   }, [transferId]);
 
+  const handleGetReceipt = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    setReceiptActionState("loading");
+    setReceiptActionError(null);
+    try {
+      const res = await fetch(`/api/transfers/${transferId}/receipt`, {
+        method: "POST",
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { ok?: boolean; receiptUrl?: string; error?: string }
+        | null;
+      if (!res.ok) {
+        if (res.status === 429) {
+          setReceiptActionError(messages.receiptResendRateLimited);
+        } else if (res.status === 409) {
+          setReceiptActionError(
+            payload?.error ?? messages.receiptSnapshotUnavailableLabel
+          );
+        } else if (res.status === 400) {
+          setReceiptActionError(payload?.error ?? messages.receiptLoadError);
+        } else {
+          setReceiptActionError(messages.receiptLoadError);
+        }
+        setReceiptActionState("error");
+        return;
+      }
+      const receiptUrl = payload?.receiptUrl ?? null;
+      if (receiptUrl) {
+        setIssuedReceiptUrl(receiptUrl);
+      }
+      setReceiptActionState("success");
+    } catch {
+      setReceiptActionError(messages.receiptLoadError);
+      setReceiptActionState("error");
+    }
+  }, [messages, transferId]);
+
   const activeState = requestState?.id === transferId ? requestState : null;
   const data = activeState?.data ?? null;
   const error = activeState?.error ?? null;
   const resolvedError = transferId ? error : "not_found";
+  const activeReceiptState =
+    receiptState?.id === transferId ? receiptState : null;
+  const receiptData = activeReceiptState?.data ?? null;
+  const receiptError = activeReceiptState?.error ?? null;
   const isLoading = Boolean(transferId) && !activeState;
   const isDev = ALLOW_SIMULATED_PAYOUTS;
 
@@ -472,6 +606,14 @@ export default function TransferReceiptPage() {
           : transfer.status === "EXPIRED"
             ? messages.nextStepExpired
             : messages.nextStepReady;
+  const receiptSnapshot = receiptData?.snapshot ?? null;
+  const receiptUrl =
+    issuedReceiptUrl ?? receiptData?.receiptUrl ?? null;
+  const receiptUi = resolveReceiptUiState(
+    transfer.status,
+    receiptUrl,
+    receiptActionState
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -530,7 +672,7 @@ export default function TransferReceiptPage() {
                     ? messages.copiedLabel
                     : messages.copyLinkButton}
                 </button>
-                {session?.user ? (
+                {session?.user && transfer.status === "COMPLETED" ? (
                   <button
                     type="button"
                     onClick={handleResendReceipt}
@@ -862,6 +1004,141 @@ export default function TransferReceiptPage() {
                   {messages.expiresAtLabel}: {formatDateTime(quote.expiresAt, locale)}
                   {" · "}
                   {messages.rateUpdatedLabel}: {formatDateTime(quote.rateTimestamp, locale)}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-slate-400">
+                  {messages.transferReceiptTitle}
+                </p>
+                {receiptUi.showViewLink && receiptUrl ? (
+                  <a
+                    href={receiptUrl}
+                    className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/30"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {messages.viewReceiptButton}
+                  </a>
+                ) : null}
+              </div>
+
+              <div className="mt-4 space-y-4 text-sm text-slate-200">
+                {receiptError === "unauthorized" ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+                    <p className="font-medium text-white">
+                      {messages.receiptUnauthorizedLabel}
+                    </p>
+                    <Link
+                      href="/api/auth/signin"
+                      className="mt-3 inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                    >
+                      {messages.navSignInLabel}
+                    </Link>
+                  </div>
+                ) : receiptError === "not_found" ? (
+                  <p className="text-sm text-slate-400">
+                    {messages.receiptNotFoundLabel}
+                  </p>
+                ) : receiptSnapshot ? (
+                  <div className="space-y-3 text-sm text-slate-200">
+                    <div className="flex items-center justify-between">
+                      <span>{messages.receiptSendAmountLabel}</span>
+                      <span className="font-semibold text-white">
+                        {formatMoney(receiptSnapshot.sendAmount, receiptSnapshot.fromAsset, locale)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.receiptAppliedRateLabel}</span>
+                      <span className="font-semibold text-white">
+                        1 {receiptSnapshot.fromAsset} ={" "}
+                        {formatNumber(receiptSnapshot.appliedRate, 4, locale)}{" "}
+                        {receiptSnapshot.toAsset}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.marketRateLabel}</span>
+                      <span className="font-semibold text-white">
+                        1 {receiptSnapshot.fromAsset} ={" "}
+                        {formatNumber(receiptSnapshot.marketRate, 4, locale)}{" "}
+                        {receiptSnapshot.toAsset}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.fxMarginRow}</span>
+                      <span className="font-semibold text-white">
+                        {formatNumber(receiptSnapshot.fxMarginPct, 2, locale)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.fixedFeeLabel}</span>
+                      <span className="font-semibold text-white">
+                        {formatMoney(receiptSnapshot.fixedFee, receiptSnapshot.fromAsset, locale)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.percentFeeLabel}</span>
+                      <span className="font-semibold text-white">
+                        {formatNumber(receiptSnapshot.percentFee, 2, locale)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.receiptTotalFeesLabel}</span>
+                      <span className="font-semibold text-white">
+                        {formatMoney(receiptSnapshot.totalFees, receiptSnapshot.fromAsset, locale)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.receiptRecipientGetsLabel}</span>
+                      <span className="font-semibold text-white">
+                        {formatMoney(receiptSnapshot.recipientGets, receiptSnapshot.toAsset, locale)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.rateSourceLabel}</span>
+                      <span className="font-semibold text-white">
+                        {receiptSnapshot.rateSource}
+                      </span>
+                    </div>
+                    <div className="pt-2 text-xs text-slate-500">
+                      {messages.quoteLockedEvent(formatDateTime(receiptSnapshot.lockedAt, locale))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    {messages.receiptSnapshotUnavailableLabel}
+                  </p>
+                )}
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+                  {receiptUi.showPendingText ? (
+                    <p>{messages.receiptAvailableAfterCompletionLabel}</p>
+                  ) : receiptUi.showViewLink ? (
+                    <p>{messages.receiptReadyLabel}</p>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <p className="text-sm text-slate-300">
+                        {messages.receiptGetPromptLabel}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleGetReceipt}
+                        disabled={receiptUi.disableGetButton}
+                        className="w-fit rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {receiptActionState === "loading"
+                          ? messages.receiptResendLoading
+                          : messages.receiptGetButtonLabel}
+                      </button>
+                      {receiptActionError ? (
+                        <p className="text-xs text-rose-200">
+                          {receiptActionError}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
