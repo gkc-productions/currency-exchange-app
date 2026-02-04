@@ -146,6 +146,9 @@ function buildTransferResponse(transfer: {
 }
 
 function readDevBypass(req: Request): DevBypassResult {
+  if (process.env.NODE_ENV === "production") {
+    return { active: false, email: null };
+  }
   if (process.env.DEV_BYPASS_AUTH !== "1") {
     return { active: false, email: null };
   }

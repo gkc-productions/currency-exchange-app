@@ -70,6 +70,9 @@ function isQuoteAuditSnapshot(value: unknown): value is QuoteAuditSnapshot {
 }
 
 function readDevBypassSession(req: Request): SessionLike {
+  if (process.env.NODE_ENV === "production") {
+    return null;
+  }
   if (process.env.DEV_BYPASS_AUTH !== "1") {
     return null;
   }

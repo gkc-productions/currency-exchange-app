@@ -27,6 +27,7 @@ export function getClientIp(req: Request) {
 
 export function isSameOrigin(req: Request) {
   if (
+    process.env.NODE_ENV !== "production" &&
     process.env.DEV_BYPASS_AUTH === "1" &&
     req.headers.get("x-dev-bypass-auth") === "1"
   ) {
