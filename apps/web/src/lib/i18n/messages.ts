@@ -52,6 +52,14 @@ export type Messages = {
   receiptReadyLabel: string;
   payoutRefLabel: string;
   payoutReasonLabel: string;
+  reconciliationTitle: string;
+  reconciliationTransferIdLabel: string;
+  reconciliationStatusLabel: string;
+  reconciliationProviderLabel: string;
+  reconciliationProviderPayoutIdLabel: string;
+  reconciliationProviderStatusLabel: string;
+  reconciliationUpdatedAtLabel: string;
+  reconciliationUnavailableLabel: string;
   adminTitle: string;
   adminSubtitle: string;
   adminUnauthorizedTitle: string;
@@ -379,6 +387,14 @@ const EN_MESSAGES: Messages = {
   receiptReadyLabel: "Receipt ready to view.",
   payoutRefLabel: "Ref:",
   payoutReasonLabel: "Reason:",
+  reconciliationTitle: "Reconciliation",
+  reconciliationTransferIdLabel: "Transfer ID",
+  reconciliationStatusLabel: "Status",
+  reconciliationProviderLabel: "Provider",
+  reconciliationProviderPayoutIdLabel: "Provider payout ID",
+  reconciliationProviderStatusLabel: "Provider payout status",
+  reconciliationUpdatedAtLabel: "Updated at",
+  reconciliationUnavailableLabel: "Not available",
   adminTitle: "Admin console",
   adminSubtitle: "Restricted access for ClariSend administrators.",
   adminUnauthorizedTitle: "Access restricted",
@@ -732,6 +748,14 @@ const FR_MESSAGES: Messages = {
   receiptReadyLabel: "Reçu prêt à consulter.",
   payoutRefLabel: "Ref:",
   payoutReasonLabel: "Raison :",
+  reconciliationTitle: "Rapprochement",
+  reconciliationTransferIdLabel: "ID du transfert",
+  reconciliationStatusLabel: "Statut",
+  reconciliationProviderLabel: "Fournisseur",
+  reconciliationProviderPayoutIdLabel: "ID du paiement fournisseur",
+  reconciliationProviderStatusLabel: "Statut du paiement fournisseur",
+  reconciliationUpdatedAtLabel: "Mis a jour",
+  reconciliationUnavailableLabel: "Indisponible",
   adminTitle: "Console admin",
   adminSubtitle: "Acces reserve aux administrateurs ClariSend.",
   adminUnauthorizedTitle: "Acces restreint",

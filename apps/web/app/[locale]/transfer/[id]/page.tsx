@@ -101,6 +101,15 @@ type ReceiptApiResponse = {
   snapshot?: ReceiptSnapshot | null;
 };
 
+type ReconciliationResponse = {
+  transferId: string;
+  status: string;
+  providerPayoutId: string | null;
+  providerPayoutStatus: string | null;
+  providerPayoutProvider: string | null;
+  providerPayoutUpdatedAt: string | null;
+};
+
 type ReceiptError = "not_found" | "expired" | "generic";
 type ReceiptFetchError = "unauthorized" | "not_found" | "snapshot_missing" | "generic";
 
@@ -161,6 +170,11 @@ export default function TransferReceiptPage() {
     null
   );
   const [issuedReceiptUrl, setIssuedReceiptUrl] = useState<string | null>(null);
+  const [reconciliationState, setReconciliationState] = useState<{
+    id: string;
+    data: ReconciliationResponse | null;
+    error: ReceiptFetchError | null;
+  } | null>(null);
   const [eventsState, setEventsState] = useState<{
     id: string;
     data: TimelineEvent[] | null;
@@ -239,6 +253,26 @@ export default function TransferReceiptPage() {
       throw new Error("generic");
     }
     return payload as ReceiptApiResponse;
+  }, []);
+
+  const fetchReconciliation = useCallback(async (id: string) => {
+    const res = await fetch(`/api/transfers/${id}/reconciliation`, {
+      cache: "no-store",
+    });
+    const payload = (await res.json().catch(() => null)) as
+      | ReconciliationResponse
+      | { error?: string }
+      | null;
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("unauthorized");
+      }
+      if (res.status === 404) {
+        throw new Error("not_found");
+      }
+      throw new Error("generic");
+    }
+    return payload as ReconciliationResponse;
   }, []);
 
   const fetchEvents = useCallback(async (id: string) => {
@@ -324,6 +358,40 @@ export default function TransferReceiptPage() {
       active = false;
     };
   }, [fetchReceiptSnapshot, transferId]);
+
+  useEffect(() => {
+    if (!transferId) {
+      return undefined;
+    }
+    let active = true;
+
+    fetchReconciliation(transferId)
+      .then((payload) => {
+        if (!active) {
+          return;
+        }
+        setReconciliationState({ id: transferId, data: payload, error: null });
+      })
+      .catch((err) => {
+        if (!active) {
+          return;
+        }
+        const code = (err as { message?: string }).message;
+        if (code === "unauthorized" || code === "not_found" || code === "generic") {
+          setReconciliationState({
+            id: transferId,
+            data: null,
+            error: code as ReceiptFetchError,
+          });
+          return;
+        }
+        setReconciliationState({ id: transferId, data: null, error: "generic" });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [fetchReconciliation, transferId]);
 
   useEffect(() => {
     setExecuteState("idle");
@@ -754,6 +822,7 @@ export default function TransferReceiptPage() {
             ? messages.nextStepExpired
             : messages.nextStepReady;
   const receiptSnapshot = receiptData?.snapshot ?? null;
+  const reconciliationData = reconciliationState?.data ?? null;
   const receiptUrl =
     issuedReceiptUrl ?? receiptData?.receiptUrl ?? null;
   const receiptUi = resolveReceiptUiState(
@@ -1349,6 +1418,55 @@ export default function TransferReceiptPage() {
                       ) : null}
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <p className="text-xs font-medium text-slate-400">
+                {messages.reconciliationTitle}
+              </p>
+              <div className="mt-4 space-y-3 text-sm text-slate-200">
+                <div className="flex items-center justify-between">
+                  <span>{messages.reconciliationTransferIdLabel}</span>
+                  <span className="font-semibold text-white">
+                    {reconciliationData?.transferId ?? messages.reconciliationUnavailableLabel}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>{messages.reconciliationStatusLabel}</span>
+                  <span className="font-semibold text-white">
+                    {reconciliationData?.status ?? messages.reconciliationUnavailableLabel}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>{messages.reconciliationProviderLabel}</span>
+                  <span className="font-semibold text-white">
+                    {reconciliationData?.providerPayoutProvider ??
+                      messages.reconciliationUnavailableLabel}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>{messages.reconciliationProviderPayoutIdLabel}</span>
+                  <span className="font-semibold text-white">
+                    {reconciliationData?.providerPayoutId ??
+                      messages.reconciliationUnavailableLabel}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>{messages.reconciliationProviderStatusLabel}</span>
+                  <span className="font-semibold text-white">
+                    {reconciliationData?.providerPayoutStatus ??
+                      messages.reconciliationUnavailableLabel}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>{messages.reconciliationUpdatedAtLabel}</span>
+                  <span className="font-semibold text-white">
+                    {reconciliationData?.providerPayoutUpdatedAt
+                      ? formatDateTime(reconciliationData.providerPayoutUpdatedAt, locale)
+                      : messages.reconciliationUnavailableLabel}
+                  </span>
                 </div>
               </div>
             </div>
