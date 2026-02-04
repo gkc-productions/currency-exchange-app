@@ -93,7 +93,7 @@ async function createReadyTransfer(memo?: string, referenceSuffix?: string) {
 
 const testIntegration = RUN_INTEGRATION ? test : test.skip;
 
-testIntegration("execute payout completes and is idempotent", async () => {
+testIntegration("execute payout transitions to processing and is idempotent", async () => {
   const { transferId } = await createReadyTransfer("Test", "A");
 
   const first = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
@@ -110,18 +110,20 @@ testIntegration("execute payout completes and is idempotent", async () => {
 
   const row = await prisma.transfer.findUnique({
     where: { id: transferId },
-    select: { status: true },
+    select: { status: true, providerPayoutId: true },
   });
-  assert.equal(row?.status, "COMPLETED");
+  assert.equal(row?.status, "PROCESSING");
+  assert.ok(row?.providerPayoutId);
 
   const startedCount = await prisma.transferEvent.count({
     where: { transferId, type: "PAYOUT_STARTED" },
   });
-  const completedCount = await prisma.transferEvent.count({
-    where: { transferId, type: "PAYOUT_COMPLETED" },
-  });
   assert.equal(startedCount, 1);
-  assert.equal(completedCount, 1);
+  const startedEvent = await prisma.transferEvent.findFirst({
+    where: { transferId, type: "PAYOUT_STARTED" },
+    select: { message: true },
+  });
+  assert.ok(startedEvent?.message.includes("ref="));
 });
 
 testIntegration("execute payout rejects non-ready", async () => {
@@ -141,15 +143,40 @@ testIntegration("execute payout rejects non-ready", async () => {
   const startedCount = await prisma.transferEvent.count({
     where: { transferId, type: "PAYOUT_STARTED" },
   });
-  const completedCount = await prisma.transferEvent.count({
-    where: { transferId, type: "PAYOUT_COMPLETED" },
-  });
   assert.equal(startedCount, 0);
-  assert.equal(completedCount, 0);
 });
 
-testIntegration("execute payout fails when memo requests failure and is idempotent", async () => {
+testIntegration("execute payout still starts when memo requests failure", async () => {
   const { transferId } = await createReadyTransfer("FAIL", "A");
+
+  const first = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+    method: "POST",
+    headers: DEV_HEADERS,
+  });
+  assert.equal(first.status, 200);
+
+  const row = await prisma.transfer.findUnique({
+    where: { id: transferId },
+    select: { status: true, providerPayoutId: true },
+  });
+  assert.equal(row?.status, "PROCESSING");
+  assert.ok(row?.providerPayoutId);
+
+  const startedCount = await prisma.transferEvent.count({
+    where: { transferId, type: "PAYOUT_STARTED" },
+  });
+  assert.equal(startedCount, 1);
+  const startedEvent = await prisma.transferEvent.findFirst({
+    where: { transferId, type: "PAYOUT_STARTED" },
+    select: { message: true },
+  });
+  assert.ok(startedEvent?.message.includes("ref="));
+  assert.ok(startedEvent?.message.includes("code="));
+  assert.ok(startedEvent?.message.includes("message="));
+});
+
+testIntegration("execute payout returns processing on retry", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
 
   const first = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
     method: "POST",
@@ -162,25 +189,6 @@ testIntegration("execute payout fails when memo requests failure and is idempote
     headers: DEV_HEADERS,
   });
   assert.equal(second.status, 200);
-
-  const row = await prisma.transfer.findUnique({
-    where: { id: transferId },
-    select: { status: true },
-  });
-  assert.equal(row?.status, "FAILED");
-
-  const startedCount = await prisma.transferEvent.count({
-    where: { transferId, type: "PAYOUT_STARTED" },
-  });
-  const failedCount = await prisma.transferEvent.count({
-    where: { transferId, type: "PAYOUT_FAILED" },
-  });
-  const completedCount = await prisma.transferEvent.count({
-    where: { transferId, type: "PAYOUT_COMPLETED" },
-  });
-  assert.equal(startedCount, 1);
-  assert.equal(failedCount, 1);
-  assert.equal(completedCount, 0);
 });
 
 testIntegration("concurrent execute payout", async () => {
@@ -203,9 +211,5 @@ testIntegration("concurrent execute payout", async () => {
   const startedCount = await prisma.transferEvent.count({
     where: { transferId, type: "PAYOUT_STARTED" },
   });
-  const completedCount = await prisma.transferEvent.count({
-    where: { transferId, type: "PAYOUT_COMPLETED" },
-  });
   assert.equal(startedCount, 1);
-  assert.equal(completedCount, 1);
 });

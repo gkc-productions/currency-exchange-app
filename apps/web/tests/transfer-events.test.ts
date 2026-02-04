@@ -89,7 +89,7 @@ async function createReadyTransfer(memo?: string, referenceSuffix?: string) {
 
 const testIntegration = RUN_INTEGRATION ? test : test.skip;
 
-testIntegration("transfer events include payout events", async () => {
+testIntegration("transfer events include payout completion after webhook", async () => {
   const { transferId } = await createReadyTransfer("Test", "A");
 
   const executeRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
@@ -97,6 +97,20 @@ testIntegration("transfer events include payout events", async () => {
     headers: DEV_HEADERS,
   });
   assert.equal(executeRes.status, 200);
+  const providerPayoutId = (executeRes.json as { providerPayoutId?: string }).providerPayoutId;
+  assert.ok(providerPayoutId);
+
+  const webhookRes = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventId: `evt_${transferId}`,
+      provider: "MockProvider",
+      providerPayoutId,
+      status: "COMPLETED",
+    }),
+  });
+  assert.equal(webhookRes.status, 200);
 
   const eventsRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/events`, {
     headers: DEV_HEADERS,
@@ -109,7 +123,7 @@ testIntegration("transfer events include payout events", async () => {
   assert.equal(types.has("PAYOUT_COMPLETED"), true);
 });
 
-testIntegration("transfer events include payout failed", async () => {
+testIntegration("transfer events include payout failure after webhook", async () => {
   const { transferId } = await createReadyTransfer("FAIL", "A");
 
   const executeRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
@@ -117,6 +131,20 @@ testIntegration("transfer events include payout failed", async () => {
     headers: DEV_HEADERS,
   });
   assert.equal(executeRes.status, 200);
+  const providerPayoutId = (executeRes.json as { providerPayoutId?: string }).providerPayoutId;
+  assert.ok(providerPayoutId);
+
+  const webhookRes = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventId: `evt_${transferId}_failed`,
+      provider: "MockProvider",
+      providerPayoutId,
+      status: "FAILED",
+    }),
+  });
+  assert.equal(webhookRes.status, 200);
 
   const eventsRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/events`, {
     headers: DEV_HEADERS,

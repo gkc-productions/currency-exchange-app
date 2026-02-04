@@ -120,6 +120,8 @@ export async function GET(
         referenceCode: transfer.referenceCode,
         quoteId: transfer.quoteId,
         status: transfer.status,
+        providerPayoutId: transfer.providerPayoutId ?? null,
+        providerPayoutStatus: transfer.providerPayoutStatus ?? null,
         payoutRail: transfer.payoutRail,
         recipientName: transfer.recipientName,
         recipientCountry: transfer.recipientCountry,

@@ -4,18 +4,35 @@ import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
 import { isSameOrigin } from "@/src/lib/security";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
+import { getPayoutExecutor } from "@/src/lib/payout";
 
 const DEV_BYPASS_HEADER = "x-dev-bypass-auth";
 const DEV_EMAIL_HEADER = "x-dev-user-email";
 
 type SessionLike = { user?: { email?: string | null } | null } | null;
 
-type PayoutResult = {
+type ExecuteResponse = {
   ok: boolean;
-  provider: string;
-  mode: "SIMULATED" | "LIVE";
-  reason?: string;
+  status: string;
+  providerPayoutId?: string | null;
 };
+
+function formatEventMessage(
+  base: string,
+  meta: { ref?: string; code?: string; message?: string }
+) {
+  const parts = [base];
+  if (meta.ref) {
+    parts.push(`ref=${meta.ref}`);
+  }
+  if (meta.code) {
+    parts.push(`code=${meta.code}`);
+  }
+  if (meta.message) {
+    parts.push(`message=${meta.message}`);
+  }
+  return parts.join(" ");
+}
 
 function readDevBypassSession(req: Request): SessionLike {
   if (process.env.NODE_ENV === "production") {
@@ -54,32 +71,6 @@ async function ensureDevUser(email: string): Promise<{ id: string; email: string
     select: { id: true },
   });
   return { id: user.id, email };
-}
-
-function shouldFailPayout(referenceCode: string, memo: string | null) {
-  if (referenceCode.endsWith("F")) {
-    return true;
-  }
-  if (!memo) {
-    return false;
-  }
-  return memo.toUpperCase().includes("FAIL");
-}
-
-function simulatePayout(referenceCode: string, memo: string | null): PayoutResult {
-  if (shouldFailPayout(referenceCode, memo)) {
-    return {
-      ok: false,
-      provider: "MockPayout",
-      mode: "SIMULATED",
-      reason: "Simulated payout failed",
-    };
-  }
-  return {
-    ok: true,
-    provider: "MockPayout",
-    mode: "SIMULATED",
-  };
 }
 
 export async function POST(
@@ -122,7 +113,14 @@ export async function POST(
 
   const transfer = await prisma.transfer.findUnique({
     where: { id: transferId },
-    select: { id: true, status: true, userId: true, referenceCode: true, memo: true },
+    select: {
+      id: true,
+      status: true,
+      userId: true,
+      referenceCode: true,
+      memo: true,
+      providerPayoutId: true,
+    },
   });
 
   if (!transfer || transfer.userId !== user.id) {
@@ -130,19 +128,46 @@ export async function POST(
   }
 
   if (transfer.status === "COMPLETED" || transfer.status === "FAILED") {
-    return NextResponse.json({ ok: true, status: transfer.status });
+    const response: ExecuteResponse = {
+      ok: true,
+      status: transfer.status,
+      providerPayoutId: transfer.providerPayoutId ?? null,
+    };
+    return NextResponse.json(response);
+  }
+
+  if (transfer.status === "PROCESSING") {
+    const response: ExecuteResponse = {
+      ok: true,
+      status: transfer.status,
+      providerPayoutId: transfer.providerPayoutId ?? null,
+    };
+    return NextResponse.json(response);
   }
 
   if (transfer.status !== "READY") {
     return NextResponse.json({ error: "Transfer not ready for payout." }, { status: 400 });
   }
 
-  const payout = simulatePayout(transfer.referenceCode, transfer.memo);
-  const startedMessage = "Payout started (simulated).";
-  const completedMessage = payout.ok
-    ? "Payout completed (simulated)."
-    : "Payout failed (simulated).";
-  const finalStatus = payout.ok ? TransferStatus.COMPLETED : TransferStatus.FAILED;
+  if (transfer.providerPayoutId) {
+    return NextResponse.json({
+      ok: true,
+      status: TransferStatus.PROCESSING,
+      providerPayoutId: transfer.providerPayoutId,
+    });
+  }
+
+  const executor = getPayoutExecutor();
+  const execution = await executor.execute({
+    transferId: transfer.id,
+    referenceCode: transfer.referenceCode,
+    memo: transfer.memo,
+  });
+  const startMessage = formatEventMessage("Payout started.", {
+    ref: execution.providerRef ?? execution.providerPayoutId,
+    code: execution.errorCode,
+    message: execution.errorMessage ?? execution.message,
+  });
 
   const issued = await prisma.$transaction(async (tx) => {
     const updated = await tx.transfer.updateMany({
@@ -150,8 +175,15 @@ export async function POST(
         id: transfer.id,
         userId: user.id,
         status: TransferStatus.READY,
+        providerPayoutId: null,
       },
-      data: { status: TransferStatus.PROCESSING },
+      data: {
+        status: TransferStatus.PROCESSING,
+        providerPayoutId: execution.providerPayoutId,
+        providerPayoutStatus: execution.status,
+        providerPayoutProvider: execution.provider,
+        providerPayoutUpdatedAt: new Date(),
+      },
     });
 
     if (updated.count !== 1) {
@@ -162,20 +194,7 @@ export async function POST(
       data: {
         transferId: transfer.id,
         type: "PAYOUT_STARTED",
-        message: startedMessage,
-      },
-    });
-
-    await tx.transfer.update({
-      where: { id: transfer.id },
-      data: { status: finalStatus },
-    });
-
-    await tx.transferEvent.create({
-      data: {
-        transferId: transfer.id,
-        type: payout.ok ? "PAYOUT_COMPLETED" : "PAYOUT_FAILED",
-        message: completedMessage,
+        message: startMessage,
       },
     });
 
@@ -185,19 +204,29 @@ export async function POST(
   if (!issued) {
     const current = await prisma.transfer.findUnique({
       where: { id: transfer.id },
-      select: { status: true, userId: true },
+      select: { status: true, providerPayoutId: true, userId: true },
     });
 
     if (!current || current.userId !== user.id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (current.status === "COMPLETED" || current.status === "FAILED") {
-      return NextResponse.json({ ok: true, status: current.status });
+    if (current.status === "COMPLETED" || current.status === "FAILED" || current.status === "PROCESSING") {
+      const response: ExecuteResponse = {
+        ok: true,
+        status: current.status,
+        providerPayoutId: current.providerPayoutId ?? null,
+      };
+      return NextResponse.json(response);
     }
 
     return NextResponse.json({ error: "Transfer not ready for payout." }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true, status: finalStatus, payout });
+  const response: ExecuteResponse = {
+    ok: true,
+    status: TransferStatus.PROCESSING,
+    providerPayoutId: execution.providerPayoutId,
+  };
+  return NextResponse.json(response);
 }

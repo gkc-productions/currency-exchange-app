@@ -3,6 +3,7 @@ export type ExecutePayoutState = "idle" | "loading" | "success" | "error";
 type ExecutePayoutUi = {
   showButton: boolean;
   disabled: boolean;
+  message: "processing" | "failed" | null;
 };
 
 export function resolveExecutePayoutUi(
@@ -10,10 +11,16 @@ export function resolveExecutePayoutUi(
   actionState: ExecutePayoutState
 ): ExecutePayoutUi {
   if (status !== "READY") {
-    return { showButton: false, disabled: true };
+    if (status === "PROCESSING") {
+      return { showButton: false, disabled: true, message: "processing" };
+    }
+    if (status === "FAILED") {
+      return { showButton: false, disabled: true, message: "failed" };
+    }
+    return { showButton: false, disabled: true, message: null };
   }
   if (actionState === "success") {
-    return { showButton: false, disabled: true };
+    return { showButton: false, disabled: true, message: null };
   }
-  return { showButton: true, disabled: actionState === "loading" };
+  return { showButton: true, disabled: actionState === "loading", message: null };
 }
