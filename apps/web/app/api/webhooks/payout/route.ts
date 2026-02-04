@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { Prisma, TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
+import { logEvent, safeError } from "@/src/lib/observability";
 
 export const runtime = "nodejs";
 
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing webhook secret" }, { status: 500 });
   }
 
+  const requestId = req.headers.get("x-request-id") ?? undefined;
   // Required headers:
   // - x-webhook-signature: HMAC SHA256 hex over the raw request body bytes
   // - x-payout-timestamp: Unix epoch seconds; requests older than 5 minutes are rejected
@@ -108,7 +110,8 @@ export async function POST(req: Request) {
     }
     payload = body as WebhookPayload;
     payloadJson = body as unknown as Prisma.InputJsonValue;
-  } catch {
+  } catch (err) {
+    logEvent("webhook_payout_invalid_json", { requestId, error: safeError(err) });
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
@@ -120,9 +123,18 @@ export async function POST(req: Request) {
   const occurredAt = readRequiredString(payload.occurredAt);
 
   if (!provider || !payoutId || !transferId || !eventId || !statusRaw || !occurredAt) {
+    logEvent("webhook_payout_missing_fields", {
+      requestId,
+      provider,
+      payoutId,
+      transferId,
+      eventId,
+      status: statusRaw,
+    });
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
   if (!validStatuses.has(statusRaw)) {
+    logEvent("webhook_payout_invalid_status", { requestId, status: statusRaw });
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
@@ -135,6 +147,7 @@ export async function POST(req: Request) {
     },
   });
   if (existingReceipt) {
+    logEvent("webhook_payout_deduped", { requestId, provider, eventId, transferId });
     return NextResponse.json({ ok: true, deduped: true });
   }
 
@@ -144,10 +157,17 @@ export async function POST(req: Request) {
   });
 
   if (!transfer) {
+    logEvent("webhook_payout_transfer_missing", { requestId, transferId, payoutId });
     return NextResponse.json({ error: "Transfer not found" }, { status: 404 });
   }
 
   if (transfer.providerPayoutId !== payoutId) {
+    logEvent("webhook_payout_mismatch", {
+      requestId,
+      transferId,
+      payoutId,
+      expected: transfer.providerPayoutId,
+    });
     return NextResponse.json({ error: "Payout mismatch" }, { status: 409 });
   }
 
@@ -278,5 +298,13 @@ export async function POST(req: Request) {
     return { transitioned: true };
   });
 
+  logEvent("webhook_payout_processed", {
+    requestId,
+    transferId,
+    provider,
+    payoutId,
+    status: finalStatus,
+    transitioned: updated.transitioned,
+  });
   return NextResponse.json({ ok: true, transitioned: updated.transitioned });
 }
