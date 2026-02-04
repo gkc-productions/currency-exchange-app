@@ -8,6 +8,7 @@ import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 import { resolveReceiptUiState } from "@/src/lib/receipt-ui";
+import { resolveExecutePayoutUi } from "@/src/lib/transfer-events-ui";
 
 type TransferEvent = {
   id: string;
@@ -69,6 +70,12 @@ type TransferReceiptResponse = {
   quote: QuoteSummary;
   cryptoPayout: CryptoPayoutSummary | null;
   events: TransferEvent[];
+};
+
+type TimelineEvent = {
+  type: string;
+  message: string;
+  createdAt: string;
 };
 
 type ReceiptSnapshot = {
@@ -154,6 +161,18 @@ export default function TransferReceiptPage() {
     null
   );
   const [issuedReceiptUrl, setIssuedReceiptUrl] = useState<string | null>(null);
+  const [eventsState, setEventsState] = useState<{
+    id: string;
+    data: TimelineEvent[] | null;
+    error: ReceiptFetchError | null;
+  } | null>(null);
+  const [executeState, setExecuteState] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [executeError, setExecuteError] = useState<string | null>(null);
+  const [transferStatusOverride, setTransferStatusOverride] = useState<string | null>(
+    null
+  );
   const { data: session } = useSession();
 
   const statusLabels = useMemo(
@@ -222,6 +241,26 @@ export default function TransferReceiptPage() {
     return payload as ReceiptApiResponse;
   }, []);
 
+  const fetchEvents = useCallback(async (id: string) => {
+    const res = await fetch(`/api/transfers/${id}/events`, {
+      cache: "no-store",
+    });
+    const payload = (await res.json().catch(() => null)) as
+      | TimelineEvent[]
+      | { error?: string }
+      | null;
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("unauthorized");
+      }
+      if (res.status === 404) {
+        throw new Error("not_found");
+      }
+      throw new Error("generic");
+    }
+    return payload as TimelineEvent[];
+  }, []);
+
   useEffect(() => {
     if (!transferId) {
       return undefined;
@@ -285,6 +324,46 @@ export default function TransferReceiptPage() {
       active = false;
     };
   }, [fetchReceiptSnapshot, transferId]);
+
+  useEffect(() => {
+    setExecuteState("idle");
+    setExecuteError(null);
+    setTransferStatusOverride(null);
+  }, [transferId]);
+
+  useEffect(() => {
+    if (!transferId) {
+      return undefined;
+    }
+    let active = true;
+
+    fetchEvents(transferId)
+      .then((payload) => {
+        if (!active) {
+          return;
+        }
+        setEventsState({ id: transferId, data: payload, error: null });
+      })
+      .catch((err) => {
+        if (!active) {
+          return;
+        }
+        const code = (err as { message?: string }).message;
+        if (code === "unauthorized" || code === "not_found" || code === "generic") {
+          setEventsState({
+            id: transferId,
+            data: null,
+            error: code as ReceiptFetchError,
+          });
+          return;
+        }
+        setEventsState({ id: transferId, data: null, error: "generic" });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [fetchEvents, transferId]);
 
   useEffect(() => {
     if (!copied) {
@@ -417,6 +496,51 @@ export default function TransferReceiptPage() {
     }
   }, [messages, transferId]);
 
+  const handleExecutePayout = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    setExecuteState("loading");
+    setExecuteError(null);
+    try {
+      const res = await fetch(`/api/transfers/${transferId}/execute`, {
+        method: "POST",
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { status?: string; error?: string }
+        | null;
+      if (!res.ok) {
+        setExecuteError(payload?.error ?? messages.executePayoutErrorLabel);
+        setExecuteState("error");
+        return;
+      }
+      const nextStatus = payload?.status ?? "COMPLETED";
+      setTransferStatusOverride(nextStatus);
+      setRequestState((prev) => {
+        if (!prev || prev.id !== transferId || !prev.data) {
+          return prev;
+        }
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            transfer: { ...prev.data.transfer, status: nextStatus },
+          },
+        };
+      });
+      setExecuteState("success");
+      try {
+        const refreshed = await fetchEvents(transferId);
+        setEventsState({ id: transferId, data: refreshed, error: null });
+      } catch {
+        // Keep existing events on refresh failure.
+      }
+    } catch {
+      setExecuteError(messages.executePayoutErrorLabel);
+      setExecuteState("error");
+    }
+  }, [fetchEvents, messages.executePayoutErrorLabel, transferId]);
+
   const activeState = requestState?.id === transferId ? requestState : null;
   const data = activeState?.data ?? null;
   const error = activeState?.error ?? null;
@@ -425,6 +549,10 @@ export default function TransferReceiptPage() {
     receiptState?.id === transferId ? receiptState : null;
   const receiptData = activeReceiptState?.data ?? null;
   const receiptError = activeReceiptState?.error ?? null;
+  const activeEventsState =
+    eventsState?.id === transferId ? eventsState : null;
+  const timelineEvents = activeEventsState?.data ?? null;
+  const timelineError = activeEventsState?.error ?? null;
   const isLoading = Boolean(transferId) && !activeState;
   const isDev = ALLOW_SIMULATED_PAYOUTS;
 
@@ -477,6 +605,8 @@ export default function TransferReceiptPage() {
   }
 
   const { transfer, quote, events, cryptoPayout } = data;
+  const transferStatus = transferStatusOverride ?? transfer.status;
+  const executeUi = resolveExecutePayoutUi(transferStatus, executeState);
   const lightningStatusLabel = cryptoPayout
     ? cryptoPayout.status === "PAID"
       ? messages.lightningPaidLabel
@@ -488,7 +618,7 @@ export default function TransferReceiptPage() {
     isDev &&
     cryptoPayout &&
     !["PAID", "EXPIRED", "FAILED"].includes(cryptoPayout.status);
-  const resolveEventMessage = (event: TransferEvent) => {
+  const resolveEventMessage = (event: TransferEvent | TimelineEvent) => {
     switch (event.type) {
       case "CREATED":
         return messages.transferCreatedEvent;
@@ -510,10 +640,10 @@ export default function TransferReceiptPage() {
         return event.message;
     }
   };
-  const statusStyle = statusStyles[transfer.status] ?? "bg-slate-200 text-slate-700";
+  const statusStyle = statusStyles[transferStatus] ?? "bg-slate-200 text-slate-700";
   const statusLabel =
-    statusLabels[transfer.status as keyof typeof statusLabels] ??
-    transfer.status.replaceAll("_", " ");
+    statusLabels[transferStatus as keyof typeof statusLabels] ??
+    transferStatus.replaceAll("_", " ");
   const flowSteps = [
     messages.flowStepQuote,
     messages.flowStepReview,
@@ -525,13 +655,14 @@ export default function TransferReceiptPage() {
     typeof window === "undefined"
       ? `/${locale}/transfer/${transfer.id}`
       : `${window.location.origin}/${locale}/transfer/${transfer.id}`;
-  const eventByType = new Map(events.map((event) => [event.type, event]));
+  const eventsForTimeline = timelineEvents ?? events;
+  const eventByType = new Map(eventsForTimeline.map((event) => [event.type, event]));
   const finalStatus =
-    transfer.status === "FAILED" || transfer.status === "CANCELED"
+    transferStatus === "FAILED" || transferStatus === "CANCELED"
       ? "FAILED"
-      : transfer.status === "EXPIRED"
+      : transferStatus === "EXPIRED"
         ? "EXPIRED"
-        : transfer.status === "COMPLETED"
+        : transferStatus === "COMPLETED"
           ? "COMPLETED"
           : "COMPLETED";
   const finalLabel =
@@ -572,7 +703,7 @@ export default function TransferReceiptPage() {
       description: messages.lifecyclePendingDescription,
       timestamp:
         eventByType.get("PROCESSING")?.createdAt ??
-        (transfer.status === "PROCESSING" ? transfer.updatedAt : null),
+        (transferStatus === "PROCESSING" ? transfer.updatedAt : null),
     },
     {
       key: finalStatus,
@@ -580,7 +711,7 @@ export default function TransferReceiptPage() {
       description: finalDescription,
       timestamp:
         eventByType.get(finalStatus)?.createdAt ??
-        (["COMPLETED", "FAILED", "EXPIRED", "CANCELED"].includes(transfer.status)
+        (["COMPLETED", "FAILED", "EXPIRED", "CANCELED"].includes(transferStatus)
           ? transfer.updatedAt
           : null),
     },
@@ -595,22 +726,22 @@ export default function TransferReceiptPage() {
     CANCELED: 4,
   };
   const currentStageIndex =
-    stageIndexByStatus[transfer.status] ?? stageIndexByStatus.READY;
+    stageIndexByStatus[transferStatus] ?? stageIndexByStatus.READY;
   const nextStepMessage =
-    transfer.status === "PROCESSING"
+    transferStatus === "PROCESSING"
       ? messages.nextStepProcessing
-      : transfer.status === "COMPLETED"
+      : transferStatus === "COMPLETED"
         ? messages.nextStepCompleted
-        : transfer.status === "FAILED" || transfer.status === "CANCELED"
+        : transferStatus === "FAILED" || transferStatus === "CANCELED"
           ? messages.nextStepFailed
-          : transfer.status === "EXPIRED"
+          : transferStatus === "EXPIRED"
             ? messages.nextStepExpired
             : messages.nextStepReady;
   const receiptSnapshot = receiptData?.snapshot ?? null;
   const receiptUrl =
     issuedReceiptUrl ?? receiptData?.receiptUrl ?? null;
   const receiptUi = resolveReceiptUiState(
-    transfer.status,
+    transferStatus,
     receiptUrl,
     receiptActionState
   );
@@ -672,7 +803,7 @@ export default function TransferReceiptPage() {
                     ? messages.copiedLabel
                     : messages.copyLinkButton}
                 </button>
-                {session?.user && transfer.status === "COMPLETED" ? (
+                {session?.user && transferStatus === "COMPLETED" ? (
                   <button
                     type="button"
                     onClick={handleResendReceipt}
@@ -787,15 +918,45 @@ export default function TransferReceiptPage() {
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-400">
-                  {messages.timelineLabel}
-                </p>
-                <span className="text-xs text-slate-500">{events.length}</span>
+                <div>
+                  <p className="text-xs font-medium text-slate-400">
+                    {messages.timelineLabel}
+                  </p>
+                  {executeError ? (
+                    <p className="mt-1 text-xs text-rose-300">
+                      {executeError}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-3">
+                  {executeUi.showButton ? (
+                    <button
+                      type="button"
+                      onClick={handleExecutePayout}
+                      disabled={executeUi.disabled}
+                      className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {executeState === "loading"
+                        ? messages.executePayoutLoadingLabel
+                        : messages.executePayoutButtonLabel}
+                    </button>
+                  ) : null}
+                  <span className="text-xs text-slate-500">
+                    {(timelineEvents ?? events).length}
+                  </span>
+                </div>
               </div>
               <div className="mt-5 space-y-4 border-l border-white/10 pl-4">
-                {events.length > 0 ? (
-                  events.map((event) => (
-                    <div key={event.id} className="relative">
+                {timelineError ? (
+                  <p className="text-sm text-slate-400">
+                    {messages.receiptLoadError}
+                  </p>
+                ) : (timelineEvents ?? events).length > 0 ? (
+                  (timelineEvents ?? events).map((event, index) => (
+                    <div
+                      key={`${event.type}-${event.createdAt}-${index}`}
+                      className="relative"
+                    >
                       <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
                       <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                         <p className="text-sm font-semibold text-white">

@@ -1,14 +1,17 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { getPrisma } from "../scripts/prismaClient";
+import { prisma } from "../src/lib/prisma";
 
-const BASE = process.env.TEST_BASE_URL ?? "http://localhost:3000";
+const BASE = process.env.TEST_BASE_URL;
+const RUN_INTEGRATION = Boolean(BASE && BASE.trim());
+const INTEGRATION_BASE = BASE && BASE.trim() ? BASE.trim() : "http://localhost:3000";
 const DEV_HEADERS = {
   "x-dev-bypass-auth": "1",
   "x-dev-user-email": "you@example.com",
 };
 
-const prisma = getPrisma();
+let cachedQuoteId: string | null = null;
+let cachedQuoteExpiresAt = 0;
 
 after(async () => {
   await prisma.$disconnect();
@@ -26,20 +29,33 @@ async function fetchJson(url: string, init?: RequestInit) {
   return { status: res.status, json };
 }
 
-async function createCompletedTransfer() {
+async function getLockedQuoteId() {
+  const now = Date.now();
+  if (cachedQuoteId && cachedQuoteExpiresAt > now + 5000) {
+    return cachedQuoteId;
+  }
+
   const quoteRes = await fetchJson(
-    `${BASE}/api/quote?fromAsset=USD&toAsset=GHS&rail=MOBILE_MONEY&sendAmount=100`
+    `${INTEGRATION_BASE}/api/quote?fromAsset=USD&toAsset=GHS&rail=MOBILE_MONEY&sendAmount=100`
   );
   assert.equal(quoteRes.status, 200);
-  const quoteId = (quoteRes.json as { id: string }).id;
-  assert.ok(quoteId);
+  const quote = quoteRes.json as { id: string; expiresAt: string };
+  assert.ok(quote.id);
+  cachedQuoteId = quote.id;
+  cachedQuoteExpiresAt = new Date(quote.expiresAt).getTime();
 
-  const lockRes = await fetchJson(`${BASE}/api/quote/${quoteId}/lock`, {
+  const lockRes = await fetchJson(`${INTEGRATION_BASE}/api/quote/${quote.id}/lock`, {
     method: "POST",
   });
   assert.equal(lockRes.status, 200);
 
-  const transferRes = await fetchJson(`${BASE}/api/transfers`, {
+  return cachedQuoteId;
+}
+
+async function createCompletedTransfer() {
+  const quoteId = await getLockedQuoteId();
+
+  const transferRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -60,7 +76,7 @@ async function createCompletedTransfer() {
   const transferId = (transferRes.json as { id: string }).id;
   assert.ok(transferId);
 
-  const completeRes = await fetchJson(`${BASE}/api/transfers/${transferId}/complete`, {
+  const completeRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/complete`, {
     method: "POST",
     headers: DEV_HEADERS,
   });
@@ -70,19 +86,9 @@ async function createCompletedTransfer() {
 }
 
 async function createReadyTransfer() {
-  const quoteRes = await fetchJson(
-    `${BASE}/api/quote?fromAsset=USD&toAsset=GHS&rail=MOBILE_MONEY&sendAmount=100`
-  );
-  assert.equal(quoteRes.status, 200);
-  const quoteId = (quoteRes.json as { id: string }).id;
-  assert.ok(quoteId);
+  const quoteId = await getLockedQuoteId();
 
-  const lockRes = await fetchJson(`${BASE}/api/quote/${quoteId}/lock`, {
-    method: "POST",
-  });
-  assert.equal(lockRes.status, 200);
-
-  const transferRes = await fetchJson(`${BASE}/api/transfers`, {
+  const transferRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -106,7 +112,9 @@ async function createReadyTransfer() {
   return { transferId };
 }
 
-test("POST receipt persists once", async () => {
+const testIntegration = RUN_INTEGRATION ? test : test.skip;
+
+testIntegration("POST receipt persists once", async () => {
   const { transferId } = await createCompletedTransfer();
 
   const before = await prisma.transfer.findUnique({
@@ -116,7 +124,7 @@ test("POST receipt persists once", async () => {
   assert.equal(before?.receiptUrl ?? null, null);
   assert.equal(before?.receiptIssuedAt ?? null, null);
 
-  const first = await fetchJson(`${BASE}/api/transfers/${transferId}/receipt`, {
+  const first = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/receipt`, {
     method: "POST",
     headers: DEV_HEADERS,
   });
@@ -134,7 +142,7 @@ test("POST receipt persists once", async () => {
   const sendCountFirst = afterFirst?.receiptSendCount ?? 0;
   const lastSentFirst = afterFirst?.receiptLastSentAt?.toISOString() ?? null;
 
-  const second = await fetchJson(`${BASE}/api/transfers/${transferId}/receipt`, {
+  const second = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/receipt`, {
     method: "POST",
     headers: DEV_HEADERS,
   });
@@ -152,10 +160,10 @@ test("POST receipt persists once", async () => {
   assert.equal(afterSecond?.receiptLastSentAt?.toISOString() ?? null, lastSentFirst);
 });
 
-test("POST receipt rejected pre-completion", async () => {
+testIntegration("POST receipt rejected pre-completion", async () => {
   const { transferId } = await createReadyTransfer();
 
-  const res = await fetchJson(`${BASE}/api/transfers/${transferId}/receipt`, {
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/receipt`, {
     method: "POST",
     headers: DEV_HEADERS,
   });
@@ -169,15 +177,15 @@ test("POST receipt rejected pre-completion", async () => {
   assert.equal(row?.receiptIssuedAt ?? null, null);
 });
 
-test("Concurrent POST receipt", async () => {
+testIntegration("Concurrent POST receipt", async () => {
   const { transferId } = await createCompletedTransfer();
 
   const [a, b] = await Promise.all([
-    fetchJson(`${BASE}/api/transfers/${transferId}/receipt`, {
+    fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/receipt`, {
       method: "POST",
       headers: DEV_HEADERS,
     }),
-    fetchJson(`${BASE}/api/transfers/${transferId}/receipt`, {
+    fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/receipt`, {
       method: "POST",
       headers: DEV_HEADERS,
     }),

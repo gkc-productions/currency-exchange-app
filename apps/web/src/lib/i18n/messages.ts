@@ -220,6 +220,9 @@ export type Messages = {
   receiptNotFoundLabel: string;
   receiptExpiredLabel: string;
   receiptBackHomeButton: string;
+  executePayoutButtonLabel: string;
+  executePayoutLoadingLabel: string;
+  executePayoutErrorLabel: string;
   lifecycleTitle: string;
   lifecycleCreatedLabel: string;
   lifecycleQuotedLabel: string;
@@ -536,10 +539,13 @@ const EN_MESSAGES: Messages = {
   receiptTotalFeesLabel: "Total fees",
   receiptRecipientGetsLabel: "Recipient gets",
   receiptLoadingLabel: "Loading receipt...",
-  receiptLoadError: "We couldn't load the receipt. Please try again.",
-  receiptNotFoundLabel: "We couldn't find that transfer.",
-  receiptExpiredLabel: "This transfer expired before completion.",
-  receiptBackHomeButton: "Back to home",
+    receiptLoadError: "We couldn't load the receipt. Please try again.",
+    receiptNotFoundLabel: "We couldn't find that transfer.",
+    receiptExpiredLabel: "This transfer expired before completion.",
+    receiptBackHomeButton: "Back to home",
+    executePayoutButtonLabel: "Execute payout",
+    executePayoutLoadingLabel: "Executing payout...",
+    executePayoutErrorLabel: "We couldn't execute the payout. Please try again.",
   lifecycleTitle: "Transfer lifecycle",
   lifecycleCreatedLabel: "CREATED",
   lifecycleQuotedLabel: "QUOTED",
@@ -869,10 +875,13 @@ const FR_MESSAGES: Messages = {
   receiptTotalFeesLabel: "Frais totaux",
   receiptRecipientGetsLabel: "Montant reçu",
   receiptLoadingLabel: "Chargement du reçu...",
-  receiptLoadError: "Impossible de charger le recu. Veuillez reessayer.",
-  receiptNotFoundLabel: "Transfert introuvable.",
-  receiptExpiredLabel: "Ce transfert a expiré avant la fin.",
-  receiptBackHomeButton: "Retour à l'accueil",
+    receiptLoadError: "Impossible de charger le recu. Veuillez reessayer.",
+    receiptNotFoundLabel: "Transfert introuvable.",
+    receiptExpiredLabel: "Ce transfert a expiré avant la fin.",
+    receiptBackHomeButton: "Retour à l'accueil",
+    executePayoutButtonLabel: "Exécuter le paiement",
+    executePayoutLoadingLabel: "Paiement en cours...",
+    executePayoutErrorLabel: "Impossible d'exécuter le paiement.",
   lifecycleTitle: "Cycle de transfert",
   lifecycleCreatedLabel: "CRÉÉ",
   lifecycleQuotedLabel: "DEVISÉ",
