@@ -640,6 +640,22 @@ export default function TransferReceiptPage() {
         return event.message;
     }
   };
+  const parseEventMetadata = (message: string) => {
+    const refMatch = message.match(/(?:^|\s)ref=([^\s]+)/);
+    const codeMatch = message.match(/(?:^|\s)code=([^\s]+)/);
+    const messageMatch = message.match(/(?:^|\s)message=(.*)$/);
+    const base = message
+      .replace(/\sref=[^\s]+/g, "")
+      .replace(/\scode=[^\s]+/g, "")
+      .replace(/\smessage=.*$/g, "")
+      .trim();
+    return {
+      text: base,
+      ref: refMatch ? refMatch[1] : null,
+      code: codeMatch ? codeMatch[1] : null,
+      errorMessage: messageMatch ? messageMatch[1] : null,
+    };
+  };
   const statusStyle = statusStyles[transferStatus] ?? "bg-slate-200 text-slate-700";
   const statusLabel =
     statusLabels[transferStatus as keyof typeof statusLabels] ??
@@ -922,6 +938,15 @@ export default function TransferReceiptPage() {
                   <p className="text-xs font-medium text-slate-400">
                     {messages.timelineLabel}
                   </p>
+                  {executeUi.message === "processing" ? (
+                    <p className="mt-1 text-xs text-slate-300">
+                      {messages.executePayoutProcessingLabel}
+                    </p>
+                  ) : executeUi.message === "failed" ? (
+                    <p className="mt-1 text-xs text-rose-300">
+                      {messages.executePayoutFailedLabel}
+                    </p>
+                  ) : null}
                   {executeError ? (
                     <p className="mt-1 text-xs text-rose-300">
                       {executeError}
@@ -959,9 +984,33 @@ export default function TransferReceiptPage() {
                     >
                       <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
                       <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                        <p className="text-sm font-semibold text-white">
-                          {resolveEventMessage(event)}
-                        </p>
+                        {(() => {
+                          const resolved = resolveEventMessage(event);
+                          const meta = parseEventMetadata(resolved);
+                          return (
+                            <p className="text-sm font-semibold text-white">
+                              {meta.text}
+                              {meta.ref ? (
+                                <span className="ml-2 text-xs font-medium text-slate-300">
+                                  {messages.payoutRefLabel} {meta.ref}
+                                </span>
+                              ) : null}
+                            </p>
+                          );
+                        })()}
+                        {event.type === "PAYOUT_FAILED" ? (
+                          (() => {
+                            const meta = parseEventMetadata(resolveEventMessage(event));
+                            if (!meta.code) {
+                              return null;
+                            }
+                            return (
+                              <p className="mt-2 text-xs text-rose-300">
+                                {messages.payoutReasonLabel} {meta.code}
+                              </p>
+                            );
+                          })()
+                        ) : null}
                         <p className="mt-2 text-xs text-slate-500">
                           {formatDateTime(event.createdAt, locale)}
                         </p>

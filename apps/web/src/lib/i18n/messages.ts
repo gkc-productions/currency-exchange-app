@@ -50,10 +50,29 @@ export type Messages = {
   receiptSnapshotUnavailableLabel: string;
   receiptUnauthorizedLabel: string;
   receiptReadyLabel: string;
+  payoutRefLabel: string;
+  payoutReasonLabel: string;
   adminTitle: string;
   adminSubtitle: string;
   adminUnauthorizedTitle: string;
   adminUnauthorizedDescription: string;
+  adminPayoutsTitle: string;
+  adminPayoutsSubtitle: string;
+  adminPayoutsEmpty: string;
+  adminPayoutsLoadingLabel: string;
+  adminPayoutsAllLabel: string;
+  adminPayoutsReferenceLabel: string;
+  adminPayoutsStatusLabel: string;
+  adminPayoutsRailLabel: string;
+  adminPayoutsUpdatedLabel: string;
+  adminPayoutsLatestEventLabel: string;
+  adminPayoutsReceiptLabel: string;
+  adminPayoutsReceiptViewLabel: string;
+  adminPayoutsReceiptUnavailableLabel: string;
+  adminPayoutsEventEmptyLabel: string;
+  adminPayoutsProviderLabel: string;
+  adminPayoutsRefreshLabel: string;
+  adminPayoutsLoadError: string;
   heroTitle: string;
   heroSubtitle: string;
   sendCardTitle: string;
@@ -223,6 +242,8 @@ export type Messages = {
   executePayoutButtonLabel: string;
   executePayoutLoadingLabel: string;
   executePayoutErrorLabel: string;
+  executePayoutProcessingLabel: string;
+  executePayoutFailedLabel: string;
   lifecycleTitle: string;
   lifecycleCreatedLabel: string;
   lifecycleQuotedLabel: string;
@@ -356,11 +377,30 @@ const EN_MESSAGES: Messages = {
   receiptSnapshotUnavailableLabel: "Snapshot unavailable.",
   receiptUnauthorizedLabel: "Unauthorized",
   receiptReadyLabel: "Receipt ready to view.",
+  payoutRefLabel: "Ref:",
+  payoutReasonLabel: "Reason:",
   adminTitle: "Admin console",
   adminSubtitle: "Restricted access for ClariSend administrators.",
   adminUnauthorizedTitle: "Access restricted",
   adminUnauthorizedDescription:
     "You do not have permission to view this page.",
+  adminPayoutsTitle: "Payout monitoring",
+  adminPayoutsSubtitle: "Inspect provider-backed payout activity and receipts.",
+  adminPayoutsEmpty: "No payout activity yet.",
+  adminPayoutsLoadingLabel: "Loading payouts...",
+  adminPayoutsAllLabel: "All",
+  adminPayoutsReferenceLabel: "Reference",
+  adminPayoutsStatusLabel: "Status",
+  adminPayoutsProviderLabel: "Provider",
+  adminPayoutsRailLabel: "Rail",
+  adminPayoutsUpdatedLabel: "Updated",
+  adminPayoutsLatestEventLabel: "Latest payout event",
+  adminPayoutsReceiptLabel: "Receipt",
+  adminPayoutsReceiptViewLabel: "View receipt",
+  adminPayoutsReceiptUnavailableLabel: "Unavailable",
+  adminPayoutsEventEmptyLabel: "No payout events",
+  adminPayoutsRefreshLabel: "Refresh",
+  adminPayoutsLoadError: "Unable to load payouts.",
   heroTitle:
     "Send with clarity. Rates, fees, and delivery time upfront.",
   heroSubtitle:
@@ -546,6 +586,8 @@ const EN_MESSAGES: Messages = {
     executePayoutButtonLabel: "Execute payout",
     executePayoutLoadingLabel: "Executing payout...",
     executePayoutErrorLabel: "We couldn't execute the payout. Please try again.",
+    executePayoutProcessingLabel: "Payout processing...",
+    executePayoutFailedLabel: "Payout failed.",
   lifecycleTitle: "Transfer lifecycle",
   lifecycleCreatedLabel: "CREATED",
   lifecycleQuotedLabel: "QUOTED",
@@ -688,11 +730,30 @@ const FR_MESSAGES: Messages = {
   receiptSnapshotUnavailableLabel: "Instantané indisponible.",
   receiptUnauthorizedLabel: "Non autorisé",
   receiptReadyLabel: "Reçu prêt à consulter.",
+  payoutRefLabel: "Ref:",
+  payoutReasonLabel: "Raison :",
   adminTitle: "Console admin",
   adminSubtitle: "Acces reserve aux administrateurs ClariSend.",
   adminUnauthorizedTitle: "Acces restreint",
   adminUnauthorizedDescription:
     "Vous n'avez pas les droits pour voir cette page.",
+  adminPayoutsTitle: "Suivi des paiements",
+  adminPayoutsSubtitle: "Consultez les paiements fournisseurs et les reçus.",
+  adminPayoutsEmpty: "Aucune activite de paiement pour le moment.",
+  adminPayoutsLoadingLabel: "Chargement des paiements...",
+  adminPayoutsAllLabel: "Tous",
+  adminPayoutsReferenceLabel: "Reference",
+  adminPayoutsStatusLabel: "Statut",
+  adminPayoutsProviderLabel: "Fournisseur",
+  adminPayoutsRailLabel: "Canal",
+  adminPayoutsUpdatedLabel: "Mis a jour",
+  adminPayoutsLatestEventLabel: "Dernier evenement",
+  adminPayoutsReceiptLabel: "Recu",
+  adminPayoutsReceiptViewLabel: "Voir le recu",
+  adminPayoutsReceiptUnavailableLabel: "Indisponible",
+  adminPayoutsEventEmptyLabel: "Aucun evenement",
+  adminPayoutsRefreshLabel: "Actualiser",
+  adminPayoutsLoadError: "Impossible de charger les paiements.",
   heroTitle:
     "Envoyez en toute clarte. Taux, frais et delais visibles.",
   heroSubtitle:
@@ -882,6 +943,8 @@ const FR_MESSAGES: Messages = {
     executePayoutButtonLabel: "Exécuter le paiement",
     executePayoutLoadingLabel: "Paiement en cours...",
     executePayoutErrorLabel: "Impossible d'exécuter le paiement.",
+    executePayoutProcessingLabel: "Paiement en cours de traitement...",
+    executePayoutFailedLabel: "Paiement échoué.",
   lifecycleTitle: "Cycle de transfert",
   lifecycleCreatedLabel: "CRÉÉ",
   lifecycleQuotedLabel: "DEVISÉ",
