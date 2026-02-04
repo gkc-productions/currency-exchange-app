@@ -136,6 +136,10 @@ model Transfer {
   userId                      String?
   recipientId                 String?
   status                      TransferStatus @default(DRAFT)
+  providerPayoutId            String?
+  providerPayoutStatus        String?
+  providerPayoutProvider      String?
+  providerPayoutUpdatedAt     DateTime?
   payoutRail                  PayoutRail
   recipientName               String
   recipientCountry            String
@@ -158,6 +162,7 @@ model Transfer {
   quote                       Quote          @relation(fields: [quoteId], references: [id])
   cryptoPayout                CryptoPayout?
   events                      TransferEvent[]
+  payoutWebhookEvents         PayoutWebhookEvent[]
   user                        User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   recipient                   Recipient?     @relation(fields: [recipientId], references: [id], onDelete: SetNull)
 
@@ -166,6 +171,32 @@ model Transfer {
   @@index([recipientId])
   @@index([status])
   @@index([createdAt])
+}
+
+model PayoutWebhookEvent {
+  id               String   @id @default(cuid())
+  eventId          String   @unique
+  provider         String
+  providerPayoutId String
+  status           String
+  receivedAt       DateTime @default(now())
+  transferId       String
+
+  transfer         Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  @@index([transferId, receivedAt])
+  @@index([providerPayoutId])
+}
+
+model WebhookEventReceipt {
+  id         String   @id @default(cuid())
+  provider   String
+  eventId    String
+  payload    Json?
+  signature  String?
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
 }
 
 model CryptoPayout {
