@@ -60,3 +60,18 @@ testAdminIntegration("admin payouts filters by status", async () => {
   assert.equal(res.status, 200);
   assert.ok(Array.isArray(res.json));
 });
+
+testAdminIntegration("admin payouts CSV export returns header", async () => {
+  const res = await fetch(`${INTEGRATION_BASE}/api/admin/exports/payouts.csv`, {
+    headers: DEV_HEADERS,
+  });
+  assert.equal(res.status, 200);
+  const contentType = res.headers.get("content-type") ?? "";
+  assert.equal(contentType.includes("text/csv"), true);
+  const text = await res.text();
+  const firstLine = text.split("\n")[0] ?? "";
+  assert.equal(
+    firstLine.trim(),
+    "transferId,referenceCode,status,providerPayoutId,providerPayoutStatus,providerPayoutProvider,completedAt"
+  );
+});

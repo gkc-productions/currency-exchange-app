@@ -81,6 +81,9 @@ export type Messages = {
   adminPayoutsProviderLabel: string;
   adminPayoutsRefreshLabel: string;
   adminPayoutsLoadError: string;
+  adminPayoutsFromLabel: string;
+  adminPayoutsToLabel: string;
+  adminPayoutsDownloadCsvLabel: string;
   heroTitle: string;
   heroSubtitle: string;
   sendCardTitle: string;
@@ -417,6 +420,9 @@ const EN_MESSAGES: Messages = {
   adminPayoutsEventEmptyLabel: "No payout events",
   adminPayoutsRefreshLabel: "Refresh",
   adminPayoutsLoadError: "Unable to load payouts.",
+  adminPayoutsFromLabel: "From",
+  adminPayoutsToLabel: "To",
+  adminPayoutsDownloadCsvLabel: "Download CSV",
   heroTitle:
     "Send with clarity. Rates, fees, and delivery time upfront.",
   heroSubtitle:
@@ -778,6 +784,9 @@ const FR_MESSAGES: Messages = {
   adminPayoutsEventEmptyLabel: "Aucun evenement",
   adminPayoutsRefreshLabel: "Actualiser",
   adminPayoutsLoadError: "Impossible de charger les paiements.",
+  adminPayoutsFromLabel: "Du",
+  adminPayoutsToLabel: "Au",
+  adminPayoutsDownloadCsvLabel: "Telecharger CSV",
   heroTitle:
     "Envoyez en toute clarte. Taux, frais et delais visibles.",
   heroSubtitle:

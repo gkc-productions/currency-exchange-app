@@ -40,6 +40,8 @@ export default function AdminPayoutsTable({
   const [payouts, setPayouts] = useState<AdminPayoutRow[]>(initialPayouts);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [providerFilter, setProviderFilter] = useState("ALL");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -74,6 +76,18 @@ export default function AdminPayoutsTable({
     setPayouts(payload);
     setLoading(false);
   }, [messages.adminPayoutsLoadError, providerFilter, statusFilter]);
+
+  const csvUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (fromDate) {
+      params.set("from", fromDate);
+    }
+    if (toDate) {
+      params.set("to", toDate);
+    }
+    const query = params.toString();
+    return `/api/admin/exports/payouts.csv${query ? `?${query}` : ""}`;
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     void fetchPayouts();
@@ -117,6 +131,30 @@ export default function AdminPayoutsTable({
         >
           {messages.adminPayoutsRefreshLabel}
         </button>
+        <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {messages.adminPayoutsFromLabel}
+          <input
+            type="date"
+            className="mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+            value={fromDate}
+            onChange={(event) => setFromDate(event.target.value)}
+          />
+        </label>
+        <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {messages.adminPayoutsToLabel}
+          <input
+            type="date"
+            className="mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+            value={toDate}
+            onChange={(event) => setToDate(event.target.value)}
+          />
+        </label>
+        <a
+          href={csvUrl}
+          className="self-end rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700"
+        >
+          {messages.adminPayoutsDownloadCsvLabel}
+        </a>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
