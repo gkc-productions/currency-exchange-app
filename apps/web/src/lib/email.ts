@@ -58,6 +58,18 @@ async function logEmail({
   }
 }
 
+function formatMoney(code: string, value: number) {
+  return `${value.toFixed(2)} ${code}`;
+}
+
+function formatPercent(value: number) {
+  return `${value.toFixed(2)}%`;
+}
+
+function formatRate(value: number) {
+  return value.toFixed(6);
+}
+
 export async function sendMagicLinkEmail({
   to,
   url,
@@ -134,9 +146,9 @@ export async function sendTransferStatusEmail({
   to: string;
   type: TransferEmailType;
   referenceCode: string;
-  sendAmount: number;
-  totalFee: number;
-  recipientGets: number;
+  sendAmount: string;
+  totalFee: string;
+  recipientGets: string;
   fromAsset: string;
   toAsset: string;
   recipientName: string;
@@ -272,6 +284,15 @@ export async function sendReceiptEmail({
   toAsset,
   receiptUrl,
   transferId,
+  marketRate,
+  appliedRate,
+  fxMarginPct,
+  fixedFee,
+  percentFee,
+  rateSource,
+  rateTimestamp,
+  lockedAt,
+  expiresAt,
 }: {
   to: string;
   referenceCode: string;
@@ -283,6 +304,15 @@ export async function sendReceiptEmail({
   toAsset: string;
   receiptUrl: string;
   transferId?: string;
+  marketRate: number;
+  appliedRate: number;
+  fxMarginPct: number;
+  fixedFee: number;
+  percentFee: number;
+  rateSource: string;
+  rateTimestamp: string;
+  lockedAt: string;
+  expiresAt: string;
 }) {
   let transporter;
   try {
@@ -303,16 +333,25 @@ export async function sendReceiptEmail({
   }
 
   const subject = `Your ClariSend receipt (${referenceCode})`;
-  const text = `Your transfer is ${status}.\n\nReference: ${referenceCode}\nSend amount: ${sendAmount} ${fromAsset}\nTotal fees: ${totalFee} ${fromAsset}\nRecipient gets: ${recipientGets} ${toAsset}\n\nView receipt: ${receiptUrl}`;
+  const text = `Your transfer is ${status}.\n\nReference: ${referenceCode}\nSend amount: ${formatMoney(fromAsset, sendAmount)}\nTotal fees: ${formatMoney(fromAsset, totalFee)}\nRecipient gets: ${formatMoney(toAsset, recipientGets)}\n\nMarket rate: ${formatRate(marketRate)} ${toAsset}/${fromAsset}\nApplied rate: ${formatRate(appliedRate)} ${toAsset}/${fromAsset}\nFX margin: ${formatPercent(fxMarginPct)}\nFixed fee: ${formatMoney(fromAsset, fixedFee)}\nPercent fee: ${formatPercent(percentFee)}\nRate source: ${rateSource}\nRate timestamp: ${rateTimestamp}\nQuote locked at: ${lockedAt}\nQuote expires at: ${expiresAt}\n\nView receipt: ${receiptUrl}`;
   const html = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #0f172a;">
       <h2 style="margin:0 0 12px;">Your ClariSend receipt</h2>
       <p style="margin:0 0 18px;">Status: <strong>${status}</strong></p>
-      <table style="border-collapse: collapse; width: 100%; max-width: 420px;">
+      <table style="border-collapse: collapse; width: 100%; max-width: 520px;">
         <tr><td style="padding:6px 0; color:#64748b;">Reference</td><td style="padding:6px 0; font-weight:600;">${referenceCode}</td></tr>
-        <tr><td style="padding:6px 0; color:#64748b;">Send amount</td><td style="padding:6px 0; font-weight:600;">${sendAmount} ${fromAsset}</td></tr>
-        <tr><td style="padding:6px 0; color:#64748b;">Total fees</td><td style="padding:6px 0; font-weight:600;">${totalFee} ${fromAsset}</td></tr>
-        <tr><td style="padding:6px 0; color:#64748b;">Recipient gets</td><td style="padding:6px 0; font-weight:600;">${recipientGets} ${toAsset}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Send amount</td><td style="padding:6px 0; font-weight:600;">${formatMoney(fromAsset, sendAmount)}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Total fees</td><td style="padding:6px 0; font-weight:600;">${formatMoney(fromAsset, totalFee)}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Recipient gets</td><td style="padding:6px 0; font-weight:600;">${formatMoney(toAsset, recipientGets)}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Market rate</td><td style="padding:6px 0;">${formatRate(marketRate)} ${toAsset}/${fromAsset}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Applied rate</td><td style="padding:6px 0;">${formatRate(appliedRate)} ${toAsset}/${fromAsset}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">FX margin</td><td style="padding:6px 0;">${formatPercent(fxMarginPct)}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Fixed fee</td><td style="padding:6px 0;">${formatMoney(fromAsset, fixedFee)}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Percent fee</td><td style="padding:6px 0;">${formatPercent(percentFee)}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Rate source</td><td style="padding:6px 0;">${rateSource}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Rate timestamp</td><td style="padding:6px 0;">${rateTimestamp}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Quote locked at</td><td style="padding:6px 0;">${lockedAt}</td></tr>
+        <tr><td style="padding:6px 0; color:#64748b;">Quote expires at</td><td style="padding:6px 0;">${expiresAt}</td></tr>
       </table>
       <p style="margin:18px 0 0;"><a href="${receiptUrl}" style="color:#0f766e;">View full receipt</a></p>
     </div>

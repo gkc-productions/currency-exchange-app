@@ -233,7 +233,7 @@ export async function GET(req: Request) {
     sendAmount,
     marketRate,
     rateSource,
-    rateTimestamp,
+    rateTimestamp: rateTimestamp.toISOString(),
     cheapestRouteId: cheapestRoute.id,
     fastestRouteId: fastestRoute.id,
     bestValueRouteId: bestValueRoute.id,

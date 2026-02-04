@@ -187,7 +187,7 @@ export async function GET(req: Request) {
     id: quote.id,
     provider: rateSource,
     rateSource,
-    rateTimestamp,
+    rateTimestamp: rateTimestamp.toISOString(),
     from: fromAsset.code,
     to: toAsset.code,
     fromAsset: {

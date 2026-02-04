@@ -28,7 +28,7 @@ function quoteToResponse(quote: {
     id: quote.id,
     provider: quote.rateSource,
     rateSource: quote.rateSource,
-    rateTimestamp: quote.rateTimestamp,
+    rateTimestamp: quote.rateTimestamp.toISOString(),
     from: quote.fromCode ?? quote.fromAsset.code,
     to: quote.toCode ?? quote.toAsset.code,
     fromAsset: {
@@ -73,7 +73,16 @@ export async function GET(
     return NextResponse.json({ error: "This quote could not be found. It may have been deleted." }, { status: 404 });
   }
 
-  const response = quoteToResponse(quote);
+  const lockRecord = await prisma.auditLog.findFirst({
+    where: { action: "QUOTE_LOCKED", entityType: "Quote", entityId: quote.id },
+    orderBy: { createdAt: "desc" },
+  });
+  const lockedAt = lockRecord?.createdAt ?? null;
+  const response = {
+    ...quoteToResponse(quote),
+    locked: Boolean(lockedAt),
+    lockedAt,
+  };
   const expired = quote.expiresAt.getTime() <= Date.now();
 
   if (expired) {
