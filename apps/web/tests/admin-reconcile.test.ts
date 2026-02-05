@@ -218,3 +218,25 @@ testAdminIntegration("reconcile ready rejected", async () => {
   const payload = res.json as { error?: string };
   assert.equal(payload.error, "not_processing");
 });
+
+testAdminIntegration("reconcile returns ok false for unknown provider status", async () => {
+  const transferId = await createTransfer();
+  await prisma.transfer.update({
+    where: { id: transferId },
+    data: {
+      status: "PROCESSING",
+      providerPayoutId: "mock_unknown",
+      providerPayoutStatus: "CREATED",
+      providerPayoutProvider: "mock",
+    },
+  });
+
+  const res = await fetchJson(
+    `${INTEGRATION_BASE}/api/admin/transfers/${transferId}/reconcile`,
+    { method: "POST", headers: DEV_HEADERS }
+  );
+  assert.equal(res.status, 200);
+  const payload = res.json as { ok?: boolean; error?: string };
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error, "unknown_provider_status");
+});

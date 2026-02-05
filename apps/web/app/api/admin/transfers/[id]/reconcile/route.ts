@@ -4,6 +4,8 @@ import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession, isAdminSession } from "@/src/lib/auth";
 import { getReadOnlyResponse, readDevBypassEmail } from "@/src/lib/security";
 import { getPayoutStatus } from "@/src/lib/payout";
+import { mapProviderStatus } from "@/src/lib/payout/provider-state";
+import { ensureReceiptIssued } from "@/src/lib/receipt-issue";
 
 type SessionLike = { user?: { email?: string | null } | null } | null;
 
@@ -138,12 +140,18 @@ export async function POST(
   }
 
   const normalizedStatus = providerStatus.toUpperCase();
-  const nextStatus =
-    normalizedStatus === "COMPLETED"
-      ? TransferStatus.COMPLETED
-      : normalizedStatus === "FAILED"
-        ? TransferStatus.FAILED
-        : TransferStatus.PROCESSING;
+  const mapping = mapProviderStatus(normalizedStatus);
+  if (!mapping) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "unknown_provider_status",
+        providerStatus: normalizedStatus,
+      },
+      { status: 200 }
+    );
+  }
+  const nextStatus = mapping.transferStatus;
 
   const previousProviderStatus = (transfer.providerPayoutStatus ?? "").toUpperCase();
   if (transfer.status === nextStatus && previousProviderStatus === normalizedStatus) {
@@ -205,15 +213,10 @@ export async function POST(
 
   let receiptIssued = false;
   let receiptUrl: string | null = transfer.receiptUrl ?? null;
-  if (nextStatus === TransferStatus.COMPLETED && transfer.userId) {
-    const nextReceiptUrl = transfer.receiptUrl ?? buildReceiptUrl(transfer.id);
-    const issuance = await issueReceiptAtomically(
-      transfer.id,
-      transfer.userId,
-      nextReceiptUrl
-    );
+  if (nextStatus === TransferStatus.COMPLETED) {
+    const issuance = await ensureReceiptIssued({ transferId: transfer.id });
     receiptIssued = issuance.issued || Boolean(transfer.receiptUrl);
-    receiptUrl = nextReceiptUrl;
+    receiptUrl = issuance.receiptUrl ?? receiptUrl;
   }
 
   await prisma.transferEvent.create({

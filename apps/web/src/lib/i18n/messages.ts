@@ -111,6 +111,7 @@ export type Messages = {
   adminPayoutsReceiptViewLabel: string;
   adminPayoutsReceiptUnavailableLabel: string;
   adminPayoutsEventEmptyLabel: string;
+  adminPayoutsCollapseLabel: string;
   adminPayoutsProviderLabel: string;
   adminPayoutsRefreshLabel: string;
   adminPayoutsLoadError: string;
@@ -125,6 +126,16 @@ export type Messages = {
   adminProvidersNoErrorLabel: string;
   adminProvidersLoadError: string;
   adminProvidersUpdateError: string;
+  adminToolsTitleLabel: string;
+  adminForceStatusLabel: string;
+  adminForceReasonLabel: string;
+  adminForceReasonPlaceholder: string;
+  adminForceStatusApplyLabel: string;
+  adminForceStatusLoadingLabel: string;
+  adminForceStatusSuccessLabel: string;
+  adminForceStatusErrorLabel: string;
+  adminForceStatusInvalidLabel: string;
+  adminForceStatusForbiddenLabel: string;
   heroTitle: string;
   heroSubtitle: string;
   sendCardTitle: string;
@@ -402,6 +413,14 @@ export type Messages = {
   adminWebhookEventsReplaySuccess: string;
   adminWebhookEventsReplayError: string;
   adminWebhookEventsDedupedLabel: string;
+  adminWebhookEventsDetailsLabel: string;
+  adminWebhookEventsCopyLabel: string;
+  adminWebhookEventsCopiedLabel: string;
+  adminWebhookEventsSearchLabel: string;
+  adminWebhookEventsSearchPlaceholder: string;
+  adminWebhookEventsSignatureStatusLabel: string;
+  adminWebhookEventsPayloadHashLabel: string;
+  adminWebhookEventsOutcomeReasonLabel: string;
   adminPayoutWebhookTitle: string;
   adminPayoutWebhookSubtitle: string;
   adminPayoutWebhookLoadingLabel: string;
@@ -580,6 +599,7 @@ const EN_MESSAGES: Messages = {
   adminPayoutsReceiptViewLabel: "View receipt",
   adminPayoutsReceiptUnavailableLabel: "Unavailable",
   adminPayoutsEventEmptyLabel: "No payout events",
+  adminPayoutsCollapseLabel: "Hide",
   adminPayoutsRefreshLabel: "Refresh",
   adminPayoutsLoadError: "Unable to load payouts.",
   adminPayoutsFromLabel: "From",
@@ -593,6 +613,16 @@ const EN_MESSAGES: Messages = {
   adminProvidersNoErrorLabel: "No recent errors",
   adminProvidersLoadError: "Unable to load providers.",
   adminProvidersUpdateError: "Unable to update provider.",
+  adminToolsTitleLabel: "Admin tools",
+  adminForceStatusLabel: "Force status",
+  adminForceReasonLabel: "Reason (optional)",
+  adminForceReasonPlaceholder: "Add a short reason",
+  adminForceStatusApplyLabel: "Apply",
+  adminForceStatusLoadingLabel: "Applying...",
+  adminForceStatusSuccessLabel: "Status updated.",
+  adminForceStatusErrorLabel: "Unable to update status.",
+  adminForceStatusInvalidLabel: "Transition not allowed.",
+  adminForceStatusForbiddenLabel: "Not available in production.",
   heroTitle:
     "Send with clarity. Rates, fees, and delivery time upfront.",
   heroSubtitle:
@@ -889,6 +919,14 @@ const EN_MESSAGES: Messages = {
     adminWebhookEventsReplaySuccess: "Replay sent.",
     adminWebhookEventsReplayError: "Replay failed.",
     adminWebhookEventsDedupedLabel: "Deduped",
+    adminWebhookEventsDetailsLabel: "Details",
+    adminWebhookEventsCopyLabel: "Copy",
+    adminWebhookEventsCopiedLabel: "Copied",
+    adminWebhookEventsSearchLabel: "Search",
+    adminWebhookEventsSearchPlaceholder: "Search events",
+    adminWebhookEventsSignatureStatusLabel: "Signature status",
+    adminWebhookEventsPayloadHashLabel: "Payload hash",
+    adminWebhookEventsOutcomeReasonLabel: "Outcome reason",
     adminPayoutWebhookTitle: "Payout webhooks",
     adminPayoutWebhookSubtitle: "Review recent webhook deliveries.",
     adminPayoutWebhookLoadingLabel: "Loading webhook deliveries...",
@@ -1078,6 +1116,7 @@ const FR_MESSAGES: Messages = {
   adminPayoutsReceiptViewLabel: "Voir le recu",
   adminPayoutsReceiptUnavailableLabel: "Indisponible",
   adminPayoutsEventEmptyLabel: "Aucun evenement",
+  adminPayoutsCollapseLabel: "Masquer",
   adminPayoutsRefreshLabel: "Actualiser",
   adminPayoutsLoadError: "Impossible de charger les paiements.",
   adminPayoutsFromLabel: "Du",
@@ -1091,6 +1130,16 @@ const FR_MESSAGES: Messages = {
   adminProvidersNoErrorLabel: "Aucune erreur recente",
   adminProvidersLoadError: "Impossible de charger les fournisseurs.",
   adminProvidersUpdateError: "Impossible de mettre a jour le fournisseur.",
+  adminToolsTitleLabel: "Outils admin",
+  adminForceStatusLabel: "Forcer le statut",
+  adminForceReasonLabel: "Raison (optionnel)",
+  adminForceReasonPlaceholder: "Ajouter une raison",
+  adminForceStatusApplyLabel: "Appliquer",
+  adminForceStatusLoadingLabel: "Application...",
+  adminForceStatusSuccessLabel: "Statut mis a jour.",
+  adminForceStatusErrorLabel: "Impossible de mettre a jour le statut.",
+  adminForceStatusInvalidLabel: "Transition non autorisee.",
+  adminForceStatusForbiddenLabel: "Indisponible en production.",
   heroTitle:
     "Envoyez en toute clarte. Taux, frais et delais visibles.",
   heroSubtitle:
@@ -1391,6 +1440,14 @@ const FR_MESSAGES: Messages = {
     adminWebhookEventsReplaySuccess: "Rejeu envoyé.",
     adminWebhookEventsReplayError: "Échec du rejeu.",
     adminWebhookEventsDedupedLabel: "Dédupliqué",
+    adminWebhookEventsDetailsLabel: "Détails",
+    adminWebhookEventsCopyLabel: "Copier",
+    adminWebhookEventsCopiedLabel: "Copié",
+    adminWebhookEventsSearchLabel: "Recherche",
+    adminWebhookEventsSearchPlaceholder: "Rechercher des événements",
+    adminWebhookEventsSignatureStatusLabel: "Statut de signature",
+    adminWebhookEventsPayloadHashLabel: "Hash du payload",
+    adminWebhookEventsOutcomeReasonLabel: "Raison du résultat",
     adminPayoutWebhookTitle: "Webhooks de paiement",
     adminPayoutWebhookSubtitle: "Consultez les livraisons récentes.",
     adminPayoutWebhookLoadingLabel: "Chargement des webhooks...",

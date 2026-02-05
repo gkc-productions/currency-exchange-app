@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import type { Locale, Messages } from "@/src/lib/i18n/messages";
+import AccountingPanel from "@/src/lib/accounting-ui";
 
 type AdminPayoutRow = {
   id: string;
@@ -28,6 +29,35 @@ type ProviderState = {
   lastErrorAt: string | null;
   lastErrorCode: string | null;
   lastErrorMessage: string | null;
+};
+
+type ReceiptSnapshot = {
+  sendAmount: number;
+  fromAsset: string;
+  toAsset: string;
+  appliedRate: number;
+  marketRate: number;
+  fxMarginPct: number;
+  fixedFee: number;
+  percentFee: number;
+  totalFees: number;
+  recipientGets: number;
+  rateSource: string;
+  lockedAt: string;
+};
+
+type ReceiptApiResponse = {
+  transferId: string;
+  referenceCode: string;
+  status: string;
+  receiptUrl?: string | null;
+  snapshot?: ReceiptSnapshot | null;
+};
+
+type ReceiptCacheEntry = {
+  data: ReceiptApiResponse | null;
+  error: string | null;
+  loading: boolean;
 };
 
 function formatDate(locale: Locale, value: string | Date) {
@@ -58,6 +88,10 @@ export default function AdminPayoutsTable({
   const [providerError, setProviderError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [receiptCache, setReceiptCache] = useState<Record<string, ReceiptCacheEntry>>(
+    {}
+  );
   const [reconcileState, setReconcileState] = useState<
     Record<
       string,
@@ -203,6 +237,54 @@ export default function AdminPayoutsTable({
     }
   };
 
+  const toggleAccounting = async (id: string) => {
+    setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    if (expandedRows[id]) {
+      return;
+    }
+    const cached = receiptCache[id];
+    if (cached?.data || cached?.error || cached?.loading) {
+      return;
+    }
+    setReceiptCache((prev) => ({
+      ...prev,
+      [id]: { data: null, error: null, loading: true },
+    }));
+    try {
+      const res = await fetch(`/api/transfers/${id}/receipt`, {
+        cache: "no-store",
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | ReceiptApiResponse
+        | { error?: string }
+        | null;
+      if (!res.ok) {
+        const errorMessage =
+          res.status === 401
+            ? messages.receiptUnauthorizedLabel
+            : res.status === 404
+              ? messages.receiptNotFoundLabel
+              : res.status === 409
+                ? messages.receiptSnapshotUnavailableLabel
+                : messages.receiptLoadError;
+        setReceiptCache((prev) => ({
+          ...prev,
+          [id]: { data: null, error: errorMessage, loading: false },
+        }));
+        return;
+      }
+      setReceiptCache((prev) => ({
+        ...prev,
+        [id]: { data: payload as ReceiptApiResponse, error: null, loading: false },
+      }));
+    } catch {
+      setReceiptCache((prev) => ({
+        ...prev,
+        [id]: { data: null, error: messages.receiptLoadError, loading: false },
+      }));
+    }
+  };
+
   return (
     <>
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -336,25 +418,26 @@ export default function AdminPayoutsTable({
                 <th className="px-4 py-3">{messages.adminPayoutsUpdatedLabel}</th>
                 <th className="px-4 py-3">{messages.adminPayoutsLatestEventLabel}</th>
                 <th className="px-4 py-3">{messages.adminPayoutsReceiptLabel}</th>
+                <th className="px-4 py-3">{messages.accountingTitle}</th>
                 <th className="px-4 py-3">{messages.reconcilePayoutButtonLabel}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loadError ? (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-rose-500" colSpan={9}>
+                  <td className="px-4 py-6 text-sm text-rose-500" colSpan={11}>
                     {loadError}
                   </td>
                 </tr>
               ) : loading ? (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-slate-500" colSpan={9}>
+                  <td className="px-4 py-6 text-sm text-slate-500" colSpan={11}>
                     {messages.adminPayoutsLoadingLabel}
                   </td>
                 </tr>
               ) : payouts.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-6 text-sm text-slate-500" colSpan={9}>
+                  <td className="px-4 py-6 text-sm text-slate-500" colSpan={11}>
                     {messages.adminPayoutsEmpty}
                   </td>
                 </tr>
@@ -365,86 +448,124 @@ export default function AdminPayoutsTable({
                     item.status === "PROCESSING" && Boolean(item.providerPayoutId);
                   const reconcileRow = reconcileState[item.id];
                   const isReconciling = reconcileRow?.state === "loading";
+                  const isExpanded = Boolean(expandedRows[item.id]);
+                  const receiptEntry = receiptCache[item.id];
                   return (
-                    <tr key={item.id}>
-                      <td className="px-4 py-4 font-medium text-slate-900">
-                        {item.referenceCode}
-                      </td>
-                      <td className="px-4 py-4">{item.status}</td>
-                      <td className="px-4 py-4">{item.payoutRail}</td>
-                      <td className="px-4 py-4">
-                        {item.providerPayoutProvider ?? "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        {item.providerPayoutId ?? "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        {item.providerPayoutStatus ?? "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        {formatDate(locale, item.updatedAt)}
-                      </td>
-                      <td className="px-4 py-4">
-                        {latestEvent ? (
-                          <div className="space-y-1">
-                            <p className="text-xs font-semibold text-slate-700">
-                              {latestEvent.type}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {latestEvent.message}
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              {formatDate(locale, latestEvent.createdAt)}
-                            </p>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-slate-400">
-                            {messages.adminPayoutsEventEmptyLabel}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        {item.receiptUrl ? (
-                          <a
-                            href={item.receiptUrl}
-                            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
-                          >
-                            {messages.adminPayoutsReceiptViewLabel}
-                          </a>
-                        ) : (
-                          <span className="text-xs text-slate-400">
-                            {messages.adminPayoutsReceiptUnavailableLabel}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        {canReconcile ? (
-                          <div className="flex flex-col gap-2">
-                            <button
-                              type="button"
-                              onClick={() => reconcileTransfer(item.id)}
-                              disabled={isReconciling}
-                              className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    <Fragment key={item.id}>
+                      <tr>
+                        <td className="px-4 py-4 font-medium text-slate-900">
+                          {item.referenceCode}
+                        </td>
+                        <td className="px-4 py-4">{item.status}</td>
+                        <td className="px-4 py-4">{item.payoutRail}</td>
+                        <td className="px-4 py-4">
+                          {item.providerPayoutProvider ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {item.providerPayoutId ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {item.providerPayoutStatus ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {formatDate(locale, item.updatedAt)}
+                        </td>
+                        <td className="px-4 py-4">
+                          {latestEvent ? (
+                            <div className="space-y-1">
+                              <p className="text-xs font-semibold text-slate-700">
+                                {latestEvent.type}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {latestEvent.message}
+                              </p>
+                              <p className="text-[11px] text-slate-400">
+                                {formatDate(locale, latestEvent.createdAt)}
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400">
+                              {messages.adminPayoutsEventEmptyLabel}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          {item.receiptUrl ? (
+                            <a
+                              href={item.receiptUrl}
+                              className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
                             >
-                              {isReconciling
-                                ? messages.reconcilePayoutLoadingLabel
-                                : messages.reconcilePayoutButtonLabel}
-                            </button>
-                            {reconcileRow?.state === "error" ? (
-                              <span className="text-[11px] text-rose-500">
-                                {reconcileRow.error}
-                              </span>
-                            ) : reconcileRow?.state === "success" ? (
-                              <span className="text-[11px] text-slate-400">
-                                {messages.reconcilePayoutSuccessLabel}
-                              </span>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-slate-400">—</span>
-                        )}
-                      </td>
-                    </tr>
+                              {messages.adminPayoutsReceiptViewLabel}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-slate-400">
+                              {messages.adminPayoutsReceiptUnavailableLabel}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <button
+                            type="button"
+                            onClick={() => toggleAccounting(item.id)}
+                            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700"
+                          >
+                            {isExpanded
+                              ? messages.adminPayoutsCollapseLabel
+                              : messages.accountingTitle}
+                          </button>
+                        </td>
+                        <td className="px-4 py-4">
+                          {canReconcile ? (
+                            <div className="flex flex-col gap-2">
+                              <button
+                                type="button"
+                                onClick={() => reconcileTransfer(item.id)}
+                                disabled={isReconciling}
+                                className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {isReconciling
+                                  ? messages.reconcilePayoutLoadingLabel
+                                  : messages.reconcilePayoutButtonLabel}
+                              </button>
+                              {reconcileRow?.state === "error" ? (
+                                <span className="text-[11px] text-rose-500">
+                                  {reconcileRow.error}
+                                </span>
+                              ) : reconcileRow?.state === "success" ? (
+                                <span className="text-[11px] text-slate-400">
+                                  {messages.reconcilePayoutSuccessLabel}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
+                        </td>
+                      </tr>
+                      {isExpanded ? (
+                        <tr>
+                          <td className="px-4 pb-6 pt-0" colSpan={11}>
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                              {receiptEntry?.loading ? (
+                                <p className="text-sm text-slate-500">
+                                  {messages.receiptLoadingLabel}
+                                </p>
+                              ) : receiptEntry?.error ? (
+                                <p className="text-sm text-rose-500">
+                                  {receiptEntry.error}
+                                </p>
+                              ) : (
+                                <AccountingPanel
+                                  snapshot={receiptEntry?.data?.snapshot ?? null}
+                                  locale={locale}
+                                  messages={messages}
+                                />
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
                   );
                 })
               )}

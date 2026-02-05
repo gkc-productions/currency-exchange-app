@@ -92,6 +92,8 @@ async function createReadyTransfer(memo?: string, referenceSuffix?: string) {
 }
 
 const testIntegration = RUN_INTEGRATION ? test : test.skip;
+const testExternalDisabled =
+  RUN_INTEGRATION && process.env.PAYOUT_EXTERNAL_CALLS === "0" ? test : test.skip;
 
 testIntegration("execute payout transitions to processing and is idempotent", async () => {
   const { transferId } = await createReadyTransfer("Test", "A");
@@ -270,6 +272,16 @@ testFailover("execute payout failover after max attempts", async () => {
   assert.equal(row?.payoutProviderCursor, 1);
 });
 
+testExternalDisabled("execute payout returns 503 when external calls disabled", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+    method: "POST",
+    headers: DEV_HEADERS,
+  });
+  assert.equal(res.status, 503);
+  assert.equal((res.json as { error?: string })?.error, "payout_disabled");
+});
+
 testFailover("execute payout exhausted returns 409", async () => {
   const { transferId } = await createReadyTransfer("Test", "A");
   await prisma.payoutProviderState.upsert({
@@ -369,4 +381,60 @@ testIntegration("concurrent execute payout", async () => {
     where: { transferId, type: "PAYOUT_STARTED" },
   });
   assert.equal(startedCount, 1);
+});
+
+testIntegration("execute payout retries failed transfer", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
+  await prisma.transfer.update({
+    where: { id: transferId },
+    data: {
+      status: "FAILED",
+      providerPayoutId: "mock_retry",
+      payoutAttemptCount: 0,
+      payoutLastAttemptAt: new Date(Date.now() - 60_000),
+    },
+  });
+
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+    method: "POST",
+    headers: DEV_HEADERS,
+  });
+  assert.equal(res.status, 200);
+  const row = await prisma.transfer.findUnique({
+    where: { id: transferId },
+    select: { status: true, payoutAttemptCount: true },
+  });
+  assert.equal(row?.status, "PROCESSING");
+  assert.equal(row?.payoutAttemptCount, 1);
+  const startedCount = await prisma.transferEvent.count({
+    where: { transferId, type: "PAYOUT_STARTED" },
+  });
+  assert.equal(startedCount, 1);
+});
+
+testIntegration("concurrent retry does not duplicate attempts", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
+  await prisma.transfer.update({
+    where: { id: transferId },
+    data: {
+      status: "FAILED",
+      providerPayoutId: "mock_retry",
+      payoutAttemptCount: 0,
+      payoutLastAttemptAt: new Date(Date.now() - 60_000),
+    },
+  });
+
+  await Promise.all([
+    fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+      method: "POST",
+      headers: DEV_HEADERS,
+    }),
+    fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+      method: "POST",
+      headers: DEV_HEADERS,
+    }),
+  ]);
+
+  const attempts = await prisma.payoutAttempt.count({ where: { transferId } });
+  assert.equal(attempts, 1);
 });
