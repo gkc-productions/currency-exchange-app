@@ -239,6 +239,7 @@ export default function Home() {
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const recommendationAbortRef = useRef<AbortController | null>(null);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const autoRefreshRef = useRef(false);
 
   const expiresAtLabel = useMemo(() => {
     if (!quote?.expiresAt) {
@@ -1125,6 +1126,29 @@ export default function Home() {
     const interval = window.setInterval(updateCountdown, 1000);
     return () => window.clearInterval(interval);
   }, [quote?.expiresAt]);
+
+  useEffect(() => {
+    if (!quoteActive || !lockedQuoteId) {
+      autoRefreshRef.current = false;
+      return;
+    }
+    if (!isExpired || autoRefreshRef.current) {
+      return;
+    }
+    autoRefreshRef.current = true;
+    setLockedQuoteId(null);
+    setLockError(messages.lockQuoteUpdated);
+    fetchQuote().catch(() => {
+      setQuoteError(messages.lockQuoteRefreshFailed);
+    });
+  }, [
+    fetchQuote,
+    isExpired,
+    lockedQuoteId,
+    messages.lockQuoteRefreshFailed,
+    messages.lockQuoteUpdated,
+    quoteActive,
+  ]);
 
   useEffect(() => {
     if (!lockedQuoteId || !quote?.id) {

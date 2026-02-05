@@ -39,6 +39,10 @@ function readNumberParam(
   return { ok: true, value: parsed };
 }
 
+function jsonError(message: string, errorCode: string, status: number) {
+  return NextResponse.json({ error: message, errorCode, message }, { status });
+}
+
 export async function GET(req: Request) {
   const ip = getClientIp(req);
   const rate = await enforceRateLimit({
@@ -47,9 +51,10 @@ export async function GET(req: Request) {
     windowMs: 60_000,
   });
   if (!rate.allowed) {
-    return NextResponse.json(
-      { error: "Too many quote requests. Please wait a moment and try again." },
-      { status: 429 }
+    return jsonError(
+      "Too many quote requests. Please wait a moment and try again.",
+      "RATE_LIMITED",
+      429
     );
   }
 
@@ -62,9 +67,13 @@ export async function GET(req: Request) {
   const to = (toParam?.trim() || "GHS").toUpperCase();
   const rail = (railParam?.trim() || "MOBILE_MONEY").toUpperCase();
 
-  const allowedRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING"]);
+  const allowedRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING", "CRYPTO"]);
   if (!allowedRails.has(rail)) {
-    return NextResponse.json({ error: "Please select a valid payout method (Bank, Mobile Money, or Bitcoin Lightning)." }, { status: 400 });
+    return jsonError(
+      "Please select a valid payout method (Bank, Mobile Money, Lightning, or Crypto).",
+      "INVALID_RAIL",
+      400
+    );
   }
 
   const [fromAsset, toAsset] = await prisma.$transaction([
@@ -73,10 +82,18 @@ export async function GET(req: Request) {
   ]);
 
   if (!fromAsset || !fromAsset.isActive) {
-    return NextResponse.json({ error: `We don't currently support ${from}. Please select a different currency.` }, { status: 400 });
+    return jsonError(
+      `We don't currently support ${from}. Please select a different currency.`,
+      "INVALID_FROM_ASSET",
+      400
+    );
   }
   if (!toAsset || !toAsset.isActive) {
-    return NextResponse.json({ error: `We don't currently support ${to}. Please select a different currency.` }, { status: 400 });
+    return jsonError(
+      `We don't currently support ${to}. Please select a different currency.`,
+      "INVALID_TO_ASSET",
+      400
+    );
   }
 
   const sendAmountResult = readNumberParam(
@@ -86,7 +103,7 @@ export async function GET(req: Request) {
     { min: 1 }
   );
   if (!sendAmountResult.ok) {
-    return NextResponse.json({ error: sendAmountResult.error }, { status: 400 });
+    return jsonError(sendAmountResult.error, "INVALID_SEND_AMOUNT", 400);
   }
   const sendAmount = sendAmountResult.value;
   const marketRateInput = parseOptionalNumber(searchParams.get("marketRate"));
@@ -109,7 +126,7 @@ export async function GET(req: Request) {
     { min: 0 }
   );
   if (!fxMarginResult.ok) {
-    return NextResponse.json({ error: fxMarginResult.error }, { status: 400 });
+    return jsonError(fxMarginResult.error, "INVALID_FX_MARGIN", 400);
   }
   const feeFixedResult = readNumberParam(
     searchParams.get("feeFixed"),
@@ -118,7 +135,7 @@ export async function GET(req: Request) {
     { min: 0 }
   );
   if (!feeFixedResult.ok) {
-    return NextResponse.json({ error: feeFixedResult.error }, { status: 400 });
+    return jsonError(feeFixedResult.error, "INVALID_FEE_FIXED", 400);
   }
   const feePctResult = readNumberParam(
     searchParams.get("feePct"),
@@ -127,7 +144,7 @@ export async function GET(req: Request) {
     { min: 0 }
   );
   if (!feePctResult.ok) {
-    return NextResponse.json({ error: feePctResult.error }, { status: 400 });
+    return jsonError(feePctResult.error, "INVALID_FEE_PCT", 400);
   }
 
   const fxMarginPct = fxMarginResult.value;
@@ -141,7 +158,10 @@ export async function GET(req: Request) {
   const net = Math.max(0, sendAmount - totalFee);
   const recipientGets = net * appliedRate;
 
-  const expiresAt = new Date(Date.now() + 30_000); // 30s validity
+  const ttlSeconds = Number(process.env.QUOTE_TTL_SECONDS ?? "600");
+  const resolvedTtlSeconds =
+    Number.isFinite(ttlSeconds) && ttlSeconds > 0 ? ttlSeconds : 600;
+  const expiresAt = new Date(Date.now() + resolvedTtlSeconds * 1000);
 
   const quote = await prisma.$transaction(async (tx) => {
     const created = await tx.quote.create({
@@ -150,7 +170,7 @@ export async function GET(req: Request) {
         toAssetId: toAsset.id,
         fromCode: fromAsset.code,
         toCode: toAsset.code,
-        rail: rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
+        rail: rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO",
         sendAmount: sendAmount.toFixed(2),
         marketRate: marketRate.toFixed(6),
         rateSource,

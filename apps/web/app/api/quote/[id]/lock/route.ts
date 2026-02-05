@@ -17,7 +17,10 @@ export async function POST(
   });
 
   if (!quote) {
-    return NextResponse.json({ error: "Quote not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Quote not found", errorCode: "QUOTE_NOT_FOUND" },
+      { status: 404 }
+    );
   }
 
   if (quote.expiresAt.getTime() <= Date.now()) {
@@ -32,19 +35,24 @@ export async function POST(
     orderBy: { createdAt: "desc" },
   });
 
-  if (!existingLock) {
-    await prisma.auditLog.create({
-      data: {
-        actor: "system",
-        action: "QUOTE_LOCKED",
-        entityType: "Quote",
-        entityId: quote.id,
-        metadata: {
-          lockedAt: new Date().toISOString(),
-        },
-      },
-    });
+  if (existingLock) {
+    return NextResponse.json(
+      { error: "Quote already locked", errorCode: "QUOTE_ALREADY_LOCKED" },
+      { status: 409 }
+    );
   }
+
+  await prisma.auditLog.create({
+    data: {
+      actor: "system",
+      action: "QUOTE_LOCKED",
+      entityType: "Quote",
+      entityId: quote.id,
+      metadata: {
+        lockedAt: new Date().toISOString(),
+      },
+    },
+  });
 
   return NextResponse.json({ id: quote.id });
 }
