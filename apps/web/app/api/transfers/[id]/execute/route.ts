@@ -53,6 +53,18 @@ function parseNumber(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function jsonError(
+  message: string,
+  errorCode: string,
+  status: number,
+  extra?: Record<string, unknown>
+) {
+  return NextResponse.json(
+    { error: message, errorCode, message, ...(extra ?? {}) },
+    { status }
+  );
+}
+
 function readDevBypassSession(req: Request): SessionLike {
   const email = readDevBypassEmail(req);
   if (!email) {
@@ -81,26 +93,27 @@ export async function POST(
     return readOnly;
   }
   if (!ALLOW_SIMULATED_PAYOUTS) {
-    return NextResponse.json({ error: "Not available" }, { status: 404 });
+    return jsonError("Not available", "NOT_AVAILABLE", 404);
   }
 
   const session = readDevBypassSession(req) ?? (await getServerAuthSession());
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError("Unauthorized", "UNAUTHORIZED", 401);
   }
 
   const devBypassActive = isDevBypassRequest(req);
   if (!devBypassActive && !isSameOrigin(req)) {
-    return NextResponse.json(
-      { error: "This action is only available from the ClariSend app." },
-      { status: 403 }
+    return jsonError(
+      "This action is only available from the ClariSend app.",
+      "FORBIDDEN_ORIGIN",
+      403
     );
   }
 
   const resolvedParams = await Promise.resolve(params);
   const transferId = resolvedParams.id?.trim();
   if (!transferId) {
-    return NextResponse.json({ error: "Invalid transfer id" }, { status: 400 });
+    return jsonError("Invalid transfer id", "INVALID_TRANSFER_ID", 400);
   }
 
   const user = devBypassActive
@@ -111,7 +124,7 @@ export async function POST(
       });
 
   if (!user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError("Unauthorized", "UNAUTHORIZED", 401);
   }
 
   const transfer = await prisma.transfer.findUnique({
@@ -132,7 +145,7 @@ export async function POST(
   });
 
   if (!transfer || transfer.userId !== user.id) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return jsonError("Not found", "NOT_FOUND", 404);
   }
 
   if (transfer.status === "COMPLETED") {
@@ -156,7 +169,7 @@ export async function POST(
   const cooldownMs = parseNumber(process.env.PAYOUT_RETRY_COOLDOWN_MS, 30_000);
   const providers = getPayoutProviders();
   if (providers.length === 0) {
-    return NextResponse.json({ error: "No payout providers available." }, { status: 500 });
+    return jsonError("No payout providers available.", "NO_PAYOUT_PROVIDERS", 500);
   }
 
   const providerStates = await getProviderStates(providers.map((provider) => provider.name));
@@ -176,27 +189,28 @@ export async function POST(
       cursor += 1;
     }
     if (cursor >= providers.length) {
-      return NextResponse.json(
-        { error: "No eligible payout providers.", errorCode: "PAYOUT_NO_ELIGIBLE_PROVIDERS" },
-        { status: 409 }
+      return jsonError(
+        "No eligible payout providers.",
+        "PAYOUT_NO_ELIGIBLE_PROVIDERS",
+        409
       );
     }
     providerIndex = cursor;
   }
 
   if (transfer.status !== "READY" && transfer.status !== "FAILED") {
-    return NextResponse.json({ error: "Transfer not ready for payout." }, { status: 400 });
+    return jsonError("not_executable", "NOT_EXECUTABLE", 400);
   }
+
+  const resolveExecutor = (index: number) =>
+    getPayoutExecutorByName(providers[index]?.name ?? "mock") ?? providers[index];
 
   if (transfer.status === "FAILED") {
     const lastAttemptAt = transfer.payoutLastAttemptAt?.getTime() ?? 0;
     const now = Date.now();
     if (lastAttemptAt && now - lastAttemptAt < cooldownMs) {
       const retryAfterSeconds = Math.ceil((cooldownMs - (now - lastAttemptAt)) / 1000);
-      return NextResponse.json(
-        { error: "Retry later.", errorCode: "RETRY_LATER", retryAfterSeconds },
-        { status: 429 }
-      );
+      return jsonError("Retry later.", "RETRY_LATER", 429, { retryAfterSeconds });
     }
 
     if (transfer.payoutAttemptCount >= maxAttempts) {
@@ -256,10 +270,17 @@ export async function POST(
       providerIndex = nextIndex;
       transfer.payoutAttemptCount = 0;
     }
+
+    const retryExecutor = resolveExecutor(providerIndex);
+    if (!transfer.providerPayoutId && !retryExecutor.supportsNewPayoutOnRetry) {
+      return jsonError("not_executable", "NOT_EXECUTABLE", 400);
+    }
   }
 
-  const executor =
-    getPayoutExecutorByName(providers[providerIndex]?.name ?? "mock") ?? providers[providerIndex];
+  const executor = resolveExecutor(providerIndex);
+  if (executor.name === "real" && process.env.PAYOUT_EXTERNAL_CALLS === "0") {
+    return jsonError("payout_disabled", "PAYOUT_DISABLED", 503);
+  }
   const attemptNumber = transfer.payoutAttemptCount + 1;
   const claimResult = await prisma.transfer.updateMany({
     where: {

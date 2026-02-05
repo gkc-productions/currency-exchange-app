@@ -64,6 +64,10 @@ function quoteSummary(quote: {
   };
 }
 
+function jsonError(message: string, errorCode: string, status: number) {
+  return NextResponse.json({ error: message, errorCode, message }, { status });
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
@@ -71,7 +75,7 @@ export async function GET(
   const resolvedParams = await Promise.resolve(params);
   const transferId = resolvedParams.id?.trim();
   if (!transferId) {
-    return NextResponse.json({ error: "Invalid transfer id" }, { status: 400 });
+    return jsonError("Invalid transfer id", "INVALID_TRANSFER_ID", 400);
   }
 
   const transfer = await prisma.transfer.findUnique({
@@ -89,29 +93,26 @@ export async function GET(
   });
 
   if (!transfer) {
-    return NextResponse.json({ error: "Transfer not found" }, { status: 404 });
+    return jsonError("Transfer not found", "NOT_FOUND", 404);
   }
 
   // Ownership enforcement: if transfer has a userId, only that user can view it
   if (transfer.userId) {
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return jsonError("Unauthorized", "UNAUTHORIZED", 401);
     }
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: { id: true },
     });
     if (!user || user.id !== transfer.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return jsonError("Unauthorized", "UNAUTHORIZED", 401);
     }
   }
 
   if (transfer.status === "EXPIRED") {
-    return NextResponse.json(
-      { error: "Transfer expired", expired: true },
-      { status: 410 }
-    );
+    return jsonError("Transfer expired", "TRANSFER_EXPIRED", 410);
   }
 
     return NextResponse.json({
@@ -124,7 +125,10 @@ export async function GET(
         providerPayoutStatus: transfer.providerPayoutStatus ?? null,
         providerPayoutProvider: transfer.providerPayoutProvider ?? null,
         providerPayoutUpdatedAt: transfer.providerPayoutUpdatedAt ?? null,
+        receiptUrl: transfer.receiptUrl ?? null,
+        receiptIssuedAt: transfer.receiptIssuedAt ?? null,
         payoutRail: transfer.payoutRail,
+        fundingMethod: transfer.fundingMethod,
         recipientName: transfer.recipientName,
         recipientCountry: transfer.recipientCountry,
         recipientPhone: transfer.recipientPhone,
@@ -170,36 +174,37 @@ export async function PATCH(
     return readOnly;
   }
   if (!isSameOrigin(req)) {
-    return NextResponse.json(
-      { error: "This action is only available from the ClariSend app." },
-      { status: 403 }
+    return jsonError(
+      "This action is only available from the ClariSend app.",
+      "FORBIDDEN_ORIGIN",
+      403
     );
   }
 
   const resolvedParams = await Promise.resolve(params);
   const transferId = resolvedParams.id?.trim();
   if (!transferId) {
-    return NextResponse.json({ error: "Invalid transfer id" }, { status: 400 });
+    return jsonError("Invalid transfer id", "INVALID_TRANSFER_ID", 400);
   }
 
   let payload: { status?: unknown };
   try {
     const body = await req.json();
     if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+      return jsonError("Invalid JSON body", "INVALID_JSON", 400);
     }
     payload = body as { status?: unknown };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return jsonError("Invalid JSON body", "INVALID_JSON", 400);
   }
 
   const statusInput = readRequiredString(payload.status);
   if (!statusInput) {
-    return NextResponse.json({ error: "status is required" }, { status: 400 });
+    return jsonError("status is required", "STATUS_REQUIRED", 400);
   }
   const nextStatus = statusInput.toUpperCase();
   if (!isTransferStatus(nextStatus)) {
-    return NextResponse.json({ error: "Unknown status" }, { status: 400 });
+    return jsonError("Unknown status", "INVALID_STATUS", 400);
   }
 
   const transfer = await prisma.transfer.findUnique({
@@ -215,7 +220,7 @@ export async function PATCH(
   });
 
   if (!transfer) {
-    return NextResponse.json({ error: "Transfer not found" }, { status: 404 });
+    return jsonError("Transfer not found", "NOT_FOUND", 404);
   }
 
   if (transfer.status === nextStatus) {

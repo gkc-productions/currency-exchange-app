@@ -8,7 +8,9 @@ import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 import { resolveReceiptUiState } from "@/src/lib/receipt-ui";
+import AccountingPanel from "@/src/lib/accounting-ui";
 import {
+  parseTimelineMessage,
   resolveExecutePayoutUi,
   resolvePayoutAction,
   shouldShowPayoutInfo,
@@ -99,6 +101,7 @@ type ReceiptSnapshot = {
   recipientGets: number;
   rateSource: string;
   lockedAt: string;
+  fundingMethod?: string | null;
 };
 
 type ReceiptApiResponse = {
@@ -228,6 +231,13 @@ export default function TransferReceiptPage() {
   const [transferStatusOverride, setTransferStatusOverride] = useState<string | null>(
     null
   );
+  const [forceStatus, setForceStatus] = useState<string>("COMPLETED");
+  const [forceReason, setForceReason] = useState<string>("");
+  const [forceState, setForceState] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [forceError, setForceError] = useState<string | null>(null);
+  const [forceResult, setForceResult] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const { data: session } = useSession();
 
@@ -249,6 +259,7 @@ export default function TransferReceiptPage() {
       BANK: messages.payoutRailBankLabel,
       MOBILE_MONEY: messages.payoutRailMobileMoneyLabel,
       LIGHTNING: messages.payoutRailLightningLabel,
+      CRYPTO: messages.payoutRailCryptoLabel,
     }),
     [messages]
   );
@@ -283,7 +294,7 @@ export default function TransferReceiptPage() {
     });
     const payload = (await res.json().catch(() => null)) as
       | ReceiptApiResponse
-      | { error?: string }
+      | { error?: string; errorCode?: string; message?: string }
       | null;
     if (!res.ok) {
       if (res.status === 401) {
@@ -291,6 +302,15 @@ export default function TransferReceiptPage() {
       }
       if (res.status === 404) {
         throw new Error("not_found");
+      }
+      if (
+        res.status === 409 &&
+        payload &&
+        typeof payload === "object" &&
+        "errorCode" in payload &&
+        payload.errorCode === "RECEIPT_SNAPSHOT_MISSING"
+      ) {
+        throw new Error("snapshot_missing");
       }
       throw new Error("generic");
     }
@@ -405,7 +425,12 @@ export default function TransferReceiptPage() {
           return;
         }
         const code = (err as { message?: string }).message;
-        if (code === "unauthorized" || code === "not_found" || code === "generic") {
+        if (
+          code === "unauthorized" ||
+          code === "not_found" ||
+          code === "snapshot_missing" ||
+          code === "generic"
+        ) {
           setReceiptState({
             id: transferId,
             data: null,
@@ -419,6 +444,32 @@ export default function TransferReceiptPage() {
     return () => {
       active = false;
     };
+  }, [fetchReceiptSnapshot, transferId]);
+
+  const retryReceiptSnapshot = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    try {
+      const payload = await fetchReceiptSnapshot(transferId);
+      setReceiptState({ id: transferId, data: payload, error: null });
+    } catch (err) {
+      const code = (err as { message?: string }).message;
+      if (
+        code === "unauthorized" ||
+        code === "not_found" ||
+        code === "snapshot_missing" ||
+        code === "generic"
+      ) {
+        setReceiptState({
+          id: transferId,
+          data: null,
+          error: code as ReceiptFetchError,
+        });
+        return;
+      }
+      setReceiptState({ id: transferId, data: null, error: "generic" });
+    }
   }, [fetchReceiptSnapshot, transferId]);
 
   useEffect(() => {
@@ -464,6 +515,9 @@ export default function TransferReceiptPage() {
     setReconcileState("idle");
     setReconcileError(null);
     setReconcileResult(null);
+    setForceState("idle");
+    setForceError(null);
+    setForceResult(null);
   }, [transferId]);
 
   useEffect(() => {
@@ -883,6 +937,87 @@ export default function TransferReceiptPage() {
     transferStatusOverride,
   ]);
 
+  const handleForceStatus = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    setForceState("loading");
+    setForceError(null);
+    setForceResult(null);
+    try {
+      const res = await fetch(`/api/admin/transfers/${transferId}/force-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: forceStatus,
+          reason: forceReason.trim() || undefined,
+        }),
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | {
+            status?: string;
+            receiptUrl?: string | null;
+            error?: string;
+            deduped?: boolean;
+          }
+        | null;
+      if (!res.ok) {
+        if (res.status === 400) {
+          setForceError(messages.adminForceStatusInvalidLabel);
+        } else if (res.status === 403) {
+          setForceError(messages.adminForceStatusForbiddenLabel);
+        } else {
+          setForceError(payload?.error ?? messages.adminForceStatusErrorLabel);
+        }
+        setForceState("error");
+        return;
+      }
+      const nextStatus =
+        payload?.status ??
+        transferStatusOverride ??
+        requestState?.data?.transfer.status ??
+        "READY";
+      setTransferStatusOverride(nextStatus);
+      setRequestState((prev) => {
+        if (!prev || prev.id !== transferId || !prev.data) {
+          return prev;
+        }
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            transfer: { ...prev.data.transfer, status: nextStatus },
+          },
+        };
+      });
+      if (payload?.receiptUrl) {
+        setIssuedReceiptUrl(payload.receiptUrl);
+      }
+      setForceResult(messages.adminForceStatusSuccessLabel);
+      setForceState("success");
+      try {
+        const refreshed = await fetchEvents(transferId);
+        setEventsState({ id: transferId, data: refreshed, error: null });
+      } catch {
+        // Keep existing events on refresh failure.
+      }
+    } catch {
+      setForceError(messages.adminForceStatusErrorLabel);
+      setForceState("error");
+    }
+  }, [
+    fetchEvents,
+    forceReason,
+    forceStatus,
+    messages.adminForceStatusErrorLabel,
+    messages.adminForceStatusForbiddenLabel,
+    messages.adminForceStatusInvalidLabel,
+    messages.adminForceStatusSuccessLabel,
+    requestState?.data?.transfer.status,
+    transferId,
+    transferStatusOverride,
+  ]);
+
   const activeState = requestState?.id === transferId ? requestState : null;
   const data = activeState?.data ?? null;
   const error = activeState?.error ?? null;
@@ -897,6 +1032,7 @@ export default function TransferReceiptPage() {
   const timelineError = activeEventsState?.error ?? null;
   const isLoading = Boolean(transferId) && !activeState;
   const isDev = ALLOW_SIMULATED_PAYOUTS;
+  const isNonProd = process.env.NODE_ENV !== "production";
 
   if (isLoading) {
     return (
@@ -956,6 +1092,7 @@ export default function TransferReceiptPage() {
   const showCancelButton = transferStatus === "PROCESSING";
   const showReconcileButton =
     isAdmin && (transferStatus === "PROCESSING" || transferStatus === "FAILED");
+  const showAdminTools = isAdmin && isNonProd;
   const showPayoutInfo = shouldShowPayoutInfo({
     status: transferStatus,
     providerPayoutId: transfer.providerPayoutId,
@@ -995,22 +1132,6 @@ export default function TransferReceiptPage() {
       default:
         return event.message;
     }
-  };
-  const parseEventMetadata = (message: string) => {
-    const refMatch = message.match(/(?:^|\s)ref=([^\s]+)/);
-    const codeMatch = message.match(/(?:^|\s)code=([^\s]+)/);
-    const messageMatch = message.match(/(?:^|\s)message=(.*)$/);
-    const base = message
-      .replace(/\sref=[^\s]+/g, "")
-      .replace(/\scode=[^\s]+/g, "")
-      .replace(/\smessage=.*$/g, "")
-      .trim();
-    return {
-      text: base,
-      ref: refMatch ? refMatch[1] : null,
-      code: codeMatch ? codeMatch[1] : null,
-      errorMessage: messageMatch ? messageMatch[1] : null,
-    };
   };
   const statusStyle = statusStyles[transferStatus] ?? "bg-slate-200 text-slate-700";
   const statusLabel =
@@ -1110,6 +1231,20 @@ export default function TransferReceiptPage() {
             ? messages.nextStepExpired
             : messages.nextStepReady;
   const receiptSnapshot = receiptData?.snapshot ?? null;
+  const accountingSnapshot = receiptSnapshot
+    ? {
+        sendAmount: receiptSnapshot.sendAmount,
+        fixedFee: receiptSnapshot.fixedFee,
+        percentFee: receiptSnapshot.percentFee,
+        totalFees: receiptSnapshot.totalFees,
+        recipientGets: receiptSnapshot.recipientGets,
+        marketRate: receiptSnapshot.marketRate,
+        appliedRate: receiptSnapshot.appliedRate,
+        fxMarginPct: receiptSnapshot.fxMarginPct,
+        fromAsset: receiptSnapshot.fromAsset,
+        toAsset: receiptSnapshot.toAsset,
+      }
+    : null;
   const reconciliationData = reconciliationState?.data ?? null;
   const attemptsData = attemptsState?.data ?? null;
   const receiptUrl =
@@ -1366,46 +1501,46 @@ export default function TransferReceiptPage() {
                     {messages.receiptLoadError}
                   </p>
                 ) : (timelineEvents ?? events).length > 0 ? (
-                  (timelineEvents ?? events).map((event, index) => (
-                    <div
-                      key={`${event.type}-${event.createdAt}-${index}`}
-                      className="relative"
-                    >
-                      <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
-                      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                        {(() => {
-                          const resolved = resolveEventMessage(event);
-                          const meta = parseEventMetadata(resolved);
-                          return (
+                  (timelineEvents ?? events).map((event, index) => {
+                    const resolved = resolveEventMessage(event);
+                    const parsed = parseTimelineMessage(resolved);
+                    const messageText =
+                      parsed.text || messages.timelineMessageEmptyLabel;
+                    const typeLabel = event.type.replaceAll("_", " ");
+                    return (
+                      <div
+                        key={`${event.type}-${event.createdAt}-${index}`}
+                        className="relative"
+                      >
+                        <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
+                        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                          <div className="flex items-center justify-between gap-4">
                             <p className="text-sm font-semibold text-white">
-                              {meta.text}
-                              {meta.ref ? (
-                                <span className="ml-2 text-xs font-medium text-slate-300">
-                                  {messages.payoutRefLabel} {meta.ref}
-                                </span>
-                              ) : null}
+                              {typeLabel}
                             </p>
-                          );
-                        })()}
-                        {event.type === "PAYOUT_FAILED" ? (
-                          (() => {
-                            const meta = parseEventMetadata(resolveEventMessage(event));
-                            if (!meta.code) {
-                              return null;
-                            }
-                            return (
-                              <p className="mt-2 text-xs text-rose-300">
-                                {messages.payoutReasonLabel} {meta.code}
-                              </p>
-                            );
-                          })()
-                        ) : null}
-                        <p className="mt-2 text-xs text-slate-500">
-                          {formatDateTime(event.createdAt, locale)}
-                        </p>
+                            <span className="text-xs text-slate-500">
+                              {formatDateTime(event.createdAt, locale)}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm text-slate-200">
+                            {messageText}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-300">
+                            {parsed.ref ? (
+                              <span>
+                                {messages.payoutRefLabel} {parsed.ref}
+                              </span>
+                            ) : null}
+                            {parsed.reason ? (
+                              <span className="text-rose-300">
+                                {messages.payoutReasonLabel} {parsed.reason}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p className="text-sm text-slate-400">
                     {messages.timelineEmptyLabel}
@@ -1641,12 +1776,40 @@ export default function TransferReceiptPage() {
                   <p className="text-sm text-slate-400">
                     {messages.receiptNotFoundLabel}
                   </p>
+                ) : receiptError === "snapshot_missing" ? (
+                  <div className="space-y-2 text-sm text-slate-400">
+                    <p>{messages.receiptSnapshotUnavailableLabel}</p>
+                    <button
+                      type="button"
+                      onClick={retryReceiptSnapshot}
+                      className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                    >
+                      {messages.receiptRetryButton}
+                    </button>
+                  </div>
+                ) : receiptError === "generic" ? (
+                  <div className="space-y-2 text-sm text-slate-400">
+                    <p>{messages.receiptLoadError}</p>
+                    <button
+                      type="button"
+                      onClick={retryReceiptSnapshot}
+                      className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                    >
+                      {messages.receiptRetryButton}
+                    </button>
+                  </div>
                 ) : receiptSnapshot ? (
                   <div className="space-y-3 text-sm text-slate-200">
                     <div className="flex items-center justify-between">
                       <span>{messages.receiptSendAmountLabel}</span>
                       <span className="font-semibold text-white">
                         {formatMoney(receiptSnapshot.sendAmount, receiptSnapshot.fromAsset, locale)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.fundingMethodLabel}</span>
+                      <span className="font-semibold text-white">
+                        {receiptSnapshot.fundingMethod ?? "—"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1744,6 +1907,19 @@ export default function TransferReceiptPage() {
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <p className="text-xs font-medium text-slate-400">
+                {messages.accountingTitle}
+              </p>
+              <div className="mt-4">
+                <AccountingPanel
+                  snapshot={accountingSnapshot}
+                  locale={locale}
+                  messages={messages}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <p className="text-xs font-medium text-slate-400">
                 {messages.reconciliationTitle}
               </p>
               <div className="mt-4 space-y-3 text-sm text-slate-200">
@@ -1825,6 +2001,62 @@ export default function TransferReceiptPage() {
                 </div>
               ) : null}
             </div>
+
+            {showAdminTools ? (
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <p className="text-xs font-medium text-slate-400">
+                  {messages.adminToolsTitleLabel}
+                </p>
+                <div className="mt-4 space-y-3 text-sm text-slate-200">
+                  <label className="flex flex-col gap-2 text-xs font-medium text-slate-400">
+                    {messages.adminForceStatusLabel}
+                    <select
+                      value={forceStatus}
+                      onChange={(event) => setForceStatus(event.target.value)}
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
+                    >
+                      <option value="READY">{messages.statusReadyLabel}</option>
+                      <option value="PROCESSING">
+                        {messages.statusProcessingLabel}
+                      </option>
+                      <option value="FAILED">{messages.statusFailedLabel}</option>
+                      <option value="COMPLETED">
+                        {messages.statusCompletedLabel}
+                      </option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-2 text-xs font-medium text-slate-400">
+                    {messages.adminForceReasonLabel}
+                    <input
+                      value={forceReason}
+                      onChange={(event) => setForceReason(event.target.value)}
+                      placeholder={messages.adminForceReasonPlaceholder}
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100"
+                    />
+                  </label>
+                </div>
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleForceStatus}
+                    disabled={forceState === "loading"}
+                    className="rounded-full border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-xs font-medium text-amber-100 transition hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {forceState === "loading"
+                      ? messages.adminForceStatusLoadingLabel
+                      : messages.adminForceStatusApplyLabel}
+                  </button>
+                  {forceState === "success" ? (
+                    <span className="text-xs text-slate-400">
+                      {forceResult ?? messages.adminForceStatusSuccessLabel}
+                    </span>
+                  ) : null}
+                  {forceState === "error" ? (
+                    <span className="text-xs text-rose-300">{forceError}</span>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
             {showPayoutInfo ? (
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">

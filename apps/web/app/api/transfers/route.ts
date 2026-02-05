@@ -203,7 +203,7 @@ export async function GET(req: Request) {
   const devBypass = readDevBypass(req);
   if (devBypass.active) {
     if (!devBypass.email) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      return jsonError("unauthorized", "UNAUTHORIZED", 401);
     }
 
     const user = await ensureDevUser(devBypass.email);
@@ -218,7 +218,7 @@ export async function GET(req: Request) {
 
   const session = await getServerAuthSession();
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return jsonError("unauthorized", "UNAUTHORIZED", 401);
   }
 
   try {
@@ -227,7 +227,7 @@ export async function GET(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      return jsonError("unauthorized", "UNAUTHORIZED", 401);
     }
 
     const transfers = await prisma.transfer.findMany({
@@ -239,7 +239,7 @@ export async function GET(req: Request) {
     return NextResponse.json(transfers.map(buildTransferResponse));
   } catch (error) {
     console.error("transfers_get_failed", error);
-    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+    return jsonError("internal_error", "INTERNAL_ERROR", 500);
   }
 }
 
@@ -251,9 +251,10 @@ export async function POST(req: Request) {
   const devBypass = readDevBypass(req);
   if (!devBypass.active) {
     if (!isSameOrigin(req)) {
-      return NextResponse.json(
-        { error: "This action is only available from the ClariSend app." },
-        { status: 403 }
+      return jsonError(
+        "This action is only available from the ClariSend app.",
+        "FORBIDDEN_ORIGIN",
+        403
       );
     }
   }
@@ -261,7 +262,7 @@ export async function POST(req: Request) {
   let devUser: { id: string; email: string } | null = null;
   if (devBypass.active) {
     if (!devBypass.email) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      return jsonError("unauthorized", "UNAUTHORIZED", 401);
     }
     devUser = await ensureDevUser(devBypass.email);
   }
@@ -359,24 +360,23 @@ export async function POST(req: Request) {
 
   const recipientName = readRequiredString(payload.recipientName);
   if (!recipientName) {
-    return NextResponse.json(
-      { error: "Please provide the recipient's name." },
-      { status: 400 }
-    );
+    return jsonError("Please provide the recipient's name.", "RECIPIENT_NAME_REQUIRED", 400);
   }
 
   const recipientCountryInput = readRequiredString(payload.recipientCountry);
   const recipientCountry = recipientCountryInput?.toUpperCase() ?? "";
   if (!recipientCountry) {
-    return NextResponse.json(
-      { error: "Please select the recipient's country." },
-      { status: 400 }
+    return jsonError(
+      "Please select the recipient's country.",
+      "RECIPIENT_COUNTRY_REQUIRED",
+      400
     );
   }
   if (!/^[A-Z]{2}$/.test(recipientCountry)) {
-    return NextResponse.json(
-      { error: "Please select a valid country from the list." },
-      { status: 400 }
+    return jsonError(
+      "Please select a valid country from the list.",
+      "RECIPIENT_COUNTRY_INVALID",
+      400
     );
   }
 
@@ -402,9 +402,10 @@ export async function POST(req: Request) {
       (bank as { account?: unknown } | null)?.account
     );
     if (!bankName || !bankAccount) {
-      return NextResponse.json(
-        { error: "Please provide both bank name and account number." },
-        { status: 400 }
+      return jsonError(
+        "Please provide both bank name and account number.",
+        "BANK_DETAILS_REQUIRED",
+        400
       );
     }
     recipientBankName = bankName;
@@ -423,9 +424,10 @@ export async function POST(req: Request) {
       (mobileMoney as { number?: unknown } | null)?.number
     );
     if (!provider || !number) {
-      return NextResponse.json(
-        { error: "mobile money provider and number are required" },
-        { status: 400 }
+      return jsonError(
+        "mobile money provider and number are required",
+        "MOBILE_MONEY_REQUIRED",
+        400
       );
     }
     recipientMobileMoneyProvider = provider;
@@ -440,14 +442,11 @@ export async function POST(req: Request) {
     },
   });
   if (!quote) {
-    return NextResponse.json({ error: "Quote not found." }, { status: 400 });
+    return jsonError("Quote not found.", "QUOTE_NOT_FOUND", 400);
   }
 
   if (quote.expiresAt.getTime() <= Date.now()) {
-    return NextResponse.json(
-      { error: "Quote expired.", errorCode: "QUOTE_EXPIRED" },
-      { status: 400 }
-    );
+    return jsonError("Quote expired.", "QUOTE_EXPIRED", 400);
   }
 
   const quoteLock = await prisma.auditLog.findFirst({
@@ -456,16 +455,14 @@ export async function POST(req: Request) {
   });
   const lockedAt = quoteLock?.createdAt ?? null;
   if (!lockedAt) {
-    return NextResponse.json(
-      { error: "Quote must be locked.", errorCode: "QUOTE_NOT_LOCKED" },
-      { status: 400 }
-    );
+    return jsonError("Quote must be locked.", "QUOTE_NOT_LOCKED", 400);
   }
 
   if (quote.rail !== payoutRail) {
-    return NextResponse.json(
-      { error: "payoutRail must match the quote rail" },
-      { status: 400 }
+    return jsonError(
+      "payoutRail must match the quote rail",
+      "PAYOUT_RAIL_MISMATCH",
+      400
     );
   }
 
@@ -540,7 +537,7 @@ export async function POST(req: Request) {
   }
 
   if (!userId) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return jsonError("unauthorized", "UNAUTHORIZED", 401);
   }
 
   const rateKey = `transfer:user:${userId}`;
@@ -550,9 +547,10 @@ export async function POST(req: Request) {
     windowMs: 60_000,
   });
   if (!rate.allowed) {
-    return NextResponse.json(
-      { error: "Too many transfer requests. Please wait a moment and try again." },
-      { status: 429 }
+    return jsonError(
+      "Too many transfer requests. Please wait a moment and try again.",
+      "RATE_LIMITED",
+      429
     );
   }
 
@@ -708,17 +706,11 @@ export async function POST(req: Request) {
       }
     }
   } catch {
-    return NextResponse.json(
-      { error: messages.transferCreateError },
-      { status: 500 }
-    );
+    return jsonError(messages.transferCreateError, "TRANSFER_CREATE_FAILED", 500);
   }
 
   if (!transfer) {
-    return NextResponse.json(
-      { error: messages.transferCreateError },
-      { status: 500 }
-    );
+    return jsonError(messages.transferCreateError, "TRANSFER_CREATE_FAILED", 500);
   }
 
   // Send INITIATED email (non-blocking)

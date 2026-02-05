@@ -103,6 +103,10 @@ function resolveLocale(req: Request) {
   return "en";
 }
 
+function jsonError(message: string, errorCode: string, status: number) {
+  return NextResponse.json({ error: message, errorCode, message }, { status });
+}
+
 async function resolveTransferSnapshot(transferId: string) {
   const transfer = await prisma.transfer.findUnique({
     where: { id: transferId },
@@ -250,13 +254,13 @@ export async function GET(
 ) {
   const session = readDevBypassSession(req) ?? await getServerAuthSession();
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError("Unauthorized", "UNAUTHORIZED", 401);
   }
 
   const resolvedParams = await Promise.resolve(params);
   const transferId = resolvedParams.id?.trim();
   if (!transferId) {
-    return NextResponse.json({ error: "Invalid transfer id" }, { status: 400 });
+    return jsonError("Invalid transfer id", "INVALID_TRANSFER_ID", 400);
   }
 
   const user = await prisma.user.findUnique({
@@ -264,13 +268,13 @@ export async function GET(
   });
 
   if (!user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError("Unauthorized", "UNAUTHORIZED", 401);
   }
 
   const { transfer, snapshot, auditLog } = await resolveTransferSnapshot(transferId);
 
   if (!transfer || transfer.userId !== user.id) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return jsonError("Not found", "NOT_FOUND", 404);
   }
 
   if (!snapshot) {
@@ -331,7 +335,7 @@ export async function POST(
   try {
     const session = readDevBypassSession(req) ?? await getServerAuthSession();
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return jsonError("Unauthorized", "UNAUTHORIZED", 401);
     }
 
     const devBypassActive = isDevBypassRequest(req);
@@ -345,7 +349,7 @@ export async function POST(
     const resolvedParams = await Promise.resolve(params);
     transferId = resolvedParams.id?.trim();
     if (!transferId) {
-      return NextResponse.json({ error: "Invalid transfer id" }, { status: 400 });
+      return jsonError("Invalid transfer id", "INVALID_TRANSFER_ID", 400);
     }
 
     const user = await prisma.user.findUnique({
@@ -354,7 +358,7 @@ export async function POST(
     });
 
     if (!user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return jsonError("Unauthorized", "UNAUTHORIZED", 401);
     }
 
     const locale = resolveLocale(req);
@@ -364,7 +368,7 @@ export async function POST(
 
     const transferRow = await findTransferReceiptRow(transferId);
     if (!transferRow || transferRow.userId !== user.id) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return jsonError("Not found", "NOT_FOUND", 404);
     }
 
     if (transferRow.status !== "COMPLETED") {
@@ -423,7 +427,7 @@ export async function POST(
     const { transfer, snapshot } = await resolveTransferSnapshot(transferId);
 
     if (!transfer || transfer.userId !== user.id) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return jsonError("Not found", "NOT_FOUND", 404);
     }
 
     if (!snapshot) {
@@ -480,6 +484,6 @@ export async function POST(
       requestId,
       error: err instanceof Error ? { message: err.message, stack: err.stack } : err,
     });
-    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+    return jsonError("internal_error", "INTERNAL_ERROR", 500);
   }
 }

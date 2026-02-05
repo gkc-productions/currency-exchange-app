@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
+import { ensureReceiptIssued } from "@/src/lib/receipt-issue";
 import { getReadOnlyResponse, readDevBypassEmail } from "@/src/lib/security";
 
 type SessionLike = { user?: { email?: string | null } | null } | null;
@@ -50,14 +51,12 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (transfer.status === "COMPLETED") {
-    return NextResponse.json({ ok: true, status: transfer.status });
+  if (transfer.status !== "COMPLETED") {
+    await prisma.transfer.update({
+      where: { id: transfer.id },
+      data: { status: TransferStatus.COMPLETED },
+    });
   }
-
-  const updated = await prisma.transfer.update({
-    where: { id: transfer.id },
-    data: { status: TransferStatus.COMPLETED },
-  });
 
   await prisma.transferEvent.create({
     data: {
@@ -67,5 +66,10 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ ok: true, status: updated.status });
+  const issuance = await ensureReceiptIssued({ transferId: transfer.id });
+  return NextResponse.json({
+    ok: true,
+    status: TransferStatus.COMPLETED,
+    receiptUrl: issuance.receiptUrl ?? null,
+  });
 }

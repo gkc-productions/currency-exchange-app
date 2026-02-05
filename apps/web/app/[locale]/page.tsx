@@ -812,6 +812,43 @@ export default function Home() {
     };
   }, [quote]);
 
+  const resolveQuoteErrorMessage = useCallback(
+    (payload: { error?: string; errorCode?: string; message?: string } | null) => {
+      if (!payload) {
+        return messages.quoteLoadError;
+      }
+      if (payload.errorCode === "RATE_LIMITED") {
+        return messages.quoteRateLimited;
+      }
+      return payload.message ?? payload.error ?? messages.quoteLoadError;
+    },
+    [messages.quoteLoadError, messages.quoteRateLimited]
+  );
+
+  const resolveTransferErrorMessage = useCallback(
+    (payload: { error?: string; errorCode?: string; message?: string } | null) => {
+      if (!payload) {
+        return messages.transferCreateError;
+      }
+      switch (payload.errorCode) {
+        case "QUOTE_EXPIRED":
+          return messages.quoteExpiredError;
+        case "QUOTE_NOT_LOCKED":
+          return messages.invalidQuoteError;
+        case "INVALID_FUNDING_METHOD":
+          return messages.fundingMethodInvalid;
+        default:
+          return payload.message ?? payload.error ?? messages.transferCreateError;
+      }
+    },
+    [
+      messages.transferCreateError,
+      messages.quoteExpiredError,
+      messages.invalidQuoteError,
+      messages.fundingMethodInvalid,
+    ]
+  );
+
   const fetchQuote = useCallback(async () => {
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -834,12 +871,24 @@ export default function Home() {
       const res = await fetch(`/api/quote?${params.toString()}`, {
         signal: controller.signal,
       });
+      const data = (await res.json().catch(() => null)) as
+        | Quote
+        | { error?: string; errorCode?: string; message?: string }
+        | null;
       if (!res.ok) {
-        throw new Error("Unable to fetch quote");
+        const errorPayload =
+          data && typeof data === "object" && "id" in data
+            ? null
+            : (data as { error?: string; errorCode?: string; message?: string } | null);
+        setQuoteError(resolveQuoteErrorMessage(errorPayload));
+        return null;
       }
-      const data = (await res.json()) as Quote;
-      setQuote(data);
-      return data;
+      if (data && "id" in data) {
+        const quoteData = data as Quote;
+        setQuote(quoteData);
+        return quoteData;
+      }
+      setQuoteError(messages.quoteLoadError);
     } catch (err) {
       if ((err as { name?: string }).name !== "AbortError") {
         setQuoteError(messages.quoteLoadError);
@@ -857,6 +906,7 @@ export default function Home() {
     toAsset,
     rail,
     messages.quoteLoadError,
+    resolveQuoteErrorMessage,
     shouldSendManualRate,
     manualRateInfo.value,
   ]);
@@ -1118,7 +1168,14 @@ export default function Home() {
       });
 
       const data = (await res.json().catch(() => null)) as
-        | { id?: string; status?: string; error?: string; expired?: boolean }
+        | {
+            id?: string;
+            status?: string;
+            error?: string;
+            errorCode?: string;
+            message?: string;
+            expired?: boolean;
+          }
         | null;
 
       if (!res.ok) {
@@ -1126,7 +1183,7 @@ export default function Home() {
           setTransferError(messages.quoteExpiredError);
           return;
         }
-        setTransferError(data?.error ?? messages.transferCreateError);
+        setTransferError(resolveTransferErrorMessage(data));
         return;
       }
 
@@ -1154,7 +1211,9 @@ export default function Home() {
     messages.recipientSaveSuccess,
     messages.transferCreateError,
     messages.transferIncompleteMessage,
+    resolveTransferErrorMessage,
     payoutRail,
+    fundingMethod,
     quote,
     recipientLightningInvoice,
     saveRecipient,
@@ -1796,7 +1855,17 @@ export default function Home() {
                       : `${messages.feesLabel}: —`}
                   </div>
                   {quoteError ? (
-                    <p className="mt-3 text-xs text-rose-600">{quoteError}</p>
+                    <div className="mt-3 space-y-2 text-xs text-rose-600">
+                      <p>{quoteError}</p>
+                      <button
+                        type="button"
+                        onClick={fetchQuote}
+                        disabled={isLoading}
+                        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-700 transition hover:border-rose-300 disabled:opacity-60"
+                      >
+                        {messages.retryQuoteButton}
+                      </button>
+                    </div>
                   ) : null}
                   {lockError ? (
                     <p className="mt-3 text-xs text-amber-600">{lockError}</p>
@@ -2461,4 +2530,3 @@ export default function Home() {
     </div>
   );
 }
-

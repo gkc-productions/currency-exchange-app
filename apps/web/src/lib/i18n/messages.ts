@@ -48,10 +48,22 @@ export type Messages = {
   receiptGetPromptLabel: string;
   receiptAvailableAfterCompletionLabel: string;
   receiptSnapshotUnavailableLabel: string;
+  accountingTitle: string;
+  accountingSendAmountLabel: string;
+  accountingFixedFeeLabel: string;
+  accountingPercentFeeLabel: string;
+  accountingTotalFeesLabel: string;
+  accountingRecipientGetsLabel: string;
+  accountingAppliedRateLabel: string;
+  accountingMarketRateLabel: string;
+  accountingMarginLabel: string;
+  accountingFeeMismatchWarning: string;
+  accountingPayoutMismatchWarning: string;
   receiptUnauthorizedLabel: string;
   receiptReadyLabel: string;
   payoutRefLabel: string;
   payoutReasonLabel: string;
+  timelineMessageEmptyLabel: string;
   reconciliationTitle: string;
   reconciliationTransferIdLabel: string;
   reconciliationStatusLabel: string;
@@ -403,16 +415,32 @@ export type Messages = {
   adminPayoutWebhookReasonLabel: string;
   adminPayoutWebhookFilterLabel: string;
   adminWebhookEventsDetailTitle: string;
+  adminWebhookPayloadUnavailableLabel: string;
+  launchReadinessTitle: string;
+  launchReadinessSubtitle: string;
+  launchReadinessRateProviderLabel: string;
+  launchReadinessPayoutProviderLabel: string;
+  launchReadinessWebhookSecurityLabel: string;
+  launchReadinessReadOnlyLabel: string;
+  launchReadinessCommitLabel: string;
+  launchReadinessBuildTimeLabel: string;
+  launchReadinessNodeEnvLabel: string;
+  launchReadinessEnabledLabel: string;
+  launchReadinessDisabledLabel: string;
   bankDetailsRequired: string;
   mobileMoneyDetailsRequired: string;
   lockQuoteRefreshFailed: string;
   lockQuoteExpired: string;
   lockQuoteUpdated: string;
   quoteLoadError: string;
+  quoteRateLimited: string;
+  retryQuoteButton: string;
   transferCreateError: string;
   transferUpdateError: string;
   quoteExpiredError: string;
   invalidQuoteError: string;
+  fundingMethodInvalid: string;
+  receiptRetryButton: string;
   pricingTransparencyTitle: string;
   pricingTransparencySourceLabel: string;
   pricingTransparencyUpdatedLabel: string;
@@ -487,10 +515,22 @@ const EN_MESSAGES: Messages = {
   receiptGetPromptLabel: "Issue the receipt to view or share it.",
   receiptAvailableAfterCompletionLabel: "Receipt available after completion.",
   receiptSnapshotUnavailableLabel: "Snapshot unavailable.",
+  accountingTitle: "Accounting",
+  accountingSendAmountLabel: "Send amount",
+  accountingFixedFeeLabel: "Fixed fee",
+  accountingPercentFeeLabel: "Percent fee",
+  accountingTotalFeesLabel: "Total fees",
+  accountingRecipientGetsLabel: "Recipient gets",
+  accountingAppliedRateLabel: "Applied rate",
+  accountingMarketRateLabel: "Market rate",
+  accountingMarginLabel: "FX margin",
+  accountingFeeMismatchWarning: "Fee mismatch (check rounding).",
+  accountingPayoutMismatchWarning: "Payout mismatch (check rounding).",
   receiptUnauthorizedLabel: "Unauthorized",
   receiptReadyLabel: "Receipt ready to view.",
   payoutRefLabel: "Ref:",
   payoutReasonLabel: "Reason:",
+  timelineMessageEmptyLabel: "—",
   reconciliationTitle: "Reconciliation",
   reconciliationTransferIdLabel: "Transfer ID",
   reconciliationStatusLabel: "Status",
@@ -862,16 +902,33 @@ const EN_MESSAGES: Messages = {
     adminPayoutWebhookReasonLabel: "Reason",
     adminPayoutWebhookFilterLabel: "Since",
     adminWebhookEventsDetailTitle: "Webhook delivery",
+    adminWebhookPayloadUnavailableLabel:
+      "Payload storage is disabled for security. Only hashes are retained.",
+    launchReadinessTitle: "Launch readiness",
+    launchReadinessSubtitle: "Quick visibility into mock vs real systems.",
+    launchReadinessRateProviderLabel: "Rate provider",
+    launchReadinessPayoutProviderLabel: "Payout provider",
+    launchReadinessWebhookSecurityLabel: "Webhook security",
+    launchReadinessReadOnlyLabel: "Read-only mode",
+    launchReadinessCommitLabel: "Commit hash",
+    launchReadinessBuildTimeLabel: "Build time",
+    launchReadinessNodeEnvLabel: "Node environment",
+    launchReadinessEnabledLabel: "Enabled",
+    launchReadinessDisabledLabel: "Disabled",
   bankDetailsRequired: "Bank name and account are required.",
   mobileMoneyDetailsRequired: "Provider and number are required.",
   lockQuoteRefreshFailed: "We couldn't refresh the quote. Please try again.",
   lockQuoteExpired: "That quote expired. Refresh and try again.",
   lockQuoteUpdated: "The quote changed. Please lock it again to continue.",
   quoteLoadError: "We couldn't load the quote. Please try again.",
+  quoteRateLimited: "Too many quote requests. Please wait and try again.",
+  retryQuoteButton: "Retry quote",
   transferCreateError: "We couldn't create the transfer. Please try again.",
   transferUpdateError: "We couldn't update the transfer. Please try again.",
   quoteExpiredError: "That quote expired. Refresh and lock a new one.",
   invalidQuoteError: "Please lock a valid quote before continuing.",
+  fundingMethodInvalid: "Please select a valid funding method.",
+  receiptRetryButton: "Retry receipt",
   pricingTransparencyTitle: "Pricing transparency",
   pricingTransparencySourceLabel: "Source",
   pricingTransparencyUpdatedLabel: "Updated",
@@ -955,10 +1012,22 @@ const FR_MESSAGES: Messages = {
   receiptGetPromptLabel: "Emettez le reçu pour l'afficher ou le partager.",
   receiptAvailableAfterCompletionLabel: "Reçu disponible après la fin.",
   receiptSnapshotUnavailableLabel: "Instantané indisponible.",
+  accountingTitle: "Comptabilite",
+  accountingSendAmountLabel: "Montant envoye",
+  accountingFixedFeeLabel: "Frais fixes",
+  accountingPercentFeeLabel: "Frais en %",
+  accountingTotalFeesLabel: "Frais totaux",
+  accountingRecipientGetsLabel: "Montant reçu",
+  accountingAppliedRateLabel: "Taux applique",
+  accountingMarketRateLabel: "Taux de marche",
+  accountingMarginLabel: "Marge FX",
+  accountingFeeMismatchWarning: "Ecart sur les frais (verifiez l'arrondi).",
+  accountingPayoutMismatchWarning: "Ecart sur le paiement (verifiez l'arrondi).",
   receiptUnauthorizedLabel: "Non autorisé",
   receiptReadyLabel: "Reçu prêt à consulter.",
   payoutRefLabel: "Ref:",
   payoutReasonLabel: "Raison :",
+  timelineMessageEmptyLabel: "—",
   reconciliationTitle: "Rapprochement",
   reconciliationTransferIdLabel: "ID du transfert",
   reconciliationStatusLabel: "Statut",
@@ -1335,16 +1404,33 @@ const FR_MESSAGES: Messages = {
     adminPayoutWebhookReasonLabel: "Raison",
     adminPayoutWebhookFilterLabel: "Depuis",
     adminWebhookEventsDetailTitle: "Livraison webhook",
+    adminWebhookPayloadUnavailableLabel:
+      "Le stockage du payload est désactivé pour la sécurité. Seuls les hashes sont conservés.",
+    launchReadinessTitle: "Préparation au lancement",
+    launchReadinessSubtitle: "Aperçu rapide des systèmes mock vs réels.",
+    launchReadinessRateProviderLabel: "Fournisseur de taux",
+    launchReadinessPayoutProviderLabel: "Fournisseur de paiement",
+    launchReadinessWebhookSecurityLabel: "Sécurité webhook",
+    launchReadinessReadOnlyLabel: "Mode lecture seule",
+    launchReadinessCommitLabel: "Hash du commit",
+    launchReadinessBuildTimeLabel: "Heure de build",
+    launchReadinessNodeEnvLabel: "Environnement Node",
+    launchReadinessEnabledLabel: "Activé",
+    launchReadinessDisabledLabel: "Désactivé",
   bankDetailsRequired: "Le nom de la banque et le compte sont requis.",
   mobileMoneyDetailsRequired: "L’opérateur et le numéro sont requis.",
   lockQuoteRefreshFailed: "Impossible d’actualiser le devis. Veuillez réessayer.",
   lockQuoteExpired: "Ce devis a expiré. Actualisez et réessayez.",
   lockQuoteUpdated: "Le devis a changé. Verrouillez-le à nouveau pour continuer.",
   quoteLoadError: "Impossible de charger le devis. Veuillez réessayer.",
+  quoteRateLimited: "Trop de demandes de devis. Veuillez patienter.",
+  retryQuoteButton: "Réessayer le devis",
   transferCreateError: "Impossible de créer le transfert. Veuillez réessayer.",
   transferUpdateError: "Impossible de mettre à jour le transfert. Veuillez réessayer.",
   quoteExpiredError: "Ce devis a expiré. Actualisez et verrouillez un nouveau devis.",
   invalidQuoteError: "Verrouillez un devis valide avant de continuer.",
+  fundingMethodInvalid: "Veuillez sélectionner une méthode de financement valide.",
+  receiptRetryButton: "Réessayer le reçu",
   pricingTransparencyTitle: "Transparence des prix",
   pricingTransparencySourceLabel: "Source",
   pricingTransparencyUpdatedLabel: "Mis à jour",
