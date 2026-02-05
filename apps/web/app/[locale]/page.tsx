@@ -32,23 +32,25 @@ const DEFAULT_ASSETS = [
   { code: "BTC", name: "Bitcoin", symbol: "BTC", decimals: 8, kind: "CRYPTO" },
 ] as const;
 
-const DEFAULT_COUNTRY_BY_ASSET: Record<string, string> = {
-  USD: "US",
-  EUR: "FR",
-  GHS: "GH",
-  NGN: "NG",
-  XOF: "SN",
-  XAF: "CM",
-  KES: "KE",
-  UGX: "UG",
-  TZS: "TZ",
-  ZAR: "ZA",
-  MAD: "MA",
-  EGP: "EG",
-  DZD: "DZ",
-  TND: "TN",
-  XCD: "LC",
-  BTC: "GL",
+const DEFAULT_ASSET_BY_COUNTRY: Record<string, string> = {
+  US: "USD",
+  FR: "EUR",
+  GH: "GHS",
+  NG: "NGN",
+  SN: "XOF",
+  BJ: "XAF",
+  TG: "XAF",
+  CM: "XAF",
+  KE: "KES",
+  UG: "UGX",
+  TZ: "TZS",
+  ZA: "ZAR",
+  MA: "MAD",
+  EG: "EGP",
+  DZ: "DZD",
+  TN: "TND",
+  LC: "XCD",
+  GL: "BTC",
 };
 
 const STORAGE_KEY = "clarisend.transferFlow.v1";
@@ -182,6 +184,8 @@ export default function Home() {
   const [assetsError, setAssetsError] = useState<string | null>(null);
   const [assetsLoading, setAssetsLoading] = useState(false);
   const [sendAmount, setSendAmount] = useState("250");
+  const [fromCountry, setFromCountry] = useState("US");
+  const [toCountry, setToCountry] = useState("GH");
   const [fromAsset, setFromAsset] = useState("USD");
   const [toAsset, setToAsset] = useState("GHS");
   const [rail, setRail] = useState("MOBILE_MONEY");
@@ -255,6 +259,22 @@ export default function Home() {
   const assetMap = useMemo(() => {
     return new Map(assetsList.map((asset) => [asset.code, asset]));
   }, [assetsList]);
+  const assetByCountry = useMemo(() => {
+    const map = new Map<string, string>();
+    COUNTRY_OPTIONS.forEach((option) => {
+      map.set(option.countryCode, option.assetCode);
+    });
+    return map;
+  }, []);
+  const countryByAsset = useMemo(() => {
+    const map = new Map<string, string>();
+    COUNTRY_OPTIONS.forEach((option) => {
+      if (!map.has(option.assetCode)) {
+        map.set(option.assetCode, option.countryCode);
+      }
+    });
+    return map;
+  }, []);
   const countryOptions = useMemo(() => {
     const assetNameMap = new Map(
       assetsList.map((asset) => [asset.code, asset.name])
@@ -268,9 +288,10 @@ export default function Home() {
         return;
       }
       const assetName = assetNameMap.get(assetCode) ?? assetCode;
+      const fallbackCountry = countryByAsset.get(assetCode) ?? assetCode;
       options.push({
         id: `asset-${assetCode.toLowerCase()}`,
-        countryCode: "",
+        countryCode: fallbackCountry,
         countryName: assetName,
         assetCode,
         assetName,
@@ -279,7 +300,7 @@ export default function Home() {
     ensureAsset(fromAsset);
     ensureAsset(toAsset);
     return options;
-  }, [assetsList, fromAsset, toAsset]);
+  }, [assetsList, countryByAsset, fromAsset, toAsset]);
   const formatAmount = useCallback(
     (value: number, assetCode: string) => {
       const asset = assetMap.get(assetCode);
@@ -362,8 +383,7 @@ export default function Home() {
   const fromAssetMeta = assetMap.get(fromAsset);
   const railMeta = payoutRailOptions.find((item) => item.code === displayRail);
   const sendStep = stepForDecimals(fromAssetMeta?.decimals ?? 2);
-  const defaultRecipientCountry =
-    DEFAULT_COUNTRY_BY_ASSET[displayToAsset] ?? "GH";
+  const defaultRecipientCountry = toCountry || "GH";
   const isPrimaryCorridor = fromAsset === "USD" && toAsset === "GHS";
   const suggestionFrom = recommendation?.from ?? fromAsset;
   const suggestionTo = recommendation?.to ?? toAsset;
@@ -429,6 +449,8 @@ export default function Home() {
     try {
       const parsed = JSON.parse(stored) as Partial<{
         sendAmount: string;
+        fromCountry: string;
+        toCountry: string;
         fromAsset: string;
         toAsset: string;
         rail: string;
@@ -455,6 +477,8 @@ export default function Home() {
       }>;
 
       if (parsed.sendAmount) setSendAmount(parsed.sendAmount);
+      if (parsed.fromCountry) setFromCountry(parsed.fromCountry);
+      if (parsed.toCountry) setToCountry(parsed.toCountry);
       if (parsed.fromAsset) setFromAsset(parsed.fromAsset);
       if (parsed.toAsset) setToAsset(parsed.toAsset);
       if (parsed.rail) setRail(parsed.rail);
@@ -508,6 +532,8 @@ export default function Home() {
     }
     const payload = {
       sendAmount,
+      fromCountry,
+      toCountry,
       fromAsset,
       toAsset,
       rail,
@@ -536,6 +562,8 @@ export default function Home() {
   }, [
     hasHydrated,
     sendAmount,
+    fromCountry,
+    toCountry,
     fromAsset,
     toAsset,
     rail,
@@ -573,6 +601,34 @@ export default function Home() {
       setToAsset(gh?.code ?? assetsList[0].code);
     }
   }, [assetsList, assetMap, fromAsset, toAsset]);
+
+  useEffect(() => {
+    const derived = countryByAsset.get(fromAsset);
+    if (derived && derived !== fromCountry) {
+      setFromCountry(derived);
+    }
+  }, [countryByAsset, fromAsset, fromCountry]);
+
+  useEffect(() => {
+    const derived = countryByAsset.get(toAsset);
+    if (derived && derived !== toCountry) {
+      setToCountry(derived);
+    }
+  }, [countryByAsset, toAsset, toCountry]);
+
+  useEffect(() => {
+    const derived = assetByCountry.get(fromCountry) ?? DEFAULT_ASSET_BY_COUNTRY[fromCountry];
+    if (derived && derived !== fromAsset) {
+      setFromAsset(derived);
+    }
+  }, [assetByCountry, fromAsset, fromCountry]);
+
+  useEffect(() => {
+    const derived = assetByCountry.get(toCountry) ?? DEFAULT_ASSET_BY_COUNTRY[toCountry];
+    if (derived && derived !== toAsset) {
+      setToAsset(derived);
+    }
+  }, [assetByCountry, toAsset, toCountry]);
 
   useEffect(() => {
     if (!session?.user) {
@@ -1336,6 +1392,8 @@ export default function Home() {
                 amountHint={messages.sendAmountHint}
                 submitLabel={messages.sendCtaLabel}
                 assetsLoadingLabel={messages.assetsLoading}
+                fromCountry={fromCountry}
+                toCountry={toCountry}
                 fromAsset={fromAsset}
                 toAsset={toAsset}
                 rail={rail}
@@ -1345,8 +1403,8 @@ export default function Home() {
                 countryOptions={countryOptions}
                 assetsLoading={assetsLoading}
                 assetsError={assetsError}
-                onChangeFrom={setFromAsset}
-                onChangeTo={setToAsset}
+                onChangeFrom={setFromCountry}
+                onChangeTo={setToCountry}
                 onChangeRail={setRail}
                 onChangeAmount={setSendAmount}
                 onSubmit={handleGetStarted}

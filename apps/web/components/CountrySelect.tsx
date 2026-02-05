@@ -10,7 +10,7 @@ export type CountrySelectProps = {
   label: string;
   value: string;
   options: CountryOption[];
-  onChange: (assetCode: string) => void;
+  onChange: (countryCode: string) => void;
   hint?: string;
   copy: {
     changeLabel: string;
@@ -38,9 +38,9 @@ export default function CountrySelect({
 
   const selected = useMemo(() => {
     return (
-      options.find((option) => option.assetCode === value) ?? {
+      options.find((option) => option.countryCode === value) ?? {
         id: value,
-        countryCode: "",
+        countryCode: value,
         countryName: "",
         assetCode: value,
         assetName: value,
@@ -81,8 +81,8 @@ export default function CountrySelect({
     return () => window.removeEventListener("keydown", handleKey);
   }, [open]);
 
-  const handleSelect = (assetCode: string) => {
-    onChange(assetCode);
+  const handleSelect = (countryCode: string) => {
+    onChange(countryCode);
     setOpen(false);
   };
 
@@ -164,12 +164,12 @@ export default function CountrySelect({
             <div className="mt-4 max-h-72 overflow-y-auto pr-1">
               <div className="grid gap-2">
                 {filtered.map((option) => {
-                  const isSelected = option.assetCode === value;
+                  const isSelected = option.countryCode === value;
                   return (
                     <button
                       key={option.id}
                       type="button"
-                      onClick={() => handleSelect(option.assetCode)}
+                      onClick={() => handleSelect(option.countryCode)}
                       className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
                         isSelected
                           ? "border-emerald-300 bg-emerald-50"

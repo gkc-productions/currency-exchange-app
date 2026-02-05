@@ -43,6 +43,20 @@ export const COUNTRY_OPTIONS: CountryOption[] = [
     assetName: "West African CFA Franc",
   },
   {
+    id: "bj-xaf",
+    countryCode: "BJ",
+    countryName: "Benin",
+    assetCode: "XAF",
+    assetName: "Central African CFA Franc",
+  },
+  {
+    id: "tg-xaf",
+    countryCode: "TG",
+    countryName: "Togo",
+    assetCode: "XAF",
+    assetName: "Central African CFA Franc",
+  },
+  {
     id: "cm-xaf",
     countryCode: "CM",
     countryName: "Cameroon",

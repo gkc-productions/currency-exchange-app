@@ -13,6 +13,8 @@ export type SendCardProps = {
   amountHint: string;
   submitLabel: string;
   assetsLoadingLabel: string;
+  fromCountry: string;
+  toCountry: string;
   fromAsset: string;
   toAsset: string;
   rail: string;
@@ -22,8 +24,8 @@ export type SendCardProps = {
   countryOptions: CountryOption[];
   assetsLoading: boolean;
   assetsError: string | null;
-  onChangeFrom: (assetCode: string) => void;
-  onChangeTo: (assetCode: string) => void;
+  onChangeFrom: (countryCode: string) => void;
+  onChangeTo: (countryCode: string) => void;
   onChangeRail: (rail: string) => void;
   onChangeAmount: (amount: string) => void;
   onSubmit: () => void;
@@ -49,6 +51,8 @@ export default function SendCard({
   amountHint,
   submitLabel,
   assetsLoadingLabel,
+  fromCountry,
+  toCountry,
   fromAsset,
   toAsset,
   rail,
@@ -82,14 +86,14 @@ export default function SendCard({
       <div className="mt-6 grid gap-4">
         <CountrySelect
           label={fromLabel}
-          value={fromAsset}
+          value={fromCountry}
           options={countryOptions}
           onChange={onChangeFrom}
           copy={countrySelectCopy}
         />
         <CountrySelect
           label={toLabel}
-          value={toAsset}
+          value={toCountry}
           options={countryOptions}
           onChange={onChangeTo}
           copy={countrySelectCopy}
