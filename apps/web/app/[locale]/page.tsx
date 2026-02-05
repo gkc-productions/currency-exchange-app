@@ -165,6 +165,9 @@ type Recipient = {
 };
 
 export default function Home() {
+  const shouldLogRenders = process.env.NEXT_PUBLIC_DEV_RENDER_LOGS === "1";
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
   const params = useParams();
   const locale = useMemo<Locale>(() => {
     const value = params?.locale;
@@ -340,12 +343,15 @@ export default function Home() {
 
   const shouldSendManualRate = manualOverrideEnabled && manualRateInfo.valid;
 
-  const flowSteps = [
-    messages.flowStepQuote,
-    messages.flowStepReview,
-    messages.flowStepTransfer,
-    messages.flowStepReceipt,
-  ];
+  const flowSteps = useMemo(
+    () => [
+      messages.flowStepQuote,
+      messages.flowStepReview,
+      messages.flowStepTransfer,
+      messages.flowStepReceipt,
+    ],
+    [messages]
+  );
   const flowStepIndex = transferResult
     ? 3
     : lockedQuoteId
@@ -1202,29 +1208,46 @@ export default function Home() {
     [statusLabels]
   );
 
-  const suggestionCards = [
-    {
-      key: "cheapest",
-      label: messages.cheapestLabel,
-      accent: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
-      surface: "border-emerald-200/70 bg-emerald-50/50",
-      route: cheapestRoute,
-    },
-    {
-      key: "fastest",
-      label: messages.fastestLabel,
-      accent: "border-sky-200/70 bg-sky-50 text-sky-700",
-      surface: "border-sky-200/70 bg-sky-50/50",
-      route: fastestRoute,
-    },
-    {
-      key: "best",
-      label: messages.bestValueLabel,
-      accent: "border-amber-200/70 bg-amber-50 text-amber-700",
-      surface: "border-amber-200/70 bg-amber-50/50",
-      route: bestValueRoute,
-    },
-  ];
+  const suggestionCards = useMemo(
+    () => [
+      {
+        key: "cheapest",
+        label: messages.cheapestLabel,
+        accent: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
+        surface: "border-emerald-200/70 bg-emerald-50/50",
+        route: cheapestRoute,
+      },
+      {
+        key: "fastest",
+        label: messages.fastestLabel,
+        accent: "border-sky-200/70 bg-sky-50 text-sky-700",
+        surface: "border-sky-200/70 bg-sky-50/50",
+        route: fastestRoute,
+      },
+      {
+        key: "best",
+        label: messages.bestValueLabel,
+        accent: "border-amber-200/70 bg-amber-50 text-amber-700",
+        surface: "border-amber-200/70 bg-amber-50/50",
+        route: bestValueRoute,
+      },
+    ],
+    [
+      bestValueRoute,
+      cheapestRoute,
+      fastestRoute,
+      messages.bestValueLabel,
+      messages.cheapestLabel,
+      messages.fastestLabel,
+    ]
+  );
+
+  useEffect(() => {
+    if (!shouldLogRenders) {
+      return;
+    }
+    console.info(`render_home count=${renderCountRef.current}`);
+  });
 
   const trustItems = [
     messages.trustItemTransparent,

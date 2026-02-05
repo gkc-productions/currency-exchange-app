@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -149,6 +149,9 @@ const formatNumber = (value: number, digits = 2, locale: Locale = "en") =>
   }).format(value);
 
 export default function TransferReceiptPage() {
+  const shouldLogRenders = process.env.NEXT_PUBLIC_DEV_RENDER_LOGS === "1";
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
   const params = useParams();
   const locale = useMemo<Locale>(() => {
     const value = params?.locale;
@@ -1116,6 +1119,13 @@ export default function TransferReceiptPage() {
     receiptUrl,
     receiptActionState
   );
+
+  useEffect(() => {
+    if (!shouldLogRenders) {
+      return;
+    }
+    console.info(`render_transfer_detail count=${renderCountRef.current}`);
+  });
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
