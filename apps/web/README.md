@@ -13,6 +13,22 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - `/{locale}/about`, `/{locale}/security`, `/{locale}/fees`, `/{locale}/help`: placeholder brand pages
 - `/status`: system diagnostics and health monitoring
 - `/api/status`: JSON status endpoint for monitoring
+- `/api/webhooks/payout`: payout provider webhook endpoint
+
+## Webhook contract
+
+**Payout webhook** (`/api/webhooks/payout`)
+
+Required headers:
+- `x-webhook-signature` (HMAC SHA256 hex of raw body, secret = `WEBHOOK_SECRET`)
+- `x-payout-timestamp` (unix epoch seconds; ±5 minutes accepted)
+- `x-webhook-event-id` (unique event id)
+
+Response semantics:
+- Missing required headers → `400` `{ error: "invalid_webhook", errorCode: "MISSING_HEADER" }`
+- Stale timestamp → `401` `{ error: "stale_webhook", errorCode: "STALE_TIMESTAMP" }`
+- Invalid signature → `401` `{ error: "invalid_signature", errorCode: "INVALID_SIGNATURE" }`
+- Duplicate event id → `200` `{ ok: true, deduped: true }` (no state changes)
 
 ## Trust & Reliability Architecture
 

@@ -112,11 +112,63 @@ testIntegration("webhook rejects invalid signature", async () => {
       "Content-Type": "application/json",
       "x-webhook-signature": "deadbeef",
       "x-payout-timestamp": timestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
 
   assert.equal(res.status, 401);
+  assert.equal((res.json as { error?: string })?.error, "invalid_signature");
+  assert.equal((res.json as { errorCode?: string })?.errorCode, "INVALID_SIGNATURE");
+});
+
+testIntegration("webhook missing headers rejected", async () => {
+  const payload = {
+    provider: "MockProvider",
+    payoutId: "payout_1",
+    transferId: "transfer_1",
+    eventId: "evt_missing_headers",
+    status: "COMPLETED",
+    occurredAt: new Date().toISOString(),
+  };
+  const rawBody = JSON.stringify(payload);
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+
+  const missingSignature = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-payout-timestamp": timestamp,
+      "x-webhook-event-id": payload.eventId,
+    },
+    body: rawBody,
+  });
+  assert.equal(missingSignature.status, 400);
+  assert.equal((missingSignature.json as { errorCode?: string })?.errorCode, "MISSING_HEADER");
+
+  const missingTimestamp = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-webhook-signature": "deadbeef",
+      "x-webhook-event-id": payload.eventId,
+    },
+    body: rawBody,
+  });
+  assert.equal(missingTimestamp.status, 400);
+  assert.equal((missingTimestamp.json as { errorCode?: string })?.errorCode, "MISSING_HEADER");
+
+  const missingEventId = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-webhook-signature": "deadbeef",
+      "x-payout-timestamp": timestamp,
+    },
+    body: rawBody,
+  });
+  assert.equal(missingEventId.status, 400);
+  assert.equal((missingEventId.json as { errorCode?: string })?.errorCode, "MISSING_HEADER");
 });
 
 testIntegration("webhook processes completion and dedupes", async () => {
@@ -142,10 +194,13 @@ testIntegration("webhook processes completion and dedupes", async () => {
       "Content-Type": "application/json",
       "x-webhook-signature": signature,
       "x-payout-timestamp": staleTimestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
   assert.equal(first.status, 401);
+  assert.equal((first.json as { error?: string })?.error, "stale_webhook");
+  assert.equal((first.json as { errorCode?: string })?.errorCode, "STALE_TIMESTAMP");
 
   const freshTimestamp = Math.floor(Date.now() / 1000).toString();
   const firstFresh = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
@@ -154,10 +209,18 @@ testIntegration("webhook processes completion and dedupes", async () => {
       "Content-Type": "application/json",
       "x-webhook-signature": signature,
       "x-payout-timestamp": freshTimestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
   assert.equal(firstFresh.status, 200);
+
+  const beforeWebhookCount = await prisma.payoutWebhookEvent.count({
+    where: { provider: "MockProvider", eventId: payload.eventId },
+  });
+  const beforeEventCount = await prisma.transferEvent.count({
+    where: { transferId, type: "PAYOUT_COMPLETED" },
+  });
 
   const second = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
     method: "POST",
@@ -165,20 +228,38 @@ testIntegration("webhook processes completion and dedupes", async () => {
       "Content-Type": "application/json",
       "x-webhook-signature": signature,
       "x-payout-timestamp": freshTimestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
   assert.equal(second.status, 200);
+  assert.equal((second.json as { deduped?: boolean })?.deduped, true);
 
-  const receiptCount = await prisma.webhookEventReceipt.count({
+  const receiptCount = await prisma.payoutWebhookEvent.count({
     where: { provider: "MockProvider", eventId: payload.eventId },
   });
   assert.equal(receiptCount, 1);
+  const completedCount = await prisma.transferEvent.count({
+    where: { transferId, type: "PAYOUT_COMPLETED" },
+  });
+  assert.equal(completedCount, 1);
+  const afterWebhookCount = await prisma.payoutWebhookEvent.count({
+    where: { provider: "MockProvider", eventId: payload.eventId },
+  });
+  const afterEventCount = await prisma.transferEvent.count({
+    where: { transferId, type: "PAYOUT_COMPLETED" },
+  });
+  assert.equal(afterWebhookCount, beforeWebhookCount);
+  assert.equal(afterEventCount, beforeEventCount);
   const completedEvent = await prisma.transferEvent.findFirst({
     where: { transferId, type: "PAYOUT_COMPLETED" },
     select: { message: true },
   });
   assert.ok(completedEvent?.message.includes(`ref=${providerPayoutId}`));
+  const attempt = await prisma.payoutAttempt.findFirst({
+    where: { transferId, providerPayoutId },
+  });
+  assert.equal(attempt?.status, "SUCCEEDED");
 });
 
 testIntegration("webhook is idempotent for completed transfers", async () => {
@@ -207,6 +288,7 @@ testIntegration("webhook is idempotent for completed transfers", async () => {
       "Content-Type": "application/json",
       "x-webhook-signature": signature,
       "x-payout-timestamp": timestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
@@ -244,6 +326,7 @@ testIntegration("webhook upgrades failed transfer when receipt not issued", asyn
       "Content-Type": "application/json",
       "x-webhook-signature": signature,
       "x-payout-timestamp": timestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
@@ -279,6 +362,7 @@ testIntegration("webhook completion issues receipt url", async () => {
       "Content-Type": "application/json",
       "x-webhook-signature": signature,
       "x-payout-timestamp": timestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
@@ -322,10 +406,49 @@ testIntegration("webhook rejects payout mismatch", async () => {
       "Content-Type": "application/json",
       "x-webhook-signature": signature,
       "x-payout-timestamp": timestamp,
+      "x-webhook-event-id": payload.eventId,
     },
     body: rawBody,
   });
   assert.equal(res.status, 409);
+});
+
+const canReplay =
+  RUN_INTEGRATION && (process.env.ADMIN_EMAILS ?? "").toLowerCase().includes("you@example.com");
+const replayTest = canReplay ? test : test.skip;
+
+replayTest("webhook replay transitions when possible", async () => {
+  const { transferId, providerPayoutId } = await createProcessingTransfer();
+  const eventId = `evt_replay_${transferId}`;
+
+  const record = await prisma.payoutWebhookEvent.create({
+    data: {
+      eventId,
+      provider: "MockProvider",
+      providerPayoutId,
+      status: "COMPLETED",
+      outcome: "received",
+      rawHash: "hash",
+      occurredAt: new Date(),
+      signatureTimestamp: new Date(),
+      transferId,
+    },
+  });
+
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/admin/webhook-events/${record.id}/replay`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...DEV_HEADERS,
+    },
+  });
+  assert.equal(res.status, 200);
+
+  const transfer = await prisma.transfer.findUnique({
+    where: { id: transferId },
+    select: { status: true },
+  });
+  assert.equal(transfer?.status, "COMPLETED");
 });
 
 // Schema smoke check

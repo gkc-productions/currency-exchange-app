@@ -60,6 +60,27 @@ export type Messages = {
   reconciliationProviderStatusLabel: string;
   reconciliationUpdatedAtLabel: string;
   reconciliationUnavailableLabel: string;
+  reconcilePayoutTitleLabel: string;
+  reconcilePayoutButtonLabel: string;
+  reconcilePayoutLoadingLabel: string;
+  reconcilePayoutSuccessLabel: string;
+  reconcilePayoutErrorLabel: string;
+  reconcilePayoutNotProcessingLabel: string;
+  reconcilePayoutMissingProviderLabel: string;
+  reconcilePayoutProviderStatusLabel: string;
+  payoutDiagnosticsTitle: string;
+  payoutDiagnosticsEmptyLabel: string;
+  payoutDiagnosticsAttemptLabel: string;
+  payoutDiagnosticsProviderLabel: string;
+  payoutDiagnosticsStatusLabel: string;
+  payoutDiagnosticsRefLabel: string;
+  payoutDiagnosticsStartedLabel: string;
+  payoutDiagnosticsFinishedLabel: string;
+  payoutDiagnosticsErrorLabel: string;
+  providerLabel: string;
+  providerStatusLabel: string;
+  providerPayoutIdLabel: string;
+  providerUpdatedAtLabel: string;
   adminTitle: string;
   adminSubtitle: string;
   adminUnauthorizedTitle: string;
@@ -84,6 +105,14 @@ export type Messages = {
   adminPayoutsFromLabel: string;
   adminPayoutsToLabel: string;
   adminPayoutsDownloadCsvLabel: string;
+  adminProvidersTitle: string;
+  adminProvidersSubtitle: string;
+  adminProvidersEmpty: string;
+  adminProvidersEnabledLabel: string;
+  adminProvidersHealthyLabel: string;
+  adminProvidersNoErrorLabel: string;
+  adminProvidersLoadError: string;
+  adminProvidersUpdateError: string;
   heroTitle: string;
   heroSubtitle: string;
   sendCardTitle: string;
@@ -251,10 +280,18 @@ export type Messages = {
   receiptExpiredLabel: string;
   receiptBackHomeButton: string;
   executePayoutButtonLabel: string;
+  executePayoutRetryLabel: string;
   executePayoutLoadingLabel: string;
   executePayoutErrorLabel: string;
+  executePayoutCooldownLabel: (seconds: number) => string;
+  executePayoutExhaustedLabel: string;
   executePayoutProcessingLabel: string;
   executePayoutFailedLabel: string;
+  retryPayoutLoadingLabel: string;
+  retryPayoutErrorLabel: string;
+  cancelPayoutButtonLabel: string;
+  cancelPayoutLoadingLabel: string;
+  cancelPayoutErrorLabel: string;
   lifecycleTitle: string;
   lifecycleCreatedLabel: string;
   lifecycleQuotedLabel: string;
@@ -302,6 +339,64 @@ export type Messages = {
   recipientCountryInvalid: string;
   recipientPhoneInvalid: string;
   payoutRailRequired: string;
+  transfersHistoryLabel: string;
+  transfersHistoryTitle: string;
+  transfersHistorySubtitle: string;
+  transfersHistoryStatusLabel: string;
+  transfersHistoryAllLabel: string;
+  transfersHistorySearchLabel: string;
+  transfersHistorySearchPlaceholder: string;
+  transfersHistoryLoadingLabel: string;
+  transfersHistoryEmptyLabel: string;
+  transfersHistoryUnauthorizedLabel: string;
+  transfersHistoryLoginLabel: string;
+  transfersHistoryErrorLabel: string;
+  transfersHistoryReferenceLabel: string;
+  transfersHistoryRailLabel: string;
+  transfersHistoryRecipientLabel: string;
+  transfersHistoryDateLabel: string;
+  adminWebhooksTitle: string;
+  adminWebhooksSubtitle: string;
+  adminWebhooksLoadingLabel: string;
+  adminWebhooksEmptyLabel: string;
+  adminWebhooksProviderLabel: string;
+  adminWebhooksOutcomeLabel: string;
+  adminWebhooksAllLabel: string;
+  adminWebhooksReceivedLabel: string;
+  adminWebhooksEventIdLabel: string;
+  adminWebhooksTransferLabel: string;
+  adminWebhooksReplayLabel: string;
+  adminWebhooksReplaySuccess: string;
+  adminWebhooksReplayError: string;
+  adminWebhookEventsTitle: string;
+  adminWebhookEventsSubtitle: string;
+  adminWebhookEventsLoadingLabel: string;
+  adminWebhookEventsEmptyLabel: string;
+  adminWebhookEventsProviderLabel: string;
+  adminWebhookEventsKindLabel: string;
+  adminWebhookEventsOutcomeLabel: string;
+  adminWebhookEventsAllLabel: string;
+  adminWebhookEventsReceivedLabel: string;
+  adminWebhookEventsEventIdLabel: string;
+  adminWebhookEventsTransferLabel: string;
+  adminWebhookEventsSinceLabel: string;
+  adminWebhookEventsReplayLabel: string;
+  adminWebhookEventsReplaySuccess: string;
+  adminWebhookEventsReplayError: string;
+  adminWebhookEventsDedupedLabel: string;
+  adminPayoutWebhookTitle: string;
+  adminPayoutWebhookSubtitle: string;
+  adminPayoutWebhookLoadingLabel: string;
+  adminPayoutWebhookEmptyLabel: string;
+  adminPayoutWebhookStatusLabel: string;
+  adminPayoutWebhookProviderLabel: string;
+  adminPayoutWebhookAllLabel: string;
+  adminPayoutWebhookReceivedLabel: string;
+  adminPayoutWebhookEventIdLabel: string;
+  adminPayoutWebhookTransferLabel: string;
+  adminPayoutWebhookReasonLabel: string;
+  adminPayoutWebhookFilterLabel: string;
+  adminWebhookEventsDetailTitle: string;
   bankDetailsRequired: string;
   mobileMoneyDetailsRequired: string;
   lockQuoteRefreshFailed: string;
@@ -398,6 +493,27 @@ const EN_MESSAGES: Messages = {
   reconciliationProviderStatusLabel: "Provider payout status",
   reconciliationUpdatedAtLabel: "Updated at",
   reconciliationUnavailableLabel: "Not available",
+  reconcilePayoutTitleLabel: "Admin reconciliation",
+  reconcilePayoutButtonLabel: "Reconcile payout",
+  reconcilePayoutLoadingLabel: "Reconciling...",
+  reconcilePayoutSuccessLabel: "Reconciliation complete.",
+  reconcilePayoutErrorLabel: "Unable to reconcile payout.",
+  reconcilePayoutNotProcessingLabel: "Reconciliation only available for processing or failed payouts.",
+  reconcilePayoutMissingProviderLabel: "Missing provider payout id.",
+  reconcilePayoutProviderStatusLabel: "Provider status:",
+  payoutDiagnosticsTitle: "Payout diagnostics",
+  payoutDiagnosticsEmptyLabel: "No payout attempts yet.",
+  payoutDiagnosticsAttemptLabel: "Attempt",
+  payoutDiagnosticsProviderLabel: "Provider",
+  payoutDiagnosticsStatusLabel: "Status",
+  payoutDiagnosticsRefLabel: "Provider Ref",
+  payoutDiagnosticsStartedLabel: "Started",
+  payoutDiagnosticsFinishedLabel: "Finished",
+  payoutDiagnosticsErrorLabel: "Error",
+  providerLabel: "Provider",
+  providerStatusLabel: "Provider status",
+  providerPayoutIdLabel: "Provider payout id",
+  providerUpdatedAtLabel: "Updated",
   adminTitle: "Admin console",
   adminSubtitle: "Restricted access for ClariSend administrators.",
   adminUnauthorizedTitle: "Access restricted",
@@ -423,6 +539,14 @@ const EN_MESSAGES: Messages = {
   adminPayoutsFromLabel: "From",
   adminPayoutsToLabel: "To",
   adminPayoutsDownloadCsvLabel: "Download CSV",
+  adminProvidersTitle: "Providers",
+  adminProvidersSubtitle: "Manual overrides for payout providers.",
+  adminProvidersEmpty: "No provider states found.",
+  adminProvidersEnabledLabel: "Enabled",
+  adminProvidersHealthyLabel: "Healthy",
+  adminProvidersNoErrorLabel: "No recent errors",
+  adminProvidersLoadError: "Unable to load providers.",
+  adminProvidersUpdateError: "Unable to update provider.",
   heroTitle:
     "Send with clarity. Rates, fees, and delivery time upfront.",
   heroSubtitle:
@@ -606,10 +730,21 @@ const EN_MESSAGES: Messages = {
     receiptExpiredLabel: "This transfer expired before completion.",
     receiptBackHomeButton: "Back to home",
     executePayoutButtonLabel: "Execute payout",
+    executePayoutRetryLabel: "Retry payout",
     executePayoutLoadingLabel: "Executing payout...",
     executePayoutErrorLabel: "We couldn't execute the payout. Please try again.",
+    executePayoutCooldownLabel: (seconds: number) =>
+      seconds > 0
+        ? `Retry available in ${seconds}s.`
+        : "Retry available soon.",
+    executePayoutExhaustedLabel: "Payout attempts exhausted.",
     executePayoutProcessingLabel: "Payout processing...",
     executePayoutFailedLabel: "Payout failed.",
+    retryPayoutLoadingLabel: "Retrying payout...",
+    retryPayoutErrorLabel: "We couldn't retry the payout. Please try again.",
+    cancelPayoutButtonLabel: "Cancel payout",
+    cancelPayoutLoadingLabel: "Canceling payout...",
+    cancelPayoutErrorLabel: "We couldn't cancel the payout. Please try again.",
   lifecycleTitle: "Transfer lifecycle",
   lifecycleCreatedLabel: "CREATED",
   lifecycleQuotedLabel: "QUOTED",
@@ -656,7 +791,65 @@ const EN_MESSAGES: Messages = {
   recipientCountryRequired: "Recipient country is required.",
   recipientCountryInvalid: "Use a 2-letter ISO code.",
   recipientPhoneInvalid: "Enter a valid phone number.",
-  payoutRailRequired: "Select a payout rail.",
+    payoutRailRequired: "Select a payout rail.",
+    transfersHistoryLabel: "Transfers",
+    transfersHistoryTitle: "Transfer history",
+    transfersHistorySubtitle: "Browse recent transfers and open the full record.",
+    transfersHistoryStatusLabel: "Status",
+    transfersHistoryAllLabel: "All",
+    transfersHistorySearchLabel: "Search",
+    transfersHistorySearchPlaceholder: "Reference or recipient",
+    transfersHistoryLoadingLabel: "Loading transfers...",
+    transfersHistoryEmptyLabel: "No transfers yet.",
+    transfersHistoryUnauthorizedLabel: "Unauthorized. Please log in to view transfers.",
+    transfersHistoryLoginLabel: "Go to login",
+    transfersHistoryErrorLabel: "Unable to load transfers.",
+    transfersHistoryReferenceLabel: "Reference",
+    transfersHistoryRailLabel: "Rail",
+    transfersHistoryRecipientLabel: "Recipient",
+    transfersHistoryDateLabel: "Created",
+    adminWebhooksTitle: "Webhook events",
+    adminWebhooksSubtitle: "Inspect recent payout webhook deliveries.",
+    adminWebhooksLoadingLabel: "Loading webhook events...",
+    adminWebhooksEmptyLabel: "No webhook events yet.",
+    adminWebhooksProviderLabel: "Provider",
+    adminWebhooksOutcomeLabel: "Outcome",
+    adminWebhooksAllLabel: "All",
+    adminWebhooksReceivedLabel: "Received",
+    adminWebhooksEventIdLabel: "Event ID",
+    adminWebhooksTransferLabel: "Transfer",
+    adminWebhooksReplayLabel: "Replay",
+    adminWebhooksReplaySuccess: "Replay sent.",
+    adminWebhooksReplayError: "Replay failed.",
+    adminWebhookEventsTitle: "Webhook events",
+    adminWebhookEventsSubtitle: "Inspect and replay webhook deliveries.",
+    adminWebhookEventsLoadingLabel: "Loading webhook events...",
+    adminWebhookEventsEmptyLabel: "No webhook events yet.",
+    adminWebhookEventsProviderLabel: "Provider",
+    adminWebhookEventsKindLabel: "Kind",
+    adminWebhookEventsOutcomeLabel: "Outcome",
+    adminWebhookEventsAllLabel: "All",
+    adminWebhookEventsReceivedLabel: "Received",
+    adminWebhookEventsEventIdLabel: "Event ID",
+    adminWebhookEventsTransferLabel: "Transfer",
+    adminWebhookEventsSinceLabel: "Since",
+    adminWebhookEventsReplayLabel: "Replay",
+    adminWebhookEventsReplaySuccess: "Replay sent.",
+    adminWebhookEventsReplayError: "Replay failed.",
+    adminWebhookEventsDedupedLabel: "Deduped",
+    adminPayoutWebhookTitle: "Payout webhooks",
+    adminPayoutWebhookSubtitle: "Review recent webhook deliveries.",
+    adminPayoutWebhookLoadingLabel: "Loading webhook deliveries...",
+    adminPayoutWebhookEmptyLabel: "No webhook deliveries yet.",
+    adminPayoutWebhookStatusLabel: "Status",
+    adminPayoutWebhookProviderLabel: "Provider",
+    adminPayoutWebhookAllLabel: "All",
+    adminPayoutWebhookReceivedLabel: "Received",
+    adminPayoutWebhookEventIdLabel: "Event ID",
+    adminPayoutWebhookTransferLabel: "Transfer",
+    adminPayoutWebhookReasonLabel: "Reason",
+    adminPayoutWebhookFilterLabel: "Since",
+    adminWebhookEventsDetailTitle: "Webhook delivery",
   bankDetailsRequired: "Bank name and account are required.",
   mobileMoneyDetailsRequired: "Provider and number are required.",
   lockQuoteRefreshFailed: "We couldn't refresh the quote. Please try again.",
@@ -762,6 +955,28 @@ const FR_MESSAGES: Messages = {
   reconciliationProviderStatusLabel: "Statut du paiement fournisseur",
   reconciliationUpdatedAtLabel: "Mis a jour",
   reconciliationUnavailableLabel: "Indisponible",
+  reconcilePayoutTitleLabel: "Rapprochement admin",
+  reconcilePayoutButtonLabel: "Rapprocher le paiement",
+  reconcilePayoutLoadingLabel: "Rapprochement...",
+  reconcilePayoutSuccessLabel: "Rapprochement terminé.",
+  reconcilePayoutErrorLabel: "Impossible de rapprocher le paiement.",
+  reconcilePayoutNotProcessingLabel:
+    "Le rapprochement est disponible uniquement pour les paiements en traitement ou échoués.",
+  reconcilePayoutMissingProviderLabel: "ID de paiement fournisseur manquant.",
+  reconcilePayoutProviderStatusLabel: "Statut fournisseur :",
+  payoutDiagnosticsTitle: "Diagnostic des paiements",
+  payoutDiagnosticsEmptyLabel: "Aucune tentative pour le moment.",
+  payoutDiagnosticsAttemptLabel: "Tentative",
+  payoutDiagnosticsProviderLabel: "Fournisseur",
+  payoutDiagnosticsStatusLabel: "Statut",
+  payoutDiagnosticsRefLabel: "Ref fournisseur",
+  payoutDiagnosticsStartedLabel: "Debut",
+  payoutDiagnosticsFinishedLabel: "Fin",
+  payoutDiagnosticsErrorLabel: "Erreur",
+  providerLabel: "Fournisseur",
+  providerStatusLabel: "Statut fournisseur",
+  providerPayoutIdLabel: "ID du paiement fournisseur",
+  providerUpdatedAtLabel: "Mis a jour",
   adminTitle: "Console admin",
   adminSubtitle: "Acces reserve aux administrateurs ClariSend.",
   adminUnauthorizedTitle: "Acces restreint",
@@ -787,6 +1002,14 @@ const FR_MESSAGES: Messages = {
   adminPayoutsFromLabel: "Du",
   adminPayoutsToLabel: "Au",
   adminPayoutsDownloadCsvLabel: "Telecharger CSV",
+  adminProvidersTitle: "Fournisseurs",
+  adminProvidersSubtitle: "Overrides manuels pour les fournisseurs.",
+  adminProvidersEmpty: "Aucun fournisseur disponible.",
+  adminProvidersEnabledLabel: "Actif",
+  adminProvidersHealthyLabel: "Sain",
+  adminProvidersNoErrorLabel: "Aucune erreur recente",
+  adminProvidersLoadError: "Impossible de charger les fournisseurs.",
+  adminProvidersUpdateError: "Impossible de mettre a jour le fournisseur.",
   heroTitle:
     "Envoyez en toute clarte. Taux, frais et delais visibles.",
   heroSubtitle:
@@ -974,10 +1197,21 @@ const FR_MESSAGES: Messages = {
     receiptExpiredLabel: "Ce transfert a expiré avant la fin.",
     receiptBackHomeButton: "Retour à l'accueil",
     executePayoutButtonLabel: "Exécuter le paiement",
+    executePayoutRetryLabel: "Relancer le paiement",
     executePayoutLoadingLabel: "Paiement en cours...",
     executePayoutErrorLabel: "Impossible d'exécuter le paiement.",
+    executePayoutCooldownLabel: (seconds: number) =>
+      seconds > 0
+        ? `Nouvel essai disponible dans ${seconds}s.`
+        : "Nouvel essai bientôt disponible.",
+    executePayoutExhaustedLabel: "Tentatives de paiement épuisées.",
     executePayoutProcessingLabel: "Paiement en cours de traitement...",
     executePayoutFailedLabel: "Paiement échoué.",
+    retryPayoutLoadingLabel: "Relance du paiement...",
+    retryPayoutErrorLabel: "Impossible de relancer le paiement.",
+    cancelPayoutButtonLabel: "Annuler le paiement",
+    cancelPayoutLoadingLabel: "Annulation du paiement...",
+    cancelPayoutErrorLabel: "Impossible d'annuler le paiement.",
   lifecycleTitle: "Cycle de transfert",
   lifecycleCreatedLabel: "CRÉÉ",
   lifecycleQuotedLabel: "DEVISÉ",
@@ -1024,7 +1258,65 @@ const FR_MESSAGES: Messages = {
   recipientCountryRequired: "Le pays du bénéficiaire est requis.",
   recipientCountryInvalid: "Utilisez un code ISO à 2 lettres.",
   recipientPhoneInvalid: "Entrez un numéro de téléphone valide.",
-  payoutRailRequired: "Sélectionnez un rail de paiement.",
+    payoutRailRequired: "Sélectionnez un rail de paiement.",
+    transfersHistoryLabel: "Transferts",
+    transfersHistoryTitle: "Historique des transferts",
+    transfersHistorySubtitle: "Consultez les transferts récents et ouvrez le détail.",
+    transfersHistoryStatusLabel: "Statut",
+    transfersHistoryAllLabel: "Tous",
+    transfersHistorySearchLabel: "Recherche",
+    transfersHistorySearchPlaceholder: "Référence ou destinataire",
+    transfersHistoryLoadingLabel: "Chargement des transferts...",
+    transfersHistoryEmptyLabel: "Aucun transfert pour le moment.",
+    transfersHistoryUnauthorizedLabel: "Non autorisé. Connectez-vous pour voir les transferts.",
+    transfersHistoryLoginLabel: "Se connecter",
+    transfersHistoryErrorLabel: "Impossible de charger les transferts.",
+    transfersHistoryReferenceLabel: "Référence",
+    transfersHistoryRailLabel: "Rail",
+    transfersHistoryRecipientLabel: "Destinataire",
+    transfersHistoryDateLabel: "Créé",
+    adminWebhooksTitle: "Événements webhook",
+    adminWebhooksSubtitle: "Inspectez les livraisons récentes.",
+    adminWebhooksLoadingLabel: "Chargement des événements...",
+    adminWebhooksEmptyLabel: "Aucun événement pour le moment.",
+    adminWebhooksProviderLabel: "Fournisseur",
+    adminWebhooksOutcomeLabel: "Résultat",
+    adminWebhooksAllLabel: "Tous",
+    adminWebhooksReceivedLabel: "Reçu",
+    adminWebhooksEventIdLabel: "ID événement",
+    adminWebhooksTransferLabel: "Transfert",
+    adminWebhooksReplayLabel: "Rejouer",
+    adminWebhooksReplaySuccess: "Rejeu envoyé.",
+    adminWebhooksReplayError: "Échec du rejeu.",
+    adminWebhookEventsTitle: "Événements webhook",
+    adminWebhookEventsSubtitle: "Inspectez et rejouez les livraisons.",
+    adminWebhookEventsLoadingLabel: "Chargement des événements...",
+    adminWebhookEventsEmptyLabel: "Aucun événement pour le moment.",
+    adminWebhookEventsProviderLabel: "Fournisseur",
+    adminWebhookEventsKindLabel: "Type",
+    adminWebhookEventsOutcomeLabel: "Résultat",
+    adminWebhookEventsAllLabel: "Tous",
+    adminWebhookEventsReceivedLabel: "Reçu",
+    adminWebhookEventsEventIdLabel: "ID événement",
+    adminWebhookEventsTransferLabel: "Transfert",
+    adminWebhookEventsSinceLabel: "Depuis",
+    adminWebhookEventsReplayLabel: "Rejouer",
+    adminWebhookEventsReplaySuccess: "Rejeu envoyé.",
+    adminWebhookEventsReplayError: "Échec du rejeu.",
+    adminWebhookEventsDedupedLabel: "Dédupliqué",
+    adminPayoutWebhookTitle: "Webhooks de paiement",
+    adminPayoutWebhookSubtitle: "Consultez les livraisons récentes.",
+    adminPayoutWebhookLoadingLabel: "Chargement des webhooks...",
+    adminPayoutWebhookEmptyLabel: "Aucune livraison pour le moment.",
+    adminPayoutWebhookStatusLabel: "Statut",
+    adminPayoutWebhookProviderLabel: "Fournisseur",
+    adminPayoutWebhookAllLabel: "Tous",
+    adminPayoutWebhookReceivedLabel: "Reçu",
+    adminPayoutWebhookEventIdLabel: "ID événement",
+    adminPayoutWebhookTransferLabel: "Transfert",
+    adminPayoutWebhookReasonLabel: "Raison",
+    adminPayoutWebhookFilterLabel: "Depuis",
+    adminWebhookEventsDetailTitle: "Livraison webhook",
   bankDetailsRequired: "Le nom de la banque et le compte sont requis.",
   mobileMoneyDetailsRequired: "L’opérateur et le numéro sont requis.",
   lockQuoteRefreshFailed: "Impossible d’actualiser le devis. Veuillez réessayer.",

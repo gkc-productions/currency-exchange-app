@@ -6,6 +6,16 @@ type ExecutePayoutUi = {
   message: "processing" | "failed" | null;
 };
 
+export function resolvePayoutAction(status: string) {
+  if (status === "READY") {
+    return "execute";
+  }
+  if (status === "FAILED") {
+    return "retry";
+  }
+  return "none";
+}
+
 export function resolveExecutePayoutUi(
   status: string,
   actionState: ExecutePayoutState
@@ -23,4 +33,14 @@ export function resolveExecutePayoutUi(
     return { showButton: false, disabled: true, message: null };
   }
   return { showButton: true, disabled: actionState === "loading", message: null };
+}
+
+export function shouldShowPayoutInfo(params: {
+  status: string;
+  providerPayoutId?: string | null;
+  providerPayoutStatus?: string | null;
+  providerPayoutProvider?: string | null;
+  providerPayoutUpdatedAt?: string | Date | null;
+}) {
+  return ["PROCESSING", "FAILED", "COMPLETED"].includes(params.status);
 }

@@ -12,6 +12,7 @@ type AdminPayoutRow = {
   updatedAt: Date;
   receiptUrl: string | null;
   providerPayoutProvider: string | null;
+  providerPayoutStatus: string | null;
   latestPayoutEvent: {
     type: string;
     message: string;
@@ -59,6 +60,7 @@ export default async function AdminPayoutsPage({
       updatedAt: true,
       receiptUrl: true,
       providerPayoutProvider: true,
+      providerPayoutStatus: true,
       events: {
         where: { type: { startsWith: "PAYOUT_" } },
         orderBy: { createdAt: "desc" },
@@ -82,6 +84,7 @@ export default async function AdminPayoutsPage({
       updatedAt: row.updatedAt,
       receiptUrl: row.receiptUrl,
       providerPayoutProvider: row.providerPayoutProvider ?? null,
+      providerPayoutStatus: row.providerPayoutStatus ?? null,
       latestPayoutEvent: latestEvent
         ? {
             type: latestEvent.type,

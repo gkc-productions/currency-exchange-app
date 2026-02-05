@@ -95,6 +95,11 @@ const testIntegration = RUN_INTEGRATION ? test : test.skip;
 
 testIntegration("execute payout transitions to processing and is idempotent", async () => {
   const { transferId } = await createReadyTransfer("Test", "A");
+  await prisma.payoutProviderState.upsert({
+    where: { providerKey: "mock" },
+    update: { isEnabled: true, isHealthy: true },
+    create: { providerKey: "mock", isEnabled: true, isHealthy: true },
+  });
 
   const first = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
     method: "POST",
@@ -110,10 +115,18 @@ testIntegration("execute payout transitions to processing and is idempotent", as
 
   const row = await prisma.transfer.findUnique({
     where: { id: transferId },
-    select: { status: true, providerPayoutId: true },
+    select: { status: true, providerPayoutId: true, payoutAttemptCount: true, payoutLastAttemptAt: true },
   });
   assert.equal(row?.status, "PROCESSING");
   assert.ok(row?.providerPayoutId);
+  assert.equal(row?.payoutAttemptCount, 1);
+  assert.ok(row?.payoutLastAttemptAt);
+  const attempts = await prisma.payoutAttempt.findMany({
+    where: { transferId },
+    orderBy: { attemptNumber: "asc" },
+  });
+  assert.equal(attempts.length, 1);
+  assert.equal(attempts[0]?.status, "SUBMITTED");
 
   const startedCount = await prisma.transferEvent.count({
     where: { transferId, type: "PAYOUT_STARTED" },
@@ -146,8 +159,147 @@ testIntegration("execute payout rejects non-ready", async () => {
   assert.equal(startedCount, 0);
 });
 
+testIntegration("execute payout enforces cooldown", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
+  await prisma.payoutProviderState.upsert({
+    where: { providerKey: "mock" },
+    update: { isEnabled: true, isHealthy: true },
+    create: { providerKey: "mock", isEnabled: true, isHealthy: true },
+  });
+  await prisma.payoutAttempt.create({
+    data: {
+      transferId,
+      providerKey: "mock",
+      attemptNumber: 1,
+      status: "FAILED",
+      startedAt: new Date(),
+    },
+  });
+  await prisma.transfer.update({
+    where: { id: transferId },
+    data: {
+      status: "FAILED",
+      payoutAttemptCount: 1,
+      payoutLastAttemptAt: new Date(),
+    },
+  });
+
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+    method: "POST",
+    headers: DEV_HEADERS,
+  });
+  assert.equal(res.status, 429);
+
+  const row = await prisma.transfer.findUnique({
+    where: { id: transferId },
+    select: { payoutAttemptCount: true },
+  });
+  assert.equal(row?.payoutAttemptCount, 1);
+  const attemptCount = await prisma.payoutAttempt.count({ where: { transferId } });
+  assert.equal(attemptCount, 1);
+});
+
+testIntegration("execute payout retries after cooldown", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
+  await prisma.payoutProviderState.upsert({
+    where: { providerKey: "mock" },
+    update: { isEnabled: true, isHealthy: true },
+    create: { providerKey: "mock", isEnabled: true, isHealthy: true },
+  });
+  await prisma.transfer.update({
+    where: { id: transferId },
+    data: {
+      status: "FAILED",
+      payoutAttemptCount: 1,
+      payoutLastAttemptAt: new Date(Date.now() - 60_000),
+    },
+  });
+
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+    method: "POST",
+    headers: DEV_HEADERS,
+  });
+  assert.equal(res.status, 200);
+
+  const row = await prisma.transfer.findUnique({
+    where: { id: transferId },
+    select: { payoutAttemptCount: true, status: true },
+  });
+  assert.equal(row?.payoutAttemptCount, 2);
+  assert.equal(row?.status, "PROCESSING");
+  const attemptCount = await prisma.payoutAttempt.count({ where: { transferId } });
+  assert.equal(attemptCount, 1);
+});
+
+const allowFailover = RUN_INTEGRATION &&
+  (process.env.PAYOUT_PROVIDERS ?? "").split(",").filter(Boolean).length > 1;
+const testFailover = allowFailover ? test : test.skip;
+
+testFailover("execute payout failover after max attempts", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
+  await prisma.payoutProviderState.upsert({
+    where: { providerKey: "mock" },
+    update: { isEnabled: true, isHealthy: false },
+    create: { providerKey: "mock", isEnabled: true, isHealthy: false },
+  });
+  await prisma.payoutProviderState.upsert({
+    where: { providerKey: "real" },
+    update: { isEnabled: true, isHealthy: true },
+    create: { providerKey: "real", isEnabled: true, isHealthy: true },
+  });
+  await prisma.transfer.update({
+    where: { id: transferId },
+    data: {
+      status: "FAILED",
+      payoutAttemptCount: 3,
+      payoutProviderCursor: 0,
+      payoutLastAttemptAt: new Date(Date.now() - 60_000),
+    },
+  });
+
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+    method: "POST",
+    headers: DEV_HEADERS,
+  });
+  assert.equal(res.status, 200);
+
+  const row = await prisma.transfer.findUnique({
+    where: { id: transferId },
+    select: { payoutProviderCursor: true },
+  });
+  assert.equal(row?.payoutProviderCursor, 1);
+});
+
+testFailover("execute payout exhausted returns 409", async () => {
+  const { transferId } = await createReadyTransfer("Test", "A");
+  await prisma.payoutProviderState.upsert({
+    where: { providerKey: "mock" },
+    update: { isEnabled: false, isHealthy: false },
+    create: { providerKey: "mock", isEnabled: false, isHealthy: false },
+  });
+  await prisma.transfer.update({
+    where: { id: transferId },
+    data: {
+      status: "FAILED",
+      payoutAttemptCount: 3,
+      payoutProviderCursor: 1,
+      payoutLastAttemptAt: new Date(Date.now() - 60_000),
+    },
+  });
+
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
+    method: "POST",
+    headers: DEV_HEADERS,
+  });
+  assert.equal(res.status, 409);
+});
 testIntegration("execute payout still starts when memo requests failure", async () => {
   const { transferId } = await createReadyTransfer("FAIL", "A");
+  await prisma.payoutProviderState.upsert({
+    where: { providerKey: "mock" },
+    update: { isEnabled: true, isHealthy: true },
+    create: { providerKey: "mock", isEnabled: true, isHealthy: true },
+  });
 
   const first = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}/execute`, {
     method: "POST",
@@ -159,8 +311,13 @@ testIntegration("execute payout still starts when memo requests failure", async 
     where: { id: transferId },
     select: { status: true, providerPayoutId: true },
   });
-  assert.equal(row?.status, "PROCESSING");
+  assert.equal(row?.status, "FAILED");
   assert.ok(row?.providerPayoutId);
+  const attempt = await prisma.payoutAttempt.findFirst({
+    where: { transferId },
+    orderBy: { attemptNumber: "desc" },
+  });
+  assert.equal(attempt?.status, "FAILED");
 
   const startedCount = await prisma.transferEvent.count({
     where: { transferId, type: "PAYOUT_STARTED" },

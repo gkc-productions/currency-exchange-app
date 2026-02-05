@@ -2,25 +2,13 @@ import { NextResponse } from "next/server";
 import { Prisma, TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession, isAdminSession } from "@/src/lib/auth";
-
-const DEV_BYPASS_HEADER = "x-dev-bypass-auth";
-const DEV_EMAIL_HEADER = "x-dev-user-email";
+import { readDevBypassEmail } from "@/src/lib/security";
 
 type SessionLike = { user?: { email?: string | null } | null } | null;
 
 function readDevBypassSession(req: Request): SessionLike {
-  if (process.env.NODE_ENV === "production") {
-    return null;
-  }
-  if (process.env.DEV_BYPASS_AUTH !== "1") {
-    return null;
-  }
-  const bypass = req.headers.get(DEV_BYPASS_HEADER);
-  const email = req.headers.get(DEV_EMAIL_HEADER);
-  if (bypass !== "1") {
-    return null;
-  }
-  if (!email || typeof email !== "string" || !email.includes("@")) {
+  const email = readDevBypassEmail(req);
+  if (!email) {
     return null;
   }
   console.info("dev_auth_bypass_used");
@@ -94,6 +82,8 @@ export async function GET(req: Request) {
       updatedAt: true,
       receiptUrl: true,
       providerPayoutProvider: true,
+      providerPayoutStatus: true,
+      providerPayoutId: true,
       events: {
         where: { type: { startsWith: "PAYOUT_" } },
         orderBy: { createdAt: "desc" },
@@ -117,6 +107,8 @@ export async function GET(req: Request) {
       updatedAt: transfer.updatedAt,
       receiptUrl: transfer.receiptUrl,
       providerPayoutProvider: transfer.providerPayoutProvider ?? null,
+      providerPayoutStatus: transfer.providerPayoutStatus ?? null,
+      providerPayoutId: transfer.providerPayoutId ?? null,
       latestPayoutEvent: latestEvent
         ? {
             type: latestEvent.type,

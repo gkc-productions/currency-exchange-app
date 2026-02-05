@@ -8,7 +8,11 @@ import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 import { resolveReceiptUiState } from "@/src/lib/receipt-ui";
-import { resolveExecutePayoutUi } from "@/src/lib/transfer-events-ui";
+import {
+  resolveExecutePayoutUi,
+  resolvePayoutAction,
+  shouldShowPayoutInfo,
+} from "@/src/lib/transfer-events-ui";
 
 type TransferEvent = {
   id: string;
@@ -31,6 +35,10 @@ type TransferSummary = {
   recipientMobileMoneyProvider: string | null;
   recipientMobileMoneyNumber: string | null;
   recipientLightningInvoice: string | null;
+  providerPayoutId: string | null;
+  providerPayoutStatus: string | null;
+  providerPayoutProvider: string | null;
+  providerPayoutUpdatedAt: string | null;
   memo: string | null;
   createdAt: string;
   updatedAt: string;
@@ -99,6 +107,17 @@ type ReceiptApiResponse = {
   status: string;
   receiptUrl?: string | null;
   snapshot?: ReceiptSnapshot | null;
+};
+
+type PayoutAttempt = {
+  attemptNumber: number;
+  providerKey: string;
+  status: string;
+  providerPayoutId: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  startedAt: string;
+  finishedAt: string | null;
 };
 
 type ReconciliationResponse = {
@@ -175,6 +194,11 @@ export default function TransferReceiptPage() {
     data: ReconciliationResponse | null;
     error: ReceiptFetchError | null;
   } | null>(null);
+  const [attemptsState, setAttemptsState] = useState<{
+    id: string;
+    data: PayoutAttempt[] | null;
+    error: ReceiptFetchError | null;
+  } | null>(null);
   const [eventsState, setEventsState] = useState<{
     id: string;
     data: TimelineEvent[] | null;
@@ -184,9 +208,24 @@ export default function TransferReceiptPage() {
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [executeError, setExecuteError] = useState<string | null>(null);
+  const [cancelState, setCancelState] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [reconcileState, setReconcileState] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [reconcileError, setReconcileError] = useState<string | null>(null);
+  const [reconcileResult, setReconcileResult] = useState<{
+    beforeStatus: string;
+    afterStatus: string;
+    providerStatus: string;
+    receiptUrl?: string | null;
+  } | null>(null);
   const [transferStatusOverride, setTransferStatusOverride] = useState<string | null>(
     null
   );
+  const [isAdmin, setIsAdmin] = useState(false);
   const { data: session } = useSession();
 
   const statusLabels = useMemo(
@@ -295,6 +334,26 @@ export default function TransferReceiptPage() {
     return payload as TimelineEvent[];
   }, []);
 
+  const fetchAttempts = useCallback(async (id: string) => {
+    const res = await fetch(`/api/transfers/${id}/attempts`, {
+      cache: "no-store",
+    });
+    const payload = (await res.json().catch(() => null)) as
+      | PayoutAttempt[]
+      | { error?: string }
+      | null;
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("unauthorized");
+      }
+      if (res.status === 404) {
+        throw new Error("not_found");
+      }
+      throw new Error("generic");
+    }
+    return payload as PayoutAttempt[];
+  }, []);
+
   useEffect(() => {
     if (!transferId) {
       return undefined;
@@ -397,7 +456,36 @@ export default function TransferReceiptPage() {
     setExecuteState("idle");
     setExecuteError(null);
     setTransferStatusOverride(null);
+    setCancelState("idle");
+    setCancelError(null);
+    setReconcileState("idle");
+    setReconcileError(null);
+    setReconcileResult(null);
   }, [transferId]);
+
+  useEffect(() => {
+    if (!session?.user?.email) {
+      setIsAdmin(false);
+      return;
+    }
+    let active = true;
+    fetch("/api/admin/payouts?limit=1", { cache: "no-store" })
+      .then((res) => {
+        if (!active) {
+          return;
+        }
+        setIsAdmin(res.ok);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+        setIsAdmin(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.email]);
 
   useEffect(() => {
     if (!transferId) {
@@ -432,6 +520,40 @@ export default function TransferReceiptPage() {
       active = false;
     };
   }, [fetchEvents, transferId]);
+
+  useEffect(() => {
+    if (!transferId) {
+      return undefined;
+    }
+    let active = true;
+
+    fetchAttempts(transferId)
+      .then((payload) => {
+        if (!active) {
+          return;
+        }
+        setAttemptsState({ id: transferId, data: payload, error: null });
+      })
+      .catch((err) => {
+        if (!active) {
+          return;
+        }
+        const code = (err as { message?: string }).message;
+        if (code === "unauthorized" || code === "not_found" || code === "generic") {
+          setAttemptsState({
+            id: transferId,
+            data: null,
+            error: code as ReceiptFetchError,
+          });
+          return;
+        }
+        setAttemptsState({ id: transferId, data: null, error: "generic" });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [fetchAttempts, transferId]);
 
   useEffect(() => {
     if (!copied) {
@@ -575,10 +697,17 @@ export default function TransferReceiptPage() {
         method: "POST",
       });
       const payload = (await res.json().catch(() => null)) as
-        | { status?: string; error?: string }
+        | { status?: string; error?: string; errorCode?: string; retryAfterSeconds?: number }
         | null;
       if (!res.ok) {
-        setExecuteError(payload?.error ?? messages.executePayoutErrorLabel);
+        if (res.status === 429) {
+          const seconds = typeof payload?.retryAfterSeconds === "number" ? payload.retryAfterSeconds : 0;
+          setExecuteError(messages.executePayoutCooldownLabel(seconds));
+        } else if (res.status === 409 && payload?.errorCode === "PAYOUT_EXHAUSTED") {
+          setExecuteError(messages.executePayoutExhaustedLabel);
+        } else {
+          setExecuteError(payload?.error ?? messages.executePayoutErrorLabel);
+        }
         setExecuteState("error");
         return;
       }
@@ -603,11 +732,153 @@ export default function TransferReceiptPage() {
       } catch {
         // Keep existing events on refresh failure.
       }
+      try {
+        const refreshedAttempts = await fetchAttempts(transferId);
+        setAttemptsState({ id: transferId, data: refreshedAttempts, error: null });
+      } catch {
+        // Keep existing attempts on refresh failure.
+      }
     } catch {
       setExecuteError(messages.executePayoutErrorLabel);
       setExecuteState("error");
     }
-  }, [fetchEvents, messages.executePayoutErrorLabel, transferId]);
+  }, [fetchAttempts, fetchEvents, messages.executePayoutErrorLabel, transferId]);
+
+  const handleCancelPayout = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    setCancelState("loading");
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/transfers/${transferId}/cancel-payout`, {
+        method: "POST",
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | { status?: string; error?: string }
+        | null;
+      if (!res.ok) {
+        setCancelError(payload?.error ?? messages.cancelPayoutErrorLabel);
+        setCancelState("error");
+        return;
+      }
+      const nextStatus = payload?.status ?? "FAILED";
+      setTransferStatusOverride(nextStatus);
+      setRequestState((prev) => {
+        if (!prev || prev.id !== transferId || !prev.data) {
+          return prev;
+        }
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            transfer: { ...prev.data.transfer, status: nextStatus },
+          },
+        };
+      });
+      setExecuteState("idle");
+      setExecuteError(null);
+      setCancelState("success");
+      try {
+        const refreshed = await fetchEvents(transferId);
+        setEventsState({ id: transferId, data: refreshed, error: null });
+      } catch {
+        // Keep existing events on refresh failure.
+      }
+      try {
+        const refreshedAttempts = await fetchAttempts(transferId);
+        setAttemptsState({ id: transferId, data: refreshedAttempts, error: null });
+      } catch {
+        // Keep existing attempts on refresh failure.
+      }
+    } catch {
+      setCancelError(messages.cancelPayoutErrorLabel);
+      setCancelState("error");
+    }
+  }, [fetchAttempts, fetchEvents, messages.cancelPayoutErrorLabel, transferId]);
+
+  const handleReconcilePayout = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    setReconcileState("loading");
+    setReconcileError(null);
+    setReconcileResult(null);
+    try {
+      const res = await fetch(`/api/admin/transfers/${transferId}/reconcile`, {
+        method: "POST",
+      });
+      const payload = (await res.json().catch(() => null)) as
+        | {
+            beforeStatus?: string;
+            afterStatus?: string;
+            providerStatus?: string;
+            receiptUrl?: string | null;
+            error?: string;
+          }
+        | null;
+      if (!res.ok) {
+        if (res.status === 400) {
+          setReconcileError(messages.reconcilePayoutNotProcessingLabel);
+        } else if (res.status === 409) {
+          setReconcileError(messages.reconcilePayoutMissingProviderLabel);
+        } else if (res.status === 401 || res.status === 404) {
+          setReconcileError(messages.reconcilePayoutErrorLabel);
+        } else {
+          setReconcileError(payload?.error ?? messages.reconcilePayoutErrorLabel);
+        }
+        setReconcileState("error");
+        return;
+      }
+      const nextStatus = payload?.afterStatus ?? transferStatusOverride ?? "PROCESSING";
+      setTransferStatusOverride(nextStatus);
+      setRequestState((prev) => {
+        if (!prev || prev.id !== transferId || !prev.data) {
+          return prev;
+        }
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            transfer: { ...prev.data.transfer, status: nextStatus },
+          },
+        };
+      });
+      if (payload?.receiptUrl) {
+        setIssuedReceiptUrl(payload.receiptUrl);
+      }
+      setReconcileResult({
+        beforeStatus: payload?.beforeStatus ?? nextStatus,
+        afterStatus: nextStatus,
+        providerStatus: payload?.providerStatus ?? "",
+        receiptUrl: payload?.receiptUrl ?? null,
+      });
+      setReconcileState("success");
+      try {
+        const refreshed = await fetchEvents(transferId);
+        setEventsState({ id: transferId, data: refreshed, error: null });
+      } catch {
+        // Keep existing events on refresh failure.
+      }
+      try {
+        const refreshedAttempts = await fetchAttempts(transferId);
+        setAttemptsState({ id: transferId, data: refreshedAttempts, error: null });
+      } catch {
+        // Keep existing attempts on refresh failure.
+      }
+    } catch {
+      setReconcileError(messages.reconcilePayoutErrorLabel);
+      setReconcileState("error");
+    }
+  }, [
+    fetchAttempts,
+    fetchEvents,
+    messages.reconcilePayoutErrorLabel,
+    messages.reconcilePayoutMissingProviderLabel,
+    messages.reconcilePayoutNotProcessingLabel,
+    transferId,
+    transferStatusOverride,
+  ]);
 
   const activeState = requestState?.id === transferId ? requestState : null;
   const data = activeState?.data ?? null;
@@ -675,6 +946,20 @@ export default function TransferReceiptPage() {
   const { transfer, quote, events, cryptoPayout } = data;
   const transferStatus = transferStatusOverride ?? transfer.status;
   const executeUi = resolveExecutePayoutUi(transferStatus, executeState);
+  const payoutActionError = cancelError ?? executeError;
+  const payoutAction = resolvePayoutAction(transferStatus);
+  const showExecuteButton = payoutAction === "execute";
+  const showRetryButton = payoutAction === "retry";
+  const showCancelButton = transferStatus === "PROCESSING";
+  const showReconcileButton =
+    isAdmin && (transferStatus === "PROCESSING" || transferStatus === "FAILED");
+  const showPayoutInfo = shouldShowPayoutInfo({
+    status: transferStatus,
+    providerPayoutId: transfer.providerPayoutId,
+    providerPayoutStatus: transfer.providerPayoutStatus,
+    providerPayoutProvider: transfer.providerPayoutProvider,
+    providerPayoutUpdatedAt: transfer.providerPayoutUpdatedAt,
+  });
   const lightningStatusLabel = cryptoPayout
     ? cryptoPayout.status === "PAID"
       ? messages.lightningPaidLabel
@@ -823,6 +1108,7 @@ export default function TransferReceiptPage() {
             : messages.nextStepReady;
   const receiptSnapshot = receiptData?.snapshot ?? null;
   const reconciliationData = reconciliationState?.data ?? null;
+  const attemptsData = attemptsState?.data ?? null;
   const receiptUrl =
     issuedReceiptUrl ?? receiptData?.receiptUrl ?? null;
   const receiptUi = resolveReceiptUiState(
@@ -1016,23 +1302,47 @@ export default function TransferReceiptPage() {
                       {messages.executePayoutFailedLabel}
                     </p>
                   ) : null}
-                  {executeError ? (
+                  {payoutActionError ? (
                     <p className="mt-1 text-xs text-rose-300">
-                      {executeError}
+                      {payoutActionError}
                     </p>
                   ) : null}
                 </div>
                 <div className="flex items-center gap-3">
-                  {executeUi.showButton ? (
+                  {showExecuteButton ? (
                     <button
                       type="button"
                       onClick={handleExecutePayout}
-                      disabled={executeUi.disabled}
+                      disabled={executeState === "loading"}
                       className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {executeState === "loading"
                         ? messages.executePayoutLoadingLabel
                         : messages.executePayoutButtonLabel}
+                    </button>
+                  ) : null}
+                  {showRetryButton ? (
+                    <button
+                      type="button"
+                      onClick={handleExecutePayout}
+                      disabled={executeState === "loading"}
+                      className="rounded-full border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-xs font-medium text-amber-100 transition hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {executeState === "loading"
+                        ? messages.executePayoutLoadingLabel
+                        : messages.executePayoutRetryLabel}
+                    </button>
+                  ) : null}
+                  {showCancelButton ? (
+                    <button
+                      type="button"
+                      onClick={handleCancelPayout}
+                      disabled={cancelState === "loading"}
+                      className="rounded-full border border-rose-400/40 bg-rose-500/20 px-4 py-2 text-xs font-medium text-rose-100 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {cancelState === "loading"
+                        ? messages.cancelPayoutLoadingLabel
+                        : messages.cancelPayoutButtonLabel}
                     </button>
                   ) : null}
                   <span className="text-xs text-slate-500">
@@ -1469,6 +1779,129 @@ export default function TransferReceiptPage() {
                   </span>
                 </div>
               </div>
+              {showReconcileButton ? (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-200">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs font-medium text-slate-400">
+                      {messages.reconcilePayoutTitleLabel}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleReconcilePayout}
+                      disabled={reconcileState === "loading"}
+                      className="rounded-full border border-indigo-400/40 bg-indigo-500/20 px-4 py-2 text-[11px] font-medium text-indigo-100 transition hover:bg-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {reconcileState === "loading"
+                        ? messages.reconcilePayoutLoadingLabel
+                        : messages.reconcilePayoutButtonLabel}
+                    </button>
+                  </div>
+                  {reconcileError ? (
+                    <p className="mt-2 text-[11px] text-rose-300">
+                      {reconcileError}
+                    </p>
+                  ) : null}
+                  {reconcileState === "success" ? (
+                    <p className="mt-2 text-[11px] text-slate-400">
+                      {messages.reconcilePayoutSuccessLabel}
+                    </p>
+                  ) : null}
+                  {reconcileResult?.providerStatus ? (
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {messages.reconcilePayoutProviderStatusLabel}{" "}
+                      {reconcileResult.providerStatus}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {showPayoutInfo ? (
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <p className="text-xs font-medium text-slate-400">
+                  {messages.reconciliationProviderLabel}
+                </p>
+                <div className="mt-4 space-y-3 text-sm text-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span>{messages.providerLabel}</span>
+                    <span className="font-semibold text-white">
+                      {transfer.providerPayoutProvider ?? "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{messages.providerPayoutIdLabel}</span>
+                    <span className="font-semibold text-white">
+                      {transfer.providerPayoutId ?? "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{messages.providerStatusLabel}</span>
+                    <span className="font-semibold text-white">
+                      {transfer.providerPayoutStatus ?? "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{messages.providerUpdatedAtLabel}</span>
+                    <span className="font-semibold text-white">
+                      {transfer.providerPayoutUpdatedAt
+                        ? formatDateTime(transfer.providerPayoutUpdatedAt, locale)
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <p className="text-xs font-medium text-slate-400">
+                {messages.payoutDiagnosticsTitle}
+              </p>
+              {attemptsData && attemptsData.length > 0 ? (
+                <div className="mt-4 overflow-x-auto">
+                  <table className="min-w-full text-left text-xs text-slate-200">
+                    <thead className="text-[11px] uppercase text-slate-400">
+                      <tr>
+                        <th className="py-2 pr-4">{messages.payoutDiagnosticsAttemptLabel}</th>
+                        <th className="py-2 pr-4">{messages.payoutDiagnosticsProviderLabel}</th>
+                        <th className="py-2 pr-4">{messages.payoutDiagnosticsStatusLabel}</th>
+                        <th className="py-2 pr-4">{messages.payoutDiagnosticsRefLabel}</th>
+                        <th className="py-2 pr-4">{messages.payoutDiagnosticsStartedLabel}</th>
+                        <th className="py-2 pr-4">{messages.payoutDiagnosticsFinishedLabel}</th>
+                        <th className="py-2 pr-4">{messages.payoutDiagnosticsErrorLabel}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/10">
+                      {attemptsData.map((attempt) => (
+                        <tr key={`${attempt.attemptNumber}-${attempt.providerKey}`}>
+                          <td className="py-2 pr-4 font-semibold text-white">
+                            {attempt.attemptNumber}
+                          </td>
+                          <td className="py-2 pr-4">{attempt.providerKey}</td>
+                          <td className="py-2 pr-4">{attempt.status}</td>
+                          <td className="py-2 pr-4">
+                            {attempt.providerPayoutId ?? "—"}
+                          </td>
+                          <td className="py-2 pr-4">
+                            {formatDateTime(attempt.startedAt, locale)}
+                          </td>
+                          <td className="py-2 pr-4">
+                            {attempt.finishedAt
+                              ? formatDateTime(attempt.finishedAt, locale)
+                              : "—"}
+                          </td>
+                          <td className="py-2 pr-4">
+                            {attempt.errorCode ?? attempt.errorMessage ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-slate-400">
+                  {messages.payoutDiagnosticsEmptyLabel}
+                </p>
+              )}
             </div>
           </div>
         </section>
