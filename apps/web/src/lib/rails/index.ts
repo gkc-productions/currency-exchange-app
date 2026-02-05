@@ -56,6 +56,7 @@ const adapters: Record<PayoutRail, PayoutAdapter> = {
   BANK: simulatedAdapter("BANK", "BankSim"),
   MOBILE_MONEY: simulatedAdapter("MOBILE_MONEY", "MTN-Sim"),
   LIGHTNING: simulatedAdapter("LIGHTNING", "LightningSim"),
+  CRYPTO: simulatedAdapter("CRYPTO", "CryptoSim"),
 };
 
 export async function executePayout({

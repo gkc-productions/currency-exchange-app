@@ -17,7 +17,8 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const payoutRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING"]);
+const payoutRails = new Set(["BANK", "MOBILE_MONEY", "LIGHTNING", "CRYPTO"]);
+const fundingMethods = new Set(["CARD", "BANK", "WALLET", "CRYPTO"]);
 const cryptoNetworks = new Set(["BTC_LIGHTNING", "BTC_ONCHAIN"]);
 const referenceAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 const referenceLength = 6;
@@ -32,6 +33,7 @@ const allowHeaders = {
 type TransferPayload = {
   quoteId?: unknown;
   payoutRail?: unknown;
+  fundingMethod?: unknown;
   recipientId?: unknown;
   recipientName?: unknown;
   recipientCountry?: unknown;
@@ -101,16 +103,27 @@ function createPaymentHash(seed: string) {
   return createHash("sha256").update(seed).digest("hex");
 }
 
-function createLightningInvoice({
+function createCryptoPaymentRequest({
   referenceCode,
   amountSats,
+  network,
 }: {
   referenceCode: string;
   amountSats: number;
+  network: "BTC_LIGHTNING" | "BTC_ONCHAIN";
 }) {
-  const paymentHash = createPaymentHash(`${referenceCode}:${amountSats}`);
+  const paymentHash = createPaymentHash(`${referenceCode}:${amountSats}:${network}`);
+  if (network === "BTC_ONCHAIN") {
+    const address = `bc1${paymentHash.slice(0, 32)}`;
+    const invoice = `bitcoin:${address}?amount=${amountSats}`;
+    return { invoice, paymentHash };
+  }
   const invoice = `lnbc${amountSats}n1${paymentHash.slice(0, 24)}${referenceCode.toLowerCase()}`;
   return { invoice, paymentHash };
+}
+
+function jsonError(message: string, errorCode: string, status: number) {
+  return NextResponse.json({ error: message, errorCode, message }, { status });
 }
 
 function buildTransferResponse(transfer: {
@@ -119,6 +132,7 @@ function buildTransferResponse(transfer: {
   quoteId: string;
   status: string;
   payoutRail: string;
+  fundingMethod: string;
   recipientName: string;
   recipientCountry: string;
   recipientPhone: string | null;
@@ -141,6 +155,7 @@ function buildTransferResponse(transfer: {
     quoteId: transfer.quoteId,
     status: transfer.status,
     payoutRail: transfer.payoutRail,
+    fundingMethod: transfer.fundingMethod,
     recipientName: transfer.recipientName,
     recipientCountry: transfer.recipientCountry,
     recipientPhone: transfer.recipientPhone,
@@ -267,28 +282,40 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return NextResponse.json(
-        { error: "Invalid request payload." },
-        { status: 400 }
-      );
+      return jsonError("Invalid request payload.", "INVALID_PAYLOAD", 400);
     }
     payload = body as TransferPayload;
   } catch {
-    return NextResponse.json({ error: "We couldn't process your request. Please try again." }, { status: 400 });
+    return jsonError(
+      "We couldn't process your request. Please try again.",
+      "INVALID_JSON",
+      400
+    );
   }
 
   const quoteId = readRequiredString(payload.quoteId);
   if (!quoteId) {
-    return NextResponse.json({ error: "A quote is required to create a transfer. Please request a quote first." }, { status: 400 });
+    return jsonError(
+      "A quote is required to create a transfer. Please request a quote first.",
+      "MISSING_QUOTE",
+      400
+    );
   }
 
   const payoutRailInput = readRequiredString(payload.payoutRail);
   const payoutRail = payoutRailInput?.toUpperCase() ?? "";
   if (!payoutRails.has(payoutRail)) {
-    return NextResponse.json(
-      { error: "Please select a valid payout method: Bank Transfer, Mobile Money, or Bitcoin Lightning." },
-      { status: 400 }
+    return jsonError(
+      "Please select a valid payout method: Bank Transfer, Mobile Money, Lightning, or Crypto.",
+      "INVALID_PAYOUT_RAIL",
+      400
     );
+  }
+
+  const fundingMethodInput = readOptionalString(payload.fundingMethod);
+  const fundingMethod = fundingMethodInput?.toUpperCase() ?? "CARD";
+  if (!fundingMethods.has(fundingMethod)) {
+    return jsonError("Please select a valid funding method.", "INVALID_FUNDING_METHOD", 400);
   }
 
   const cryptoPayload =
@@ -296,21 +323,23 @@ export async function POST(req: Request) {
   let cryptoNetwork: string | null = null;
   let requestedAmountSats: number | null = null;
 
-  if (payoutRail === "LIGHTNING") {
+  if (payoutRail === "LIGHTNING" || payoutRail === "CRYPTO") {
     const networkInput = readRequiredString(
       (cryptoPayload as { network?: unknown } | null)?.network
     );
     const network = networkInput?.toUpperCase() ?? "";
     if (!cryptoNetworks.has(network)) {
-      return NextResponse.json(
-        { error: "crypto.network must be BTC_LIGHTNING or BTC_ONCHAIN" },
-        { status: 400 }
+      return jsonError(
+        "crypto.network must be BTC_LIGHTNING or BTC_ONCHAIN",
+        "INVALID_CRYPTO_NETWORK",
+        400
       );
     }
-    if (network !== "BTC_LIGHTNING") {
-      return NextResponse.json(
-        { error: "crypto.network must be BTC_LIGHTNING for Lightning payouts" },
-        { status: 400 }
+    if (payoutRail === "LIGHTNING" && network !== "BTC_LIGHTNING") {
+      return jsonError(
+        "crypto.network must be BTC_LIGHTNING for Lightning payouts",
+        "INVALID_CRYPTO_NETWORK",
+        400
       );
     }
     cryptoNetwork = network;
@@ -319,9 +348,10 @@ export async function POST(req: Request) {
       (cryptoPayload as { amountSats?: unknown } | null)?.amountSats
     );
     if (!amountSatsResult.valid) {
-      return NextResponse.json(
-        { error: "crypto.amountSats must be a positive integer" },
-        { status: 400 }
+      return jsonError(
+        "crypto.amountSats must be a positive integer",
+        "INVALID_CRYPTO_AMOUNT",
+        400
       );
     }
     requestedAmountSats = amountSatsResult.value;
@@ -449,24 +479,29 @@ export async function POST(req: Request) {
   });
 
   if (!corridor || !corridor.isActive) {
-    return NextResponse.json(
-      { error: "No active corridor for this asset pair. Choose another pair." },
-      { status: 400 }
+    return jsonError(
+      "No active corridor for this asset pair. Choose another pair.",
+      "NO_ACTIVE_CORRIDOR",
+      400
     );
   }
+
+  const routeRail =
+    payoutRail === "CRYPTO" ? "LIGHTNING" : (payoutRail as "BANK" | "MOBILE_MONEY" | "LIGHTNING");
 
   const route = await prisma.route.findFirst({
     where: {
       corridorId: corridor.id,
-      rail: payoutRail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
+      rail: routeRail,
       isActive: true,
     },
   });
 
   if (!route) {
-    return NextResponse.json(
-      { error: "No active route for the selected rail. Pick a different rail." },
-      { status: 400 }
+    return jsonError(
+      "No active route for the selected rail. Pick a different rail.",
+      "NO_ACTIVE_ROUTE",
+      400
     );
   }
 
@@ -536,9 +571,15 @@ export async function POST(req: Request) {
   try {
     for (let attempt = 0; attempt < maxReferenceAttempts; attempt += 1) {
       const referenceCode = createReferenceCode();
-      const lightningInvoice =
-        payoutRail === "LIGHTNING" && amountSats
-          ? createLightningInvoice({ referenceCode, amountSats })
+      const cryptoInvoice =
+        (payoutRail === "LIGHTNING" || payoutRail === "CRYPTO") &&
+        amountSats &&
+        cryptoNetwork
+          ? createCryptoPaymentRequest({
+              referenceCode,
+              amountSats,
+              network: cryptoNetwork as "BTC_LIGHTNING" | "BTC_ONCHAIN",
+            })
           : null;
       const events = [
         { type: "CREATED", message: messages.transferCreatedEvent },
@@ -547,7 +588,7 @@ export async function POST(req: Request) {
           message: messages.quoteLockedEvent(expiresAtLabel),
         },
       ];
-      if (payoutRail === "LIGHTNING") {
+      if (payoutRail === "LIGHTNING" || payoutRail === "CRYPTO") {
         events.push({
           type: "INVOICE_ISSUED",
           message: messages.invoiceIssuedEvent,
@@ -559,7 +600,8 @@ export async function POST(req: Request) {
             data: {
               quoteId,
               status: "READY",
-              payoutRail: payoutRail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
+              payoutRail: payoutRail as "BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO",
+              fundingMethod: fundingMethod as "CARD" | "BANK" | "WALLET" | "CRYPTO",
               userId,
               recipientId,
               recipientName,
@@ -574,12 +616,14 @@ export async function POST(req: Request) {
               referenceCode,
               idempotencyKey,
               cryptoPayout:
-                payoutRail === "LIGHTNING" && amountSats && lightningInvoice
+                (payoutRail === "LIGHTNING" || payoutRail === "CRYPTO") &&
+                amountSats &&
+                cryptoInvoice
                   ? {
                       create: {
-                        network: cryptoNetwork as "BTC_LIGHTNING",
-                        invoice: lightningInvoice.invoice,
-                        paymentHash: lightningInvoice.paymentHash,
+                        network: cryptoNetwork as "BTC_LIGHTNING" | "BTC_ONCHAIN",
+                        invoice: cryptoInvoice.invoice,
+                        paymentHash: cryptoInvoice.paymentHash,
                         amountSats,
                         status: "REQUESTED",
                       },
@@ -620,6 +664,7 @@ export async function POST(req: Request) {
                     expiresAt: quote.expiresAt.toISOString(),
                     lockedAt: lockedAt.toISOString(),
                   },
+                  fundingMethod,
                   recipient: {
                     name: recipientName,
                     country: recipientCountry,

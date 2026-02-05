@@ -269,6 +269,12 @@ export type Messages = {
   payoutRailBankLabel: string;
   payoutRailMobileMoneyLabel: string;
   payoutRailLightningLabel: string;
+  payoutRailCryptoLabel: string;
+  fundingMethodLabel: string;
+  fundingMethodCardLabel: string;
+  fundingMethodBankLabel: string;
+  fundingMethodWalletLabel: string;
+  fundingMethodCryptoLabel: string;
   lockedQuoteSummaryLabel: string;
   receiptSendAmountLabel: string;
   receiptAppliedRateLabel: string;
@@ -719,6 +725,12 @@ const EN_MESSAGES: Messages = {
   payoutRailBankLabel: "Bank transfer",
   payoutRailMobileMoneyLabel: "Mobile money",
   payoutRailLightningLabel: "Lightning",
+  payoutRailCryptoLabel: "Crypto",
+  fundingMethodLabel: "Funding method",
+  fundingMethodCardLabel: "Card",
+  fundingMethodBankLabel: "Bank",
+  fundingMethodWalletLabel: "Wallet",
+  fundingMethodCryptoLabel: "Crypto",
   lockedQuoteSummaryLabel: "Locked quote breakdown",
   receiptSendAmountLabel: "Send amount",
   receiptAppliedRateLabel: "Applied rate",
@@ -1186,6 +1198,12 @@ const FR_MESSAGES: Messages = {
   payoutRailBankLabel: "Virement bancaire",
   payoutRailMobileMoneyLabel: "Mobile money",
   payoutRailLightningLabel: "Lightning",
+  payoutRailCryptoLabel: "Crypto",
+  fundingMethodLabel: "Méthode de financement",
+  fundingMethodCardLabel: "Carte",
+  fundingMethodBankLabel: "Banque",
+  fundingMethodWalletLabel: "Portefeuille",
+  fundingMethodCryptoLabel: "Crypto",
   lockedQuoteSummaryLabel: "Détail du devis verrouillé",
   receiptSendAmountLabel: "Montant envoyé",
   receiptAppliedRateLabel: "Taux appliqué",

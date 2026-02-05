@@ -15,6 +15,14 @@ enum PayoutRail {
   BANK
   MOBILE_MONEY
   LIGHTNING
+  CRYPTO
+}
+
+enum FundingMethod {
+  CARD
+  BANK
+  WALLET
+  CRYPTO
 }
 
 enum TransferStatus {
@@ -146,6 +154,7 @@ model Transfer {
   payoutLastErrorMessage      String?
   payoutProviderCursor        Int            @default(0)
   payoutRail                  PayoutRail
+  fundingMethod               FundingMethod  @default(CARD)
   recipientName               String
   recipientCountry            String
   recipientPhone              String?

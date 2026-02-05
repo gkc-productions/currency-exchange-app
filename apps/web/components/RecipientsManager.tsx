@@ -7,7 +7,7 @@ export type RecipientSummary = {
   id: string;
   name: string;
   country: string;
-  rail: "BANK" | "MOBILE_MONEY" | "LIGHTNING";
+  rail: "BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO";
   bankName: string | null;
   bankAccount: string | null;
   mobileMoneyProvider: string | null;
@@ -28,11 +28,12 @@ export default function RecipientsManager({
     { value: "BANK", label: messages.payoutRailBankLabel },
     { value: "MOBILE_MONEY", label: messages.payoutRailMobileMoneyLabel },
     { value: "LIGHTNING", label: messages.payoutRailLightningLabel },
+    { value: "CRYPTO", label: messages.payoutRailCryptoLabel },
   ] as const;
   const [recipients, setRecipients] = useState(initialRecipients);
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
-  const [rail, setRail] = useState<"BANK" | "MOBILE_MONEY" | "LIGHTNING">(
+  const [rail, setRail] = useState<"BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO">(
     "BANK"
   );
   const [bankName, setBankName] = useState("");
@@ -196,7 +197,9 @@ export default function RecipientsManager({
             {messages.payoutRailLabel}
             <select
               value={rail}
-              onChange={(event) => setRail(event.target.value as "BANK" | "MOBILE_MONEY" | "LIGHTNING")}
+              onChange={(event) =>
+                setRail(event.target.value as "BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO")
+              }
               className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900"
             >
               {railOptions.map((option) => (

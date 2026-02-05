@@ -107,7 +107,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid country code." }, { status: 400 });
   }
 
-  if (!new Set(["BANK", "MOBILE_MONEY", "LIGHTNING"]).has(rail)) {
+  if (!new Set(["BANK", "MOBILE_MONEY", "LIGHTNING", "CRYPTO"]).has(rail)) {
     return NextResponse.json({ error: "Invalid payout rail." }, { status: 400 });
   }
 
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
       userId: user.id,
       name,
       country,
-      rail: rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING",
+      rail: rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO",
       bankName,
       bankAccount,
       mobileMoneyProvider,

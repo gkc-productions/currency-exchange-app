@@ -158,7 +158,7 @@ type Recipient = {
   id: string;
   name: string;
   country: string;
-  rail: "BANK" | "MOBILE_MONEY" | "LIGHTNING";
+  rail: "BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO";
   bankName: string | null;
   bankAccount: string | null;
   mobileMoneyProvider: string | null;
@@ -210,8 +210,9 @@ export default function Home() {
   const [recipientPhone, setRecipientPhone] = useState("");
   const [recipientLightningInvoice, setRecipientLightningInvoice] = useState("");
   const [payoutRail, setPayoutRail] = useState<
-    "" | "MOBILE_MONEY" | "BANK" | "LIGHTNING"
+    "" | "MOBILE_MONEY" | "BANK" | "LIGHTNING" | "CRYPTO"
   >("");
+  const [fundingMethod, setFundingMethod] = useState("CARD");
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState("");
@@ -314,6 +315,16 @@ export default function Home() {
       { code: "BANK", name: messages.payoutRailBankLabel },
       { code: "MOBILE_MONEY", name: messages.payoutRailMobileMoneyLabel },
       { code: "LIGHTNING", name: messages.payoutRailLightningLabel },
+      { code: "CRYPTO", name: messages.payoutRailCryptoLabel },
+    ],
+    [messages]
+  );
+  const fundingMethodOptions = useMemo(
+    () => [
+      { code: "CARD", name: messages.fundingMethodCardLabel },
+      { code: "BANK", name: messages.fundingMethodBankLabel },
+      { code: "WALLET", name: messages.fundingMethodWalletLabel },
+      { code: "CRYPTO", name: messages.fundingMethodCryptoLabel },
     ],
     [messages]
   );
@@ -465,7 +476,8 @@ export default function Home() {
         recipientCountry: string;
         recipientPhone: string;
         recipientLightningInvoice: string;
-        payoutRail: "" | "MOBILE_MONEY" | "BANK" | "LIGHTNING";
+        payoutRail: "" | "MOBILE_MONEY" | "BANK" | "LIGHTNING" | "CRYPTO";
+        fundingMethod: string;
         bankName: string;
         bankAccount: string;
         mobileMoneyProvider: string;
@@ -501,6 +513,7 @@ export default function Home() {
         setRecipientLightningInvoice(parsed.recipientLightningInvoice);
       }
       if (parsed.payoutRail) setPayoutRail(parsed.payoutRail);
+      if (parsed.fundingMethod) setFundingMethod(parsed.fundingMethod);
       if (parsed.bankName) setBankName(parsed.bankName);
       if (parsed.bankAccount) setBankAccount(parsed.bankAccount);
       if (parsed.mobileMoneyProvider) {
@@ -549,6 +562,7 @@ export default function Home() {
       recipientPhone,
       recipientLightningInvoice,
       payoutRail,
+      fundingMethod,
       bankName,
       bankAccount,
       mobileMoneyProvider,
@@ -579,6 +593,7 @@ export default function Home() {
     recipientPhone,
     recipientLightningInvoice,
     payoutRail,
+    fundingMethod,
     bankName,
     bankAccount,
     mobileMoneyProvider,
@@ -933,7 +948,7 @@ export default function Home() {
     setRecipientCountry(defaultRecipientCountry);
     setRecipientPhone("");
     setRecipientLightningInvoice("");
-    setPayoutRail(rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING");
+    setPayoutRail(rail as "BANK" | "MOBILE_MONEY" | "LIGHTNING" | "CRYPTO");
     setBankName("");
     setBankAccount("");
     setMobileMoneyProvider("");
@@ -1060,6 +1075,7 @@ export default function Home() {
       const payload: Record<string, unknown> = {
         quoteId: lockedQuoteId,
         payoutRail,
+        fundingMethod,
         recipientName: trimmedRecipientName,
         recipientCountry: trimmedRecipientCountry,
         memo: memo.trim() || undefined,
@@ -1089,7 +1105,7 @@ export default function Home() {
           number: mobileMoneyNumber.trim(),
         };
       }
-      if (payoutRail === "LIGHTNING") {
+      if (payoutRail === "LIGHTNING" || payoutRail === "CRYPTO") {
         payload.crypto = {
           network: "BTC_LIGHTNING",
         };
@@ -2146,9 +2162,33 @@ export default function Home() {
                     </div>
                     <div className="mt-4">
                       <p className="text-xs font-medium text-slate-500">
+                        {messages.fundingMethodLabel}
+                      </p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                        {fundingMethodOptions.map((method) => (
+                          <label
+                            key={method.code}
+                            className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700"
+                          >
+                            <input
+                              type="radio"
+                              name="fundingMethod"
+                              value={method.code}
+                              checked={fundingMethod === method.code}
+                              onChange={() => setFundingMethod(method.code)}
+                              className="h-4 w-4 accent-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                              aria-label={method.name}
+                            />
+                            {method.name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-xs font-medium text-slate-500">
                         {messages.payoutRailLabel}
                       </p>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                      <div className="mt-2 grid gap-2 sm:grid-cols-4">
                         {payoutRailOptions.map((railOption) => (
                           <label
                             key={railOption.code}
@@ -2165,6 +2205,7 @@ export default function Home() {
                                     | "MOBILE_MONEY"
                                     | "BANK"
                                     | "LIGHTNING"
+                                    | "CRYPTO"
                                 );
                                 setTransferTouched((prev) => ({
                                   ...prev,

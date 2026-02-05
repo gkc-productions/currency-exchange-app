@@ -29,11 +29,13 @@ type QuoteAuditSnapshot = {
   rateTimestamp: string;
   expiresAt: string;
   lockedAt: string;
+  fundingMethod?: string | null;
 };
 
 type AuditMetadata = {
   snapshot?: {
     quote?: QuoteAuditSnapshot;
+    fundingMethod?: string | null;
   };
 };
 
@@ -122,6 +124,10 @@ async function resolveTransferSnapshot(transferId: string) {
   const snapshotCandidate = metadata?.snapshot?.quote;
   const snapshot = isQuoteAuditSnapshot(snapshotCandidate) ? snapshotCandidate : null;
 
+  if (snapshot && metadata?.snapshot?.fundingMethod !== undefined) {
+    snapshot.fundingMethod = metadata.snapshot.fundingMethod ?? null;
+  }
+
   return { transfer, snapshot, auditLog };
 }
 
@@ -129,6 +135,7 @@ async function buildSnapshotFromTransfer(transfer: {
   id: string;
   quoteId: string;
   createdAt: Date;
+  fundingMethod: string | null;
   quote: {
     id: string;
     fromCode: string | null;
@@ -191,6 +198,7 @@ async function buildSnapshotFromTransfer(transfer: {
     rateTimestamp: transfer.quote.rateTimestamp.toISOString(),
     expiresAt: transfer.quote.expiresAt.toISOString(),
     lockedAt: lockedAt.toISOString(),
+    fundingMethod: transfer.fundingMethod ?? null,
   };
 
   return snapshot;
@@ -275,7 +283,7 @@ export async function GET(
         data: {
           metadata: {
             ...(auditLog.metadata as Record<string, unknown> | null),
-            snapshot: { quote: rebuilt },
+            snapshot: { quote: rebuilt, fundingMethod: transfer.fundingMethod ?? null },
           },
         },
       });
@@ -286,7 +294,7 @@ export async function GET(
           action: "RECEIPT_SNAPSHOT_REBUILT",
           entityType: "Transfer",
           entityId: transfer.id,
-          metadata: { snapshot: { quote: rebuilt } },
+          metadata: { snapshot: { quote: rebuilt, fundingMethod: transfer.fundingMethod ?? null } },
         },
       });
     }
