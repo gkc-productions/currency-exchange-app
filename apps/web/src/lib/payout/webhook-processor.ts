@@ -1,7 +1,8 @@
 import { Prisma, TransferStatus } from "@prisma/client";
+import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/src/lib/prisma";
-
-const validStatuses = new Set(["COMPLETED", "FAILED"]);
+import { mapProviderStatus } from "@/src/lib/payout/provider-state";
+import { ensureReceiptIssued } from "@/src/lib/receipt-issue";
 
 type ProcessInput = {
   provider: string;
@@ -21,22 +22,28 @@ type ProcessResult = {
   deduped: boolean;
 };
 
-function mapProviderStatusToTransferStatus(providerStatus: string) {
-  if (providerStatus === "COMPLETED") {
-    return TransferStatus.COMPLETED;
+export function verifyWebhookSignature(options: {
+  secret: string;
+  rawBody: string;
+  signatureHeader: string | null;
+  timestampHeader: string | null;
+}) {
+  const { secret, rawBody, signatureHeader, timestampHeader } = options;
+  if (!signatureHeader || !secret) {
+    return false;
   }
-  if (providerStatus === "FAILED") {
-    return TransferStatus.FAILED;
+  const mode = (process.env.WEBHOOK_SIGNATURE_MODE ?? "").toLowerCase();
+  const base =
+    mode === "provider_v1" ? `${timestampHeader ?? ""}.${rawBody}` : rawBody;
+  const expected = createHmac("sha256", secret).update(base).digest("hex");
+  if (expected.length !== signatureHeader.length) {
+    return false;
   }
-  return TransferStatus.PROCESSING;
-}
-
-function getReceiptBaseUrl() {
-  return process.env.APP_BASE_URL ?? process.env.NEXTAUTH_URL ?? "https://app.clarisend.co";
-}
-
-function buildReceiptUrl(transferId: string) {
-  return `${getReceiptBaseUrl()}/en/transfer/${transferId}`;
+  try {
+    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(signatureHeader, "hex"));
+  } catch {
+    return false;
+  }
 }
 
 export async function processPayoutWebhook(
@@ -44,9 +51,7 @@ export async function processPayoutWebhook(
   options?: { skipCreate?: boolean }
 ): Promise<ProcessResult> {
   const statusRaw = input.status.toUpperCase();
-  if (!validStatuses.has(statusRaw)) {
-    throw new Error("invalid_status");
-  }
+  const mapping = mapProviderStatus(statusRaw);
 
   const transfer = await prisma.transfer.findUnique({
     where: { id: input.transferId },
@@ -61,8 +66,26 @@ export async function processPayoutWebhook(
     throw new Error("payout_mismatch");
   }
 
-  const finalStatus = mapProviderStatusToTransferStatus(statusRaw);
-  const receiptUrl = buildReceiptUrl(transfer.id);
+  if (!mapping) {
+    if (!options?.skipCreate) {
+      await prisma.payoutWebhookEvent.create({
+        data: {
+          eventId: input.eventId,
+          provider: input.provider,
+          providerPayoutId: input.payoutId,
+          status: statusRaw,
+          outcome: "noop",
+          rawHash: input.rawHash,
+          occurredAt: input.occurredAt,
+          signatureTimestamp: input.signatureTimestamp,
+          transferId: transfer.id,
+        },
+      });
+    }
+    return { transitioned: false, outcome: "noop" as const, deduped: false };
+  }
+
+  const finalStatus = mapping.transferStatus;
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
@@ -84,18 +107,7 @@ export async function processPayoutWebhook(
 
       if (transfer.status === TransferStatus.COMPLETED) {
         if (finalStatus === TransferStatus.COMPLETED) {
-          await tx.transfer.updateMany({
-            where: {
-              id: transfer.id,
-              status: TransferStatus.COMPLETED,
-              receiptUrl: null,
-              receiptIssuedAt: null,
-            },
-            data: {
-              receiptUrl,
-              receiptIssuedAt: new Date(),
-            },
-          });
+          await ensureReceiptIssued({ transferId: transfer.id });
         }
         if (!options?.skipCreate) {
           await tx.payoutWebhookEvent.update({
@@ -150,18 +162,7 @@ export async function processPayoutWebhook(
           return { transitioned: false, outcome: "noop" as const };
         }
 
-        await tx.transfer.updateMany({
-          where: {
-            id: transfer.id,
-            status: TransferStatus.COMPLETED,
-            receiptUrl: null,
-            receiptIssuedAt: null,
-          },
-          data: {
-            receiptUrl,
-            receiptIssuedAt: new Date(),
-          },
-        });
+        await ensureReceiptIssued({ transferId: transfer.id });
 
         await tx.transferEvent.create({
           data: {
@@ -205,18 +206,7 @@ export async function processPayoutWebhook(
       }
 
       if (finalStatus === TransferStatus.COMPLETED) {
-        await tx.transfer.updateMany({
-          where: {
-            id: transfer.id,
-            status: TransferStatus.COMPLETED,
-            receiptUrl: null,
-            receiptIssuedAt: null,
-          },
-          data: {
-            receiptUrl,
-            receiptIssuedAt: new Date(),
-          },
-        });
+        await ensureReceiptIssued({ transferId: transfer.id });
       }
 
       const attempt = await tx.payoutAttempt.findFirst({
@@ -240,16 +230,18 @@ export async function processPayoutWebhook(
         });
       }
 
-      await tx.transferEvent.create({
-        data: {
-          transferId: transfer.id,
-          type: finalStatus === TransferStatus.COMPLETED ? "PAYOUT_COMPLETED" : "PAYOUT_FAILED",
-          message:
-            finalStatus === TransferStatus.COMPLETED
-              ? `Payout completed. ref=${input.payoutId}`
-              : `Payout failed. ref=${input.payoutId}`,
-        },
-      });
+      if (mapping.eventType) {
+        await tx.transferEvent.create({
+          data: {
+            transferId: transfer.id,
+            type: mapping.eventType,
+            message:
+              mapping.eventType === "PAYOUT_COMPLETED"
+                ? `Payout completed. ref=${input.payoutId}`
+                : `Payout failed. ref=${input.payoutId}`,
+          },
+        });
+      }
 
       if (!options?.skipCreate) {
         await tx.payoutWebhookEvent.update({

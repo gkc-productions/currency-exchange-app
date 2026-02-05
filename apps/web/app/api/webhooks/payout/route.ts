@@ -1,10 +1,10 @@
-import { createHash, createHmac, timingSafeEqual } from "crypto";
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { logEvent, safeError } from "@/src/lib/observability";
 import { getReadOnlyResponse } from "@/src/lib/security";
-import { processPayoutWebhook } from "@/src/lib/payout/webhook-processor";
+import { processPayoutWebhook, verifyWebhookSignature } from "@/src/lib/payout/webhook-processor";
 
 export const runtime = "nodejs";
 
@@ -25,18 +25,6 @@ function readRequiredString(value: unknown) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function verifySignature(secret: string, rawBody: string, signatureHeader: string | null) {
-  if (!signatureHeader) {
-    return false;
-  }
-  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-  try {
-    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(signatureHeader, "hex"));
-  } catch {
-    return false;
-  }
-}
-
 function hashRawBody(rawBody: string) {
   return createHash("sha256").update(rawBody).digest("hex");
 }
@@ -53,9 +41,14 @@ function parseTimestamp(headerValue: string | null) {
 }
 
 function isTimestampFresh(timestampSeconds: number) {
+  const maxSkewSecondsRaw = process.env.WEBHOOK_MAX_SKEW_SECONDS ?? "300";
+  const maxSkewSeconds = Number.parseInt(maxSkewSecondsRaw, 10);
+  const skewSeconds = Number.isFinite(maxSkewSeconds) && maxSkewSeconds > 0
+    ? maxSkewSeconds
+    : 300;
   const nowMs = Date.now();
   const tsMs = timestampSeconds * 1000;
-  return Math.abs(nowMs - tsMs) <= 5 * 60 * 1000;
+  return Math.abs(nowMs - tsMs) <= skewSeconds * 1000;
 }
 
 export async function POST(req: Request) {
@@ -90,7 +83,14 @@ export async function POST(req: Request) {
       { status: 401 }
     );
   }
-  if (!verifySignature(secret, rawBody, signatureHeader)) {
+  if (
+    !verifyWebhookSignature({
+      secret,
+      rawBody,
+      signatureHeader,
+      timestampHeader,
+    })
+  ) {
     return NextResponse.json(
       { error: "invalid_signature", errorCode: "INVALID_SIGNATURE" },
       { status: 401 }
@@ -161,17 +161,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, deduped: true });
   }
 
-  await prisma.webhookEventReceipt.create({
-    data: {
-      provider,
-      eventId,
-      payload: payloadJson ?? undefined,
-      signature: signatureHeader ? `${signatureHeader.slice(0, 6)}...` : null,
-      receivedAt: new Date(),
-    },
-  }).catch(() => {
-    // Ignore receipt log failures to avoid blocking processing.
-  });
+  // Store only hashes/outcomes in payoutWebhookEvent; no raw payload persistence here.
   let updated: { transitioned: boolean; outcome: string; deduped: boolean };
   try {
     updated = await processPayoutWebhook(

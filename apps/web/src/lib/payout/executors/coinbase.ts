@@ -8,52 +8,47 @@ import type {
 } from "@/src/lib/payout/types";
 import { verifyWebhookSignature } from "@/src/lib/payout/webhook-processor";
 
-const requiredEnv = ["REAL_PAYOUT_API_KEY", "REAL_PAYOUT_ENDPOINT"] as const;
+const requiredEnv = [
+  "COINBASE_API_KEY",
+  "COINBASE_ACCOUNT_ID",
+  "COINBASE_WEBHOOK_SECRET",
+] as const;
 
 function missingEnv() {
   return requiredEnv.filter((key) => !process.env[key]);
 }
 
-export const realExecutor: PayoutExecutor = {
-  name: "real",
-  providerName: "RealProvider",
+export const coinbaseExecutor: PayoutExecutor = {
+  name: "coinbase",
+  providerName: "Coinbase",
   supportsNewPayoutOnRetry: true,
   async execute() {
-    const providerPayoutId = `real_${randomUUID()}`;
-    if (process.env.PAYOUT_EXTERNAL_CALLS === "0") {
-      const errorMessage = "External payout calls disabled";
-      return {
-        ok: false,
-        status: "FAILED",
-        provider: "RealProvider",
-        providerPayoutId,
-        providerRef: providerPayoutId,
-        message: errorMessage,
-        errorCode: "PAYOUT_DISABLED",
-        errorMessage,
-      };
-    }
+    const providerPayoutId = `coinbase_${randomUUID()}`;
     const missing = missingEnv();
     if (missing.length > 0) {
       const errorMessage = `Missing config: ${missing.join(", ")}`;
       return {
         ok: false,
         status: "FAILED",
-        provider: "RealProvider",
+        provider: "Coinbase",
         providerPayoutId,
         providerRef: providerPayoutId,
         message: errorMessage,
-        errorCode: "REAL_EXECUTOR_NOT_CONFIGURED",
+        errorCode: "COINBASE_NOT_CONFIGURED",
         errorMessage,
       };
     }
 
+    // TODO: Implement real Coinbase payout initiation.
     return {
-      ok: true,
-      status: "CREATED",
-      provider: "RealProvider",
+      ok: false,
+      status: "FAILED",
+      provider: "Coinbase",
       providerPayoutId,
       providerRef: providerPayoutId,
+      message: "Coinbase executor not implemented",
+      errorCode: "COINBASE_NOT_IMPLEMENTED",
+      errorMessage: "Coinbase executor not implemented",
     };
   },
   async getStatus({ providerPayoutId }) {
@@ -63,18 +58,19 @@ export const realExecutor: PayoutExecutor = {
       return {
         ok: false,
         status: "FAILED",
-        provider: "RealProvider",
+        provider: "Coinbase",
         providerPayoutId,
         message: errorMessage,
-        errorCode: "REAL_STATUS_NOT_CONFIGURED",
+        errorCode: "COINBASE_NOT_CONFIGURED",
         errorMessage,
       };
     }
+
     const status: PayoutProviderStatus = "PROCESSING";
     return {
       ok: true,
       status,
-      provider: "RealProvider",
+      provider: "Coinbase",
       providerPayoutId,
     };
   },

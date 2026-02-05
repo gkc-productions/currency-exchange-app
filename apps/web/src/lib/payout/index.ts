@@ -2,14 +2,20 @@ import type { PayoutExecutor } from "@/src/lib/payout/types";
 import type { PayoutStatusResult } from "@/src/lib/payout/types";
 import { mockExecutor } from "@/src/lib/payout/executors/mock";
 import { realExecutor } from "@/src/lib/payout/executors/real";
+import { coinbaseExecutor } from "@/src/lib/payout/executors/coinbase";
 
 const executorsByName: Record<string, PayoutExecutor> = {
   mock: mockExecutor,
   real: realExecutor,
+  coinbase: coinbaseExecutor,
 };
 
 export function getPayoutExecutor(): PayoutExecutor {
-  const configured = (process.env.PAYOUT_EXECUTOR ?? "mock").toLowerCase();
+  const configured = (
+    process.env.PAYOUT_PROVIDER ??
+    process.env.PAYOUT_EXECUTOR ??
+    "mock"
+  ).toLowerCase();
   return executorsByName[configured] ?? mockExecutor;
 }
 

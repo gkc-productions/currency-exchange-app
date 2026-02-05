@@ -100,62 +100,39 @@ export async function GET(req: Request) {
       signatureTimestamp: true,
       outcome: true,
       rawHash: true,
+      providerPayoutId: true,
     },
   });
 
-  const receipts = await prisma.webhookEventReceipt.findMany({
-    where: {
-      eventId: { in: events.map((event) => event.eventId) },
-    },
-    select: {
-      eventId: true,
-      signature: true,
-      payload: true,
-    },
-  });
-  const receiptMap = new Map(receipts.map((receipt) => [receipt.eventId, receipt]));
-
-  const rows: WebhookListRow[] = events
-    .map((event) => {
-      const outcome = mapOutcome(event.outcome);
-      if (statusFilter && outcome.status !== statusFilter) {
-        return null;
-      }
-      const receipt = receiptMap.get(event.eventId);
-      const payload = receipt?.payload as
-        | {
-            eventType?: string;
-            payoutId?: string;
-            reference?: string;
-            amount?: number;
-            currency?: string;
-          }
-        | undefined;
-
-      return {
-        id: event.eventId,
-        receivedAt: event.receivedAt,
-        provider: event.provider,
-        transferId: event.transferId,
-        status: outcome.status,
-        reason: outcome.reason,
-        rawHeaders: {
-          signaturePresent: Boolean(receipt?.signature),
-          timestamp: event.signatureTimestamp
-            ? event.signatureTimestamp.toISOString()
-            : null,
-          eventId: event.eventId,
-        },
-        payloadSummary: {
-          eventType: payload?.eventType ?? null,
-          payoutId: payload?.payoutId ?? event.rawHash ? event.rawHash.slice(0, 12) : null,
-          reference: payload?.reference ?? null,
-          amount: typeof payload?.amount === "number" ? payload.amount : null,
-          currency: payload?.currency ?? null,
-        },
-      };
-    })
-    .filter((row): row is WebhookListRow => Boolean(row));
+  const rows = events.reduce<WebhookListRow[]>((acc, event) => {
+    const outcome = mapOutcome(event.outcome);
+    if (statusFilter && outcome.status !== statusFilter) {
+      return acc;
+    }
+    acc.push({
+      id: event.eventId,
+      receivedAt: event.receivedAt,
+      provider: event.provider,
+      transferId: event.transferId,
+      status: outcome.status,
+      reason: outcome.reason,
+      rawHeaders: {
+        signaturePresent: false,
+        timestamp: event.signatureTimestamp
+          ? event.signatureTimestamp.toISOString()
+          : null,
+        eventId: event.eventId,
+      },
+      payloadSummary: {
+        eventType: event.status ?? null,
+        payoutId: event.providerPayoutId ?? (event.rawHash ? event.rawHash.slice(0, 12) : null),
+        reference: null,
+        amount: null,
+        currency: null,
+      },
+    });
+    return acc;
+  }, []);
 
   return NextResponse.json(rows);
 }

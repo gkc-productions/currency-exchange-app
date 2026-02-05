@@ -1,5 +1,10 @@
 export type PayoutExecutionStatus = "CREATED" | "FAILED";
-export type PayoutProviderStatus = "COMPLETED" | "FAILED" | "PROCESSING" | "PENDING";
+export type PayoutProviderStatus =
+  | "COMPLETED"
+  | "FAILED"
+  | "PROCESSING"
+  | "PENDING"
+  | "UNKNOWN";
 
 export type PayoutExecutionResult = {
   ok: boolean;
@@ -23,13 +28,31 @@ export type PayoutStatusResult = {
   errorMessage?: string;
 };
 
+export type PayoutWebhookValidationInput = {
+  secret: string;
+  rawBody: string;
+  signatureHeader: string | null;
+  timestampHeader: string | null;
+  eventIdHeader: string | null;
+};
+
+export type PayoutWebhookValidationResult = {
+  ok: boolean;
+  errorCode?: string;
+  message?: string;
+};
+
 export type PayoutExecutor = {
   name: string;
   providerName: string;
+  supportsNewPayoutOnRetry: boolean;
   execute: (input: {
     transferId: string;
     referenceCode: string;
     memo: string | null;
   }) => Promise<PayoutExecutionResult>;
   getStatus: (input: { providerPayoutId: string }) => Promise<PayoutStatusResult>;
+  validateWebhook: (
+    input: PayoutWebhookValidationInput
+  ) => Promise<PayoutWebhookValidationResult>;
 };

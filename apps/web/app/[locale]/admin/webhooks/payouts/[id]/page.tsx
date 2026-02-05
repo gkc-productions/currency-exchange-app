@@ -83,7 +83,9 @@ export default async function AdminPayoutWebhookDetailPage({
         <p><strong>Signature:</strong> {payload.headers.signature ?? "—"}</p>
       </div>
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
-        <pre className="text-xs text-slate-600 whitespace-pre-wrap">{JSON.stringify(payload.payload, null, 2)}</pre>
+        <p className="text-xs text-slate-500">
+          {messages.adminWebhookPayloadUnavailableLabel}
+        </p>
       </div>
     </div>
   );

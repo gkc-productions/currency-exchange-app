@@ -381,6 +381,51 @@ testIntegration("webhook completion issues receipt url", async () => {
   assert.equal(receiptRes.status, 200);
   const receiptPayload = receiptRes.json as { receiptUrl?: string | null };
   assert.equal(receiptPayload.receiptUrl, updated?.receiptUrl);
+
+  const detailRes = await fetchJson(`${INTEGRATION_BASE}/api/transfers/${transferId}`, {
+    headers: DEV_HEADERS,
+  });
+  if (detailRes.status !== 401) {
+    assert.equal(detailRes.status, 200);
+    const detail = detailRes.json as {
+      transfer?: { status?: string; receiptUrl?: string | null };
+    };
+    assert.equal(detail.transfer?.status, "COMPLETED");
+    assert.equal(detail.transfer?.receiptUrl, updated?.receiptUrl);
+  }
+});
+
+testIntegration("webhook skips unknown provider status", async () => {
+  const { transferId, providerPayoutId } = await createProcessingTransfer();
+  const secret = process.env.WEBHOOK_SECRET ?? "";
+  assert.ok(secret);
+  const payload = {
+    provider: "MockProvider",
+    payoutId: providerPayoutId,
+    transferId,
+    eventId: `evt_unknown_${transferId}`,
+    status: "MYSTERY",
+    occurredAt: new Date().toISOString(),
+  };
+  const rawBody = JSON.stringify(payload);
+  const signature = signPayload(secret, rawBody);
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+
+  const res = await fetchJson(`${INTEGRATION_BASE}/api/webhooks/payout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-webhook-signature": signature,
+      "x-payout-timestamp": timestamp,
+      "x-webhook-event-id": payload.eventId,
+    },
+    body: rawBody,
+  });
+  assert.equal(res.status, 200);
+  const eventCount = await prisma.transferEvent.count({
+    where: { transferId, type: { startsWith: "PAYOUT_" } },
+  });
+  assert.equal(eventCount, 0);
 });
 
 testIntegration("webhook rejects payout mismatch", async () => {

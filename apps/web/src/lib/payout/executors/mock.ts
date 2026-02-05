@@ -3,7 +3,10 @@ import type {
   PayoutExecutionResult,
   PayoutExecutor,
   PayoutProviderStatus,
+  PayoutWebhookValidationInput,
+  PayoutWebhookValidationResult,
 } from "@/src/lib/payout/types";
+import { verifyWebhookSignature } from "@/src/lib/payout/webhook-processor";
 
 function shouldFail(referenceCode: string, memo: string | null) {
   if (referenceCode.endsWith("F")) {
@@ -18,6 +21,7 @@ function shouldFail(referenceCode: string, memo: string | null) {
 export const mockExecutor: PayoutExecutor = {
   name: "mock",
   providerName: "MockProvider",
+  supportsNewPayoutOnRetry: true,
   async execute({ referenceCode, memo }) {
     const providerPayoutId = `mock_${randomUUID()}`;
     const failed = shouldFail(referenceCode, memo);
@@ -38,11 +42,13 @@ export const mockExecutor: PayoutExecutor = {
   },
   async getStatus({ providerPayoutId }) {
     const normalized = providerPayoutId.toUpperCase();
-    const status: PayoutProviderStatus = normalized.includes("FAIL")
-      ? "FAILED"
-      : normalized.includes("PROCESS")
-        ? "PROCESSING"
-        : "COMPLETED";
+    const status: PayoutProviderStatus = normalized.includes("UNKNOWN")
+      ? "UNKNOWN"
+      : normalized.includes("FAIL")
+        ? "FAILED"
+        : normalized.includes("PROCESS")
+          ? "PROCESSING"
+          : "COMPLETED";
     const failed = status === "FAILED";
     return {
       ok: !failed,
@@ -53,5 +59,22 @@ export const mockExecutor: PayoutExecutor = {
       errorCode: failed ? "MOCK_STATUS_FAILED" : undefined,
       errorMessage: failed ? "Simulated payout failed" : undefined,
     };
+  },
+  async validateWebhook({
+    secret,
+    rawBody,
+    signatureHeader,
+    timestampHeader,
+  }: PayoutWebhookValidationInput): Promise<PayoutWebhookValidationResult> {
+    if (!signatureHeader || !timestampHeader) {
+      return { ok: false, errorCode: "MISSING_HEADER" };
+    }
+    const ok = verifyWebhookSignature({
+      secret,
+      rawBody,
+      signatureHeader,
+      timestampHeader,
+    });
+    return ok ? { ok: true } : { ok: false, errorCode: "INVALID_SIGNATURE" };
   },
 };

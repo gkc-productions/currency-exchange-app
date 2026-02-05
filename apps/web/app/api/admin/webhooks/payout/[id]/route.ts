@@ -58,23 +58,13 @@ export async function GET(
       receivedAt: true,
       signatureTimestamp: true,
       outcome: true,
+      rawHash: true,
     },
   });
 
   if (!event) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
-
-  const receipt = await prisma.webhookEventReceipt.findUnique({
-    where: {
-      provider_eventId: { provider: event.provider, eventId },
-    },
-    select: {
-      signature: true,
-      payload: true,
-      receivedAt: true,
-    },
-  });
 
   const transfer = await prisma.transfer.findUnique({
     where: { id: event.transferId },
@@ -84,14 +74,14 @@ export async function GET(
   const detail: WebhookDetail = {
     id: event.eventId,
     headers: {
-      signature: receipt?.signature ?? null,
+      signature: null,
       signatureRedacted: true,
       timestamp: event.signatureTimestamp
         ? event.signatureTimestamp.toISOString()
         : null,
       eventId: event.eventId,
     },
-    payload: receipt?.payload ?? null,
+    payload: null,
     processing: {
       deduped: event.outcome === "noop",
       transferId: event.transferId,

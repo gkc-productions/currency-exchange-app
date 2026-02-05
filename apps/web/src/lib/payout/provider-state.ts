@@ -1,4 +1,11 @@
 import { prisma } from "@/src/lib/prisma";
+import { TransferStatus } from "@prisma/client";
+
+export type ProviderStatusMapping = {
+  transferStatus: TransferStatus;
+  eventType: "PAYOUT_COMPLETED" | "PAYOUT_FAILED" | null;
+  reasonCode?: string;
+};
 
 export type ProviderState = {
   providerKey: string;
@@ -56,4 +63,22 @@ export async function updateProviderHealth(params: {
       lastErrorMessage: params.isHealthy ? null : params.errorMessage ?? null,
     },
   });
+}
+
+export function mapProviderStatus(providerStatus: string): ProviderStatusMapping | null {
+  const normalized = providerStatus.trim().toUpperCase();
+  if (normalized === "COMPLETED") {
+    return { transferStatus: TransferStatus.COMPLETED, eventType: "PAYOUT_COMPLETED" };
+  }
+  if (normalized === "FAILED") {
+    return {
+      transferStatus: TransferStatus.FAILED,
+      eventType: "PAYOUT_FAILED",
+      reasonCode: "PROVIDER_FAILED",
+    };
+  }
+  if (normalized === "PROCESSING" || normalized === "PENDING") {
+    return { transferStatus: TransferStatus.PROCESSING, eventType: null };
+  }
+  return null;
 }
