@@ -140,6 +140,11 @@ model Transfer {
   providerPayoutStatus        String?
   providerPayoutProvider      String?
   providerPayoutUpdatedAt     DateTime?
+  payoutAttemptCount          Int            @default(0)
+  payoutLastAttemptAt         DateTime?
+  payoutLastErrorCode         String?
+  payoutLastErrorMessage      String?
+  payoutProviderCursor        Int            @default(0)
   payoutRail                  PayoutRail
   recipientName               String
   recipientCountry            String
@@ -162,6 +167,7 @@ model Transfer {
   quote                       Quote          @relation(fields: [quoteId], references: [id])
   cryptoPayout                CryptoPayout?
   events                      TransferEvent[]
+  payoutAttempts              PayoutAttempt[]
   payoutWebhookEvents         PayoutWebhookEvent[]
   user                        User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   recipient                   Recipient?     @relation(fields: [recipientId], references: [id], onDelete: SetNull)
@@ -179,13 +185,48 @@ model PayoutWebhookEvent {
   provider         String
   providerPayoutId String
   status           String
+  outcome          String
+  rawHash          String
   receivedAt       DateTime @default(now())
+  occurredAt       DateTime?
+  signatureTimestamp DateTime?
   transferId       String
 
   transfer         Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
 
   @@index([transferId, receivedAt])
   @@index([providerPayoutId])
+}
+
+model PayoutProviderState {
+  id               String   @id @default(cuid())
+  providerKey      String   @unique
+  isEnabled        Boolean  @default(true)
+  isHealthy        Boolean  @default(true)
+  lastCheckedAt    DateTime?
+  lastErrorAt      DateTime?
+  lastErrorCode    String?
+  lastErrorMessage String?
+  updatedAt        DateTime @updatedAt
+}
+
+model PayoutAttempt {
+  id               String   @id @default(cuid())
+  transferId       String
+  providerKey      String
+  attemptNumber    Int
+  status           String
+  providerPayoutId String?
+  errorCode        String?
+  errorMessage     String?
+  startedAt        DateTime @default(now())
+  finishedAt       DateTime?
+  metadata         Json?
+
+  transfer         Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  @@index([transferId, attemptNumber])
+  @@index([transferId, startedAt])
 }
 
 model WebhookEventReceipt {
