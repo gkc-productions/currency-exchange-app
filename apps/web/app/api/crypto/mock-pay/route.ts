@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
-import { isSameOrigin } from "@/src/lib/security";
+import { getReadOnlyResponse, isSameOrigin } from "@/src/lib/security";
 import { executePayout } from "@/src/lib/rails";
 import { logWarn } from "@/src/lib/logging";
 
@@ -13,6 +13,10 @@ function readRequiredString(value: unknown) {
 }
 
 export async function POST(req: Request) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   if (!ALLOW_SIMULATED_PAYOUTS) {
     logWarn("mock_pay_blocked", {
       meta: { reason: "simulated_payouts_disabled" },

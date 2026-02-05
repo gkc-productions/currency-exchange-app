@@ -52,27 +52,28 @@ export async function GET(
 
   const transfer = await prisma.transfer.findUnique({
     where: { id: transferId },
-    select: {
-      id: true,
-      userId: true,
-      status: true,
-      providerPayoutId: true,
-      providerPayoutStatus: true,
-      providerPayoutProvider: true,
-      providerPayoutUpdatedAt: true,
-    },
+    select: { id: true, userId: true },
   });
 
   if (!transfer || transfer.userId !== user.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json({
-    transferId: transfer.id,
-    status: transfer.status,
-    providerPayoutId: transfer.providerPayoutId ?? null,
-    providerPayoutStatus: transfer.providerPayoutStatus ?? null,
-    providerPayoutProvider: transfer.providerPayoutProvider ?? null,
-    providerPayoutUpdatedAt: transfer.providerPayoutUpdatedAt ?? null,
+  const attempts = await prisma.payoutAttempt.findMany({
+    where: { transferId },
+    orderBy: { startedAt: "asc" },
   });
+
+  return NextResponse.json(
+    attempts.map((attempt) => ({
+      attemptNumber: attempt.attemptNumber,
+      providerKey: attempt.providerKey,
+      status: attempt.status,
+      providerPayoutId: attempt.providerPayoutId,
+      errorCode: attempt.errorCode,
+      errorMessage: attempt.errorMessage,
+      startedAt: attempt.startedAt,
+      finishedAt: attempt.finishedAt,
+    }))
+  );
 }

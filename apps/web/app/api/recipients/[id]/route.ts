@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
-import { isSameOrigin } from "@/src/lib/security";
+import { getReadOnlyResponse, isSameOrigin } from "@/src/lib/security";
 
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   const session = await getServerAuthSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

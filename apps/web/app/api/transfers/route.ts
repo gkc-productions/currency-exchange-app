@@ -6,7 +6,13 @@ import { getMessages } from "@/src/lib/i18n/messages";
 import { getServerAuthSession } from "@/src/lib/auth";
 import { sendTransferStatusEmail } from "@/src/lib/email";
 import { enforceRateLimit } from "@/src/lib/rate-limit";
-import { getClientIp, isSameOrigin } from "@/src/lib/security";
+import {
+  getClientIp,
+  getReadOnlyResponse,
+  isSameOrigin,
+  isDevBypassRequest,
+  readDevBypassEmail,
+} from "@/src/lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,6 +128,10 @@ function buildTransferResponse(transfer: {
   recipientMobileMoneyNumber: string | null;
   recipientLightningInvoice: string | null;
   memo: string | null;
+  providerPayoutId: string | null;
+  providerPayoutStatus: string | null;
+  providerPayoutProvider: string | null;
+  providerPayoutUpdatedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }) {
@@ -140,25 +150,20 @@ function buildTransferResponse(transfer: {
     recipientMobileMoneyNumber: transfer.recipientMobileMoneyNumber,
     recipientLightningInvoice: transfer.recipientLightningInvoice,
     memo: transfer.memo,
+    providerPayoutId: transfer.providerPayoutId,
+    providerPayoutStatus: transfer.providerPayoutStatus,
+    providerPayoutProvider: transfer.providerPayoutProvider,
+    providerPayoutUpdatedAt: transfer.providerPayoutUpdatedAt,
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
   };
 }
 
 function readDevBypass(req: Request): DevBypassResult {
-  if (process.env.NODE_ENV === "production") {
+  if (!isDevBypassRequest(req)) {
     return { active: false, email: null };
   }
-  if (process.env.DEV_BYPASS_AUTH !== "1") {
-    return { active: false, email: null };
-  }
-  if (req.headers.get("x-dev-bypass-auth") !== "1") {
-    return { active: false, email: null };
-  }
-  const email = req.headers.get("x-dev-user-email")?.trim() ?? "";
-  if (!email || !email.includes("@")) {
-    return { active: true, email: null };
-  }
+  const email = readDevBypassEmail(req);
   return { active: true, email };
 }
 
@@ -224,6 +229,10 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   const devBypass = readDevBypass(req);
   if (!devBypass.active) {
     if (!isSameOrigin(req)) {

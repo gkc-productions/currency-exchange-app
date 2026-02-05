@@ -4,7 +4,7 @@ import { prisma } from "@/src/lib/prisma";
 import { getMessages } from "@/src/lib/i18n/messages";
 import { sendTransferStatusEmail } from "@/src/lib/email";
 import { getServerAuthSession } from "@/src/lib/auth";
-import { isSameOrigin } from "@/src/lib/security";
+import { getReadOnlyResponse, isSameOrigin } from "@/src/lib/security";
 import { canTransitionTransfer } from "@/src/lib/transfer-state";
 import { alertTransferFailure } from "@/src/lib/alerts";
 
@@ -122,6 +122,8 @@ export async function GET(
         status: transfer.status,
         providerPayoutId: transfer.providerPayoutId ?? null,
         providerPayoutStatus: transfer.providerPayoutStatus ?? null,
+        providerPayoutProvider: transfer.providerPayoutProvider ?? null,
+        providerPayoutUpdatedAt: transfer.providerPayoutUpdatedAt ?? null,
         payoutRail: transfer.payoutRail,
         recipientName: transfer.recipientName,
         recipientCountry: transfer.recipientCountry,
@@ -163,6 +165,10 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   if (!isSameOrigin(req)) {
     return NextResponse.json(
       { error: "This action is only available from the ClariSend app." },

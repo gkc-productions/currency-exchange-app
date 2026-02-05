@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
+import { getReadOnlyResponse } from "@/src/lib/security";
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   const { id } = await ctx.params;
 
   const quote = await prisma.quote.findUnique({

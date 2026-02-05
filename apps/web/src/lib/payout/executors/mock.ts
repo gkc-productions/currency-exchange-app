@@ -1,5 +1,9 @@
 import { randomUUID } from "crypto";
-import type { PayoutExecutionResult, PayoutExecutor } from "@/src/lib/payout/types";
+import type {
+  PayoutExecutionResult,
+  PayoutExecutor,
+  PayoutProviderStatus,
+} from "@/src/lib/payout/types";
 
 function shouldFail(referenceCode: string, memo: string | null) {
   if (referenceCode.endsWith("F")) {
@@ -13,6 +17,7 @@ function shouldFail(referenceCode: string, memo: string | null) {
 
 export const mockExecutor: PayoutExecutor = {
   name: "mock",
+  providerName: "MockProvider",
   async execute({ referenceCode, memo }) {
     const providerPayoutId = `mock_${randomUUID()}`;
     const failed = shouldFail(referenceCode, memo);
@@ -29,6 +34,24 @@ export const mockExecutor: PayoutExecutor = {
       message: errorMessage,
       errorCode,
       errorMessage,
+    };
+  },
+  async getStatus({ providerPayoutId }) {
+    const normalized = providerPayoutId.toUpperCase();
+    const status: PayoutProviderStatus = normalized.includes("FAIL")
+      ? "FAILED"
+      : normalized.includes("PROCESS")
+        ? "PROCESSING"
+        : "COMPLETED";
+    const failed = status === "FAILED";
+    return {
+      ok: !failed,
+      status,
+      provider: "MockProvider",
+      providerPayoutId,
+      message: failed ? "Simulated payout failed" : undefined,
+      errorCode: failed ? "MOCK_STATUS_FAILED" : undefined,
+      errorMessage: failed ? "Simulated payout failed" : undefined,
     };
   },
 };

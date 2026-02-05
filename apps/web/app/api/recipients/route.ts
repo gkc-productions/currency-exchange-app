@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
-import { isSameOrigin } from "@/src/lib/security";
+import { getReadOnlyResponse, isSameOrigin } from "@/src/lib/security";
 
 function readRequiredString(value: unknown) {
   if (typeof value !== "string") {
@@ -47,6 +47,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   const session = await getServerAuthSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

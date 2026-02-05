@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
-import { isSameOrigin } from "@/src/lib/security";
+import {
+  getReadOnlyResponse,
+  isSameOrigin,
+  isDevBypassRequest,
+  readDevBypassEmail,
+} from "@/src/lib/security";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
-import { getPayoutExecutor } from "@/src/lib/payout";
-
-const DEV_BYPASS_HEADER = "x-dev-bypass-auth";
-const DEV_EMAIL_HEADER = "x-dev-user-email";
+import { getPayoutExecutorByName, getPayoutProviders } from "@/src/lib/payout";
+import { getProviderStates, updateProviderHealth } from "@/src/lib/payout/provider-state";
 
 type SessionLike = { user?: { email?: string | null } | null } | null;
 
@@ -15,13 +18,21 @@ type ExecuteResponse = {
   ok: boolean;
   status: string;
   providerPayoutId?: string | null;
+  errorCode?: string;
+  retryAfterSeconds?: number;
 };
 
 function formatEventMessage(
   base: string,
-  meta: { ref?: string; code?: string; message?: string }
+  meta: { ref?: string; code?: string; message?: string; provider?: string; attempt?: number }
 ) {
   const parts = [base];
+  if (meta.provider) {
+    parts.push(`provider=${meta.provider}`);
+  }
+  if (typeof meta.attempt === "number") {
+    parts.push(`attempt=${meta.attempt}`);
+  }
   if (meta.ref) {
     parts.push(`ref=${meta.ref}`);
   }
@@ -34,33 +45,21 @@ function formatEventMessage(
   return parts.join(" ");
 }
 
+function parseNumber(value: string | undefined, fallback: number) {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 function readDevBypassSession(req: Request): SessionLike {
-  if (process.env.NODE_ENV === "production") {
-    return null;
-  }
-  if (process.env.DEV_BYPASS_AUTH !== "1") {
-    return null;
-  }
-  const bypass = req.headers.get(DEV_BYPASS_HEADER);
-  const email = req.headers.get(DEV_EMAIL_HEADER);
-  if (bypass !== "1") {
-    return null;
-  }
-  if (!email || typeof email !== "string" || !email.includes("@")) {
+  const email = readDevBypassEmail(req);
+  if (!email) {
     return null;
   }
   console.info("dev_auth_bypass_used");
   return { user: { email } };
-}
-
-function isDevBypassRequest(req: Request) {
-  if (process.env.NODE_ENV === "production") {
-    return false;
-  }
-  if (process.env.DEV_BYPASS_AUTH !== "1") {
-    return false;
-  }
-  return req.headers.get(DEV_BYPASS_HEADER) === "1";
 }
 
 async function ensureDevUser(email: string): Promise<{ id: string; email: string }> {
@@ -77,6 +76,10 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   if (!ALLOW_SIMULATED_PAYOUTS) {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
@@ -120,6 +123,11 @@ export async function POST(
       referenceCode: true,
       memo: true,
       providerPayoutId: true,
+      payoutAttemptCount: true,
+      payoutLastAttemptAt: true,
+      payoutProviderCursor: true,
+      payoutLastErrorCode: true,
+      payoutLastErrorMessage: true,
     },
   });
 
@@ -127,7 +135,7 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (transfer.status === "COMPLETED" || transfer.status === "FAILED") {
+  if (transfer.status === "COMPLETED") {
     const response: ExecuteResponse = {
       ok: true,
       status: transfer.status,
@@ -144,51 +152,217 @@ export async function POST(
     };
     return NextResponse.json(response);
   }
+  const maxAttempts = parseNumber(process.env.PAYOUT_MAX_ATTEMPTS, 3);
+  const cooldownMs = parseNumber(process.env.PAYOUT_RETRY_COOLDOWN_MS, 30_000);
+  const providers = getPayoutProviders();
+  if (providers.length === 0) {
+    return NextResponse.json({ error: "No payout providers available." }, { status: 500 });
+  }
 
-  if (transfer.status !== "READY") {
+  const providerStates = await getProviderStates(providers.map((provider) => provider.name));
+  const isEligibleProvider = (index: number) => {
+    const provider = providers[index];
+    if (!provider) {
+      return false;
+    }
+    const state = providerStates.get(provider.name);
+    return state ? state.isEnabled && state.isHealthy : true;
+  };
+
+  let providerIndex = transfer.payoutProviderCursor ?? 0;
+  if (!isEligibleProvider(providerIndex)) {
+    let cursor = providerIndex + 1;
+    while (cursor < providers.length && !isEligibleProvider(cursor)) {
+      cursor += 1;
+    }
+    if (cursor >= providers.length) {
+      return NextResponse.json(
+        { error: "No eligible payout providers.", errorCode: "PAYOUT_NO_ELIGIBLE_PROVIDERS" },
+        { status: 409 }
+      );
+    }
+    providerIndex = cursor;
+  }
+
+  if (transfer.status !== "READY" && transfer.status !== "FAILED") {
     return NextResponse.json({ error: "Transfer not ready for payout." }, { status: 400 });
   }
 
-  if (transfer.providerPayoutId) {
+  if (transfer.status === "FAILED") {
+    const lastAttemptAt = transfer.payoutLastAttemptAt?.getTime() ?? 0;
+    const now = Date.now();
+    if (lastAttemptAt && now - lastAttemptAt < cooldownMs) {
+      const retryAfterSeconds = Math.ceil((cooldownMs - (now - lastAttemptAt)) / 1000);
+      return NextResponse.json(
+        { error: "Retry later.", errorCode: "RETRY_LATER", retryAfterSeconds },
+        { status: 429 }
+      );
+    }
+
+    if (transfer.payoutAttemptCount >= maxAttempts) {
+      const nextIndex = providerIndex + 1;
+      if (nextIndex >= providers.length) {
+        return NextResponse.json(
+          { error: "Payout attempts exhausted.", errorCode: "PAYOUT_EXHAUSTED" },
+          { status: 409 }
+        );
+      }
+
+      const failover = await prisma.$transaction(async (tx) => {
+        const updated = await tx.transfer.updateMany({
+          where: {
+            id: transfer.id,
+            userId: user.id,
+            status: TransferStatus.FAILED,
+            payoutProviderCursor: providerIndex,
+            payoutAttemptCount: transfer.payoutAttemptCount,
+          },
+          data: {
+            payoutProviderCursor: nextIndex,
+            payoutAttemptCount: 0,
+            payoutLastAttemptAt: null,
+            payoutLastErrorCode: null,
+            payoutLastErrorMessage: null,
+          },
+        });
+        if (updated.count !== 1) {
+          return false;
+        }
+        await tx.transferEvent.create({
+          data: {
+            transferId: transfer.id,
+            type: "PAYOUT_FAILOVER",
+            message: formatEventMessage("Payout failover.", {
+              provider: providers[providerIndex]?.name,
+              message: `next=${providers[nextIndex]?.name ?? "unknown"}`,
+            }),
+          },
+        });
+        return true;
+      });
+
+      if (!failover) {
+        const current = await prisma.transfer.findUnique({
+          where: { id: transfer.id },
+          select: { status: true, providerPayoutId: true },
+        });
+        return NextResponse.json({
+          ok: true,
+          status: current?.status ?? transfer.status,
+          providerPayoutId: current?.providerPayoutId ?? null,
+        });
+      }
+
+      providerIndex = nextIndex;
+      transfer.payoutAttemptCount = 0;
+    }
+  }
+
+  const executor =
+    getPayoutExecutorByName(providers[providerIndex]?.name ?? "mock") ?? providers[providerIndex];
+  const attemptNumber = transfer.payoutAttemptCount + 1;
+  const claimResult = await prisma.transfer.updateMany({
+    where: {
+      id: transfer.id,
+      userId: user.id,
+      status: transfer.status,
+      payoutProviderCursor: transfer.payoutProviderCursor ?? 0,
+      payoutAttemptCount: transfer.payoutAttemptCount,
+    },
+    data: {
+      status: TransferStatus.PROCESSING,
+      payoutAttemptCount: { increment: 1 },
+      payoutLastAttemptAt: new Date(),
+      payoutLastErrorCode: null,
+      payoutLastErrorMessage: null,
+      payoutProviderCursor: providerIndex,
+    },
+  });
+
+  if (claimResult.count !== 1) {
+    const current = await prisma.transfer.findUnique({
+      where: { id: transfer.id },
+      select: { status: true, providerPayoutId: true },
+    });
     return NextResponse.json({
       ok: true,
-      status: TransferStatus.PROCESSING,
-      providerPayoutId: transfer.providerPayoutId,
+      status: current?.status ?? transfer.status,
+      providerPayoutId: current?.providerPayoutId ?? null,
     });
   }
 
-  const executor = getPayoutExecutor();
+  const attemptRecord = await prisma.$transaction(async (tx) => {
+    const nextAttempt = await tx.payoutAttempt.count({
+      where: { transferId: transfer.id },
+    });
+    return tx.payoutAttempt.create({
+      data: {
+        transferId: transfer.id,
+        providerKey: executor.name,
+        attemptNumber: nextAttempt + 1,
+        status: "STARTED",
+      },
+    });
+  });
+
+  if (providerIndex !== (transfer.payoutProviderCursor ?? 0)) {
+    await prisma.transferEvent.create({
+      data: {
+        transferId: transfer.id,
+        type: "PAYOUT_FAILOVER",
+        message: formatEventMessage("Payout failover.", {
+          provider: providers[transfer.payoutProviderCursor ?? 0]?.name ?? "unknown",
+          message: `next=${providers[providerIndex]?.name ?? "unknown"}`,
+        }),
+      },
+    });
+  }
+
   const execution = await executor.execute({
     transferId: transfer.id,
     referenceCode: transfer.referenceCode,
     memo: transfer.memo,
   });
   const startMessage = formatEventMessage("Payout started.", {
+    provider: execution.provider,
+    attempt: attemptNumber,
+    ref: execution.providerRef ?? execution.providerPayoutId,
+  });
+  const failedMessage = formatEventMessage("Payout failed.", {
+    provider: execution.provider,
+    attempt: attemptNumber,
     ref: execution.providerRef ?? execution.providerPayoutId,
     code: execution.errorCode,
     message: execution.errorMessage ?? execution.message,
   });
 
-  const issued = await prisma.$transaction(async (tx) => {
-    const updated = await tx.transfer.updateMany({
-      where: {
-        id: transfer.id,
-        userId: user.id,
-        status: TransferStatus.READY,
-        providerPayoutId: null,
-      },
+  const nextStatus =
+    execution.status === "FAILED" ? TransferStatus.FAILED : TransferStatus.PROCESSING;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.transfer.update({
+      where: { id: transfer.id },
       data: {
-        status: TransferStatus.PROCESSING,
+        status: nextStatus,
         providerPayoutId: execution.providerPayoutId,
         providerPayoutStatus: execution.status,
         providerPayoutProvider: execution.provider,
         providerPayoutUpdatedAt: new Date(),
+        payoutLastErrorCode: execution.errorCode ?? null,
+        payoutLastErrorMessage: execution.errorMessage ?? execution.message ?? null,
       },
     });
 
-    if (updated.count !== 1) {
-      return false;
-    }
+    await tx.payoutAttempt.update({
+      where: { id: attemptRecord.id },
+      data: {
+        status: execution.status === "FAILED" ? "FAILED" : "SUBMITTED",
+        providerPayoutId: execution.providerPayoutId,
+        errorCode: execution.errorCode ?? null,
+        errorMessage: execution.errorMessage ?? execution.message ?? null,
+        finishedAt: execution.status === "FAILED" ? new Date() : null,
+      },
+    });
 
     await tx.transferEvent.create({
       data: {
@@ -198,34 +372,27 @@ export async function POST(
       },
     });
 
-    return true;
+    if (execution.status === "FAILED") {
+      await tx.transferEvent.create({
+        data: {
+          transferId: transfer.id,
+          type: "PAYOUT_FAILED",
+          message: failedMessage,
+        },
+      });
+    }
   });
 
-  if (!issued) {
-    const current = await prisma.transfer.findUnique({
-      where: { id: transfer.id },
-      select: { status: true, providerPayoutId: true, userId: true },
-    });
-
-    if (!current || current.userId !== user.id) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    if (current.status === "COMPLETED" || current.status === "FAILED" || current.status === "PROCESSING") {
-      const response: ExecuteResponse = {
-        ok: true,
-        status: current.status,
-        providerPayoutId: current.providerPayoutId ?? null,
-      };
-      return NextResponse.json(response);
-    }
-
-    return NextResponse.json({ error: "Transfer not ready for payout." }, { status: 400 });
-  }
+  await updateProviderHealth({
+    providerKey: execution.provider,
+    isHealthy: execution.status !== "FAILED",
+    errorCode: execution.errorCode ?? null,
+    errorMessage: execution.errorMessage ?? execution.message ?? null,
+  });
 
   const response: ExecuteResponse = {
     ok: true,
-    status: TransferStatus.PROCESSING,
+    status: nextStatus,
     providerPayoutId: execution.providerPayoutId,
   };
   return NextResponse.json(response);

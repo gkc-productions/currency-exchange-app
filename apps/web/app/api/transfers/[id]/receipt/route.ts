@@ -3,7 +3,13 @@ import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
 import { sendReceiptEmail } from "@/src/lib/email";
 import { enforceRateLimit } from "@/src/lib/rate-limit";
-import { getClientIp, isSameOrigin } from "@/src/lib/security";
+import {
+  getClientIp,
+  getReadOnlyResponse,
+  isSameOrigin,
+  isDevBypassRequest,
+  readDevBypassEmail,
+} from "@/src/lib/security";
 
 const RESEND_COOLDOWN_MS = 60 * 1000;
 
@@ -70,30 +76,12 @@ function isQuoteAuditSnapshot(value: unknown): value is QuoteAuditSnapshot {
 }
 
 function readDevBypassSession(req: Request): SessionLike {
-  if (process.env.NODE_ENV === "production") {
-    return null;
-  }
-  if (process.env.DEV_BYPASS_AUTH !== "1") {
-    return null;
-  }
-  const bypass = req.headers.get("x-dev-bypass-auth");
-  const email = req.headers.get("x-dev-user-email");
-  if (bypass !== "1") {
-    return null;
-  }
-  if (!email || typeof email !== "string" || !email.includes("@")) {
+  const email = readDevBypassEmail(req);
+  if (!email) {
     return null;
   }
   console.info("dev_auth_bypass_used");
   return { user: { email } };
-}
-
-function isDevBypassRequest(req: Request) {
-  return (
-    process.env.DEV_BYPASS_AUTH === "1" &&
-    req.headers.get("x-dev-bypass-auth") === "1" &&
-    process.env.NODE_ENV !== "production"
-  );
 }
 
 function getReceiptBaseUrl() {
@@ -325,6 +313,10 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   let transferId = "";
   const requestId = req.headers.get("x-request-id") ?? undefined;
 

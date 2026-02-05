@@ -1,22 +1,13 @@
 import { NextResponse } from "next/server";
 import { TransferStatus } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
-
-const DEV_BYPASS_HEADER = "x-dev-bypass-auth";
-const DEV_EMAIL_HEADER = "x-dev-user-email";
+import { getReadOnlyResponse, readDevBypassEmail } from "@/src/lib/security";
 
 type SessionLike = { user?: { email?: string | null } | null } | null;
 
 function readDevBypassSession(req: Request): SessionLike {
-  if (process.env.DEV_BYPASS_AUTH !== "1") {
-    return null;
-  }
-  const bypass = req.headers.get(DEV_BYPASS_HEADER);
-  const email = req.headers.get(DEV_EMAIL_HEADER);
-  if (bypass !== "1") {
-    return null;
-  }
-  if (!email || typeof email !== "string" || !email.includes("@")) {
+  const email = readDevBypassEmail(req);
+  if (!email) {
     return null;
   }
   console.info("dev_auth_bypass_used");
@@ -27,6 +18,10 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
+  const readOnly = getReadOnlyResponse(req);
+  if (readOnly) {
+    return readOnly;
+  }
   const session = readDevBypassSession(req);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
