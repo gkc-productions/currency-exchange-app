@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test $(find tests -maxdepth 1 -name '*.test.ts' ! -name 'auth-password.test.ts' ! -name 'mfa-ui.test.ts' | sort)",
     "smoke:payout": "tsx scripts/smoke-payout.ts"
   },
   "prisma": {

@@ -1,5 +1,22 @@
 import { NextResponse } from "next/server";
-import type { AuthErrorCode } from "@/src/lib/auth";
+
+export type AuthErrorCode =
+  | "EMAIL_TAKEN"
+  | "WEAK_PASSWORD"
+  | "INVALID_EMAIL"
+  | "INVALID_CREDENTIALS"
+  | "INTERNAL"
+  | "RATE_LIMITED"
+  | "LOCKED_OUT"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "CSRF_BLOCKED"
+  | "CHALLENGE_EXPIRED"
+  | "INVALID_CODE"
+  | "TOO_MANY_ATTEMPTS"
+  | "TOO_MANY_RESENDS"
+  | "MFA_NOT_ENABLED"
+  | "INVALID_PASSWORD";
 
 const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   EMAIL_TAKEN: "Email is already registered.",

@@ -10,9 +10,9 @@ const smtpUser = process.env.SMTP_USER;
 const smtpPassword = process.env.SMTP_PASSWORD;
 const smtpSecure = process.env.SMTP_SECURE === "true";
 const smtpFrom = process.env.SMTP_FROM ?? "ClariSend <no-reply@clarisend.co>";
-const isProduction = process.env.NODE_ENV === "production";
-
-export const authOptions: NextAuthOptions = {
+export function buildAuthOptions(nodeEnv: string | undefined = process.env.NODE_ENV): NextAuthOptions {
+  const isProduction = nodeEnv === "production";
+  return {
   adapter: PrismaAdapter(prisma),
   providers: [
     EmailProvider({
@@ -80,7 +80,10 @@ export const authOptions: NextAuthOptions = {
   },
   useSecureCookies: isProduction,
   secret: process.env.NEXTAUTH_SECRET,
-};
+  };
+}
+
+export const authOptions: NextAuthOptions = buildAuthOptions();
 
 export function getServerAuthSession() {
   return getServerSession(authOptions);
