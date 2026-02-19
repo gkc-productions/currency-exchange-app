@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import fs from "node:fs";
+import path from "node:path";
 import MarketingHero from "../components/marketing/MarketingHero";
 import QuoteWidget, { calculateQuotePreview } from "../components/marketing/QuoteWidget";
 
@@ -65,4 +67,15 @@ test("quote widget renders computed preview value", () => {
   assert.match(html, /Recipient gets/);
   assert.match(html, /GHS 3,500.00/);
   assert.match(html, /href="\/en\/signup"/);
+});
+
+test("marketing landing components use shared card and button primitives", () => {
+  const heroPath = path.join(process.cwd(), "components", "marketing", "MarketingHero.tsx");
+  const widgetPath = path.join(process.cwd(), "components", "marketing", "QuoteWidget.tsx");
+  const heroSource = fs.readFileSync(heroPath, "utf8");
+  const widgetSource = fs.readFileSync(widgetPath, "utf8");
+
+  assert.equal(heroSource.includes("@/components/ui/Button"), true);
+  assert.equal(widgetSource.includes("@/components/ui/Card"), true);
+  assert.equal(widgetSource.includes("@/components/ui/Button"), true);
 });

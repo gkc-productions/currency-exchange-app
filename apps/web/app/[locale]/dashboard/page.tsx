@@ -4,6 +4,11 @@ import { prisma } from "@/src/lib/prisma";
 import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getServerAuthSession } from "@/src/lib/auth";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { StatRow } from "@/components/ui/StatRow";
 
 const statusStyles: Record<string, string> = {
   READY: "bg-amber-100 text-amber-800",
@@ -63,110 +68,85 @@ export default async function DashboardPage({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium text-emerald-700">
-            {messages.dashboardTitle}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-            {messages.dashboardTitle}
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            {messages.dashboardSubtitle}
-          </p>
-        </div>
-        <Link
-          href={`/${validLocale}/recipients`}
-          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300"
-        >
-          {messages.recipientsTitle}
-        </Link>
-      </div>
+      <SectionHeader
+        eyebrow={messages.dashboardTitle}
+        title={messages.dashboardTitle}
+        subtitle={messages.dashboardSubtitle}
+        action={
+          <Button href={`/${validLocale}/recipients`} variant="secondary">
+            {messages.recipientsTitle}
+          </Button>
+        }
+      />
 
       <div className="mt-10 grid gap-4">
         {transfers.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center">
+          <Card className="border-dashed p-10 text-center">
             <p className="text-base font-semibold text-slate-900">
               {messages.dashboardEmptyTitle}
             </p>
             <p className="mt-2 text-sm text-slate-600">
               {messages.dashboardEmptyDescription}
             </p>
-            <Link
-              href={`/${validLocale}#send`}
-              className="mt-4 inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-            >
+            <Button href={`/${validLocale}#send`} variant="primary" className="mt-4">
               {messages.navGetStartedLabel}
-            </Link>
-          </div>
+            </Button>
+          </Card>
         ) : (
           transfers.map((transfer) => (
-            <Link
-              key={transfer.id}
-              href={`/${validLocale}/transfer/${transfer.id}`}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)] transition hover:border-slate-300"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="font-mono text-base font-semibold text-slate-900">
-                    {transfer.referenceCode}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {transfer.quote.fromAsset.code} → {transfer.quote.toAsset.code}
-                    {" · "}
-                    {formatDateTime(transfer.createdAt.toISOString(), validLocale)}
-                  </p>
+            <Card key={transfer.id} className="transition hover:border-slate-300">
+              <CardContent>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <Link
+                      href={`/${validLocale}/transfer/${transfer.id}`}
+                      className="font-mono text-base font-semibold text-slate-900"
+                    >
+                      {transfer.referenceCode}
+                    </Link>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {transfer.quote.fromAsset.code} → {transfer.quote.toAsset.code}
+                      {" · "}
+                      {formatDateTime(transfer.createdAt.toISOString(), validLocale)}
+                    </p>
+                  </div>
+                  <Badge
+                    className={statusStyles[transfer.status] ?? "bg-slate-200 text-slate-700"}
+                  >
+                    {statusLabels[transfer.status] ?? transfer.status}
+                  </Badge>
                 </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    statusStyles[transfer.status] ?? "bg-slate-200 text-slate-700"
-                  }`}
-                >
-                  {statusLabels[transfer.status] ?? transfer.status}
-                </span>
-              </div>
-              <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
-                <div>
-                  <p className="text-xs text-slate-400">
-                    {messages.sendAmountRow}
-                  </p>
-                  <p className="font-semibold text-slate-900">
-                    {formatMoney(
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <StatRow
+                    label={messages.sendAmountRow}
+                    value={formatMoney(
                       Number(transfer.quote.sendAmount),
                       transfer.quote.fromAsset.code,
                       validLocale,
                       transfer.quote.fromAsset.decimals
                     )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">
-                    {messages.totalFeeRow}
-                  </p>
-                  <p className="font-semibold text-slate-900">
-                    {formatMoney(
+                  />
+                  <StatRow
+                    label={messages.totalFeeRow}
+                    value={formatMoney(
                       Number(transfer.quote.totalFee),
                       transfer.quote.fromAsset.code,
                       validLocale,
                       transfer.quote.fromAsset.decimals
                     )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">
-                    {messages.recipientGetsLabel}
-                  </p>
-                  <p className="font-semibold text-slate-900">
-                    {formatMoney(
+                  />
+                  <StatRow
+                    label={messages.recipientGetsLabel}
+                    value={formatMoney(
                       Number(transfer.quote.recipientGets),
                       transfer.quote.toAsset.code,
                       validLocale,
                       transfer.quote.toAsset.decimals
                     )}
-                  </p>
+                  />
                 </div>
-              </div>
-            </Link>
+              </CardContent>
+            </Card>
           ))
         )}
       </div>

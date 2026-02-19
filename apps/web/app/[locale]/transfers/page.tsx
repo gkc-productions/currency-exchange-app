@@ -11,6 +11,10 @@ import {
   type TransferHistoryRow,
   type TransferStatusFilter,
 } from "@/src/lib/transfer-history";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 const statusOptions: TransferStatusFilter[] = [
   "ALL",
@@ -92,15 +96,11 @@ export default function TransfersHistoryPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-16 lg:px-8 lg:py-24">
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
-        {messages.transfersHistoryLabel}
-      </p>
-      <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-        {messages.transfersHistoryTitle}
-      </h1>
-      <p className="mt-2 text-sm text-slate-600">
-        {messages.transfersHistorySubtitle}
-      </p>
+      <SectionHeader
+        eyebrow={messages.transfersHistoryLabel}
+        title={messages.transfersHistoryTitle}
+        subtitle={messages.transfersHistorySubtitle}
+      />
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex w-full flex-1 items-center gap-3">
@@ -133,7 +133,8 @@ export default function TransfersHistoryPage() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Card className="mt-8">
+        <CardContent>
         {loading ? (
           <p className="text-sm text-slate-500">
             {messages.transfersHistoryLoadingLabel}
@@ -143,12 +144,13 @@ export default function TransfersHistoryPage() {
             <p className="text-sm font-semibold text-rose-700">
               {messages.transfersHistoryUnauthorizedLabel}
             </p>
-            <Link
+            <Button
               href={`/${locale}/login`}
-              className="mt-3 inline-flex rounded-full border border-rose-200 bg-white px-4 py-2 text-xs font-semibold text-rose-700"
+              variant="secondary"
+              className="mt-3 border-rose-200 text-rose-700"
             >
               {messages.transfersHistoryLoginLabel}
-            </Link>
+            </Button>
           </div>
         ) : error ? (
           <p className="text-sm text-rose-600">
@@ -183,8 +185,10 @@ export default function TransfersHistoryPage() {
                       </Link>
                     </td>
                     <td className="py-3">
-                      {statusLabels[transfer.status as keyof typeof statusLabels] ??
-                        transfer.status}
+                      <Badge>
+                        {statusLabels[transfer.status as keyof typeof statusLabels] ??
+                          transfer.status}
+                      </Badge>
                     </td>
                     <td className="py-3">{transfer.payoutRail}</td>
                     <td className="py-3">
@@ -200,7 +204,8 @@ export default function TransfersHistoryPage() {
             </table>
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

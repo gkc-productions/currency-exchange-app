@@ -1,4 +1,6 @@
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { Locale } from "@/src/lib/i18n/messages";
 
 export default function FeesPage({ params }: { params: { locale: string } }) {
@@ -11,11 +13,11 @@ export default function FeesPage({ params }: { params: { locale: string } }) {
           subtitle:
             "ClariSend affiche clairement le taux, la marge FX et les frais avant toute validation.",
           points: [
-            "Taux du marché et taux appliqué visibles avant verrouillage.",
-            "Frais fixes et en pourcentage affichés séparément.",
-            "Aucun frais caché au moment du paiement.",
+            "Taux du marche et taux applique visibles avant verrouillage.",
+            "Frais fixes et en pourcentage affiches separement.",
+            "Aucun frais cache au moment du paiement.",
           ],
-          cta: "Démarrer un devis",
+          cta: "Demarrer un devis",
         }
       : {
           eyebrow: "Fees",
@@ -32,31 +34,21 @@ export default function FeesPage({ params }: { params: { locale: string } }) {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8">
-      <div className="max-w-3xl">
-        <p className="text-xs font-medium text-emerald-700">
-          {content.eyebrow}
-        </p>
-        <h1 className="mt-3 font-[var(--font-display)] text-3xl text-slate-900 sm:text-4xl">
-          {content.title}
-        </h1>
-        <p className="mt-4 text-lg text-slate-600">{content.subtitle}</p>
-      </div>
+      <SectionHeader
+        eyebrow={content.eyebrow}
+        title={content.title}
+        subtitle={content.subtitle}
+      />
       <div className="mt-8 grid gap-3">
         {content.points.map((point) => (
-          <div
-            key={point}
-            className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-sm text-slate-700"
-          >
-            {point}
-          </div>
+          <Card key={point}>
+            <CardContent className="px-4 py-3 text-sm text-slate-700">{point}</CardContent>
+          </Card>
         ))}
       </div>
-      <Link
-        href={`/${locale}#send`}
-        className="mt-10 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-      >
+      <Button href={`/${locale}#send`} variant="primary" className="mt-10">
         {content.cta}
-      </Link>
+      </Button>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import { checkPasswordRules, passwordStrength } from "@/src/lib/password-strength";
+import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent } from "@/components/ui/Card";
 
 function ruleClass(passed: boolean) {
   return passed ? "text-emerald-700" : "text-slate-500";
@@ -15,10 +17,13 @@ export default function PasswordRulesPanel({
   const strength = passwordStrength(password);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs">
+    <Card className="rounded-2xl shadow-none">
+      <CardContent className="px-4 py-3 text-xs">
       <div className="flex items-center justify-between">
         <p className="font-semibold text-slate-700">Password rules</p>
-        <p className="font-semibold text-slate-700">Strength: {strength.label}</p>
+        <Badge tone={strength.score >= 3 ? "success" : strength.score >= 2 ? "info" : "warning"}>
+          Strength: {strength.label}
+        </Badge>
       </div>
       <ul className="mt-2 space-y-1">
         <li className={ruleClass(rules.lengthOk)} data-status={rules.lengthOk ? "pass" : "fail"}>
@@ -37,6 +42,7 @@ export default function PasswordRulesPanel({
           {rules.notEmailPart ? "OK" : "Avoid"} using your email name
         </li>
       </ul>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

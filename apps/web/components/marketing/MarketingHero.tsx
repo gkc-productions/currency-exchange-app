@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/Button";
 
 type MarketingHeroProps = {
   locale: "en" | "fr";
@@ -23,18 +23,20 @@ export default function MarketingHero({ locale, title, subtitle, children }: Mar
           </h1>
           <p className="max-w-xl text-lg text-slate-600">{subtitle}</p>
           <div className="flex flex-wrap gap-3">
-            <Link
+            <Button
               href={`/${locale}#send`}
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              variant="primary"
+              className="px-5 py-2.5 text-sm font-semibold"
             >
               Start a quote
-            </Link>
-            <Link
+            </Button>
+            <Button
               href={`/${locale}/login`}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              variant="secondary"
+              className="px-5 py-2.5 text-sm font-semibold"
             >
               Sign in
-            </Link>
+            </Button>
           </div>
         </div>
         <div data-testid="marketing-hero-quote-widget">{children}</div>

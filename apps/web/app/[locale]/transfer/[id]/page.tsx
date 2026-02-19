@@ -20,6 +20,10 @@ import {
   buildUserStatusTimeline,
   resolveUserStatusModel,
 } from "@/src/lib/transfer-status-model";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { StatRow } from "@/components/ui/StatRow";
 
 type TransferEvent = {
   id: string;
@@ -1146,10 +1150,11 @@ export default function TransferReceiptPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-16 lg:px-8">
-        <header
+        <Card
           data-testid="transfer-detail-header"
-          className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]"
+          className="p-8"
         >
+          <CardContent className="p-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-medium text-slate-500">
@@ -1200,41 +1205,42 @@ export default function TransferReceiptPage() {
               </div>
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyle}`}
-              >
+              <Badge className={statusStyle}>
                 {statusLabel}
-              </span>
+              </Badge>
               <div className="flex flex-wrap gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => handleCopy(referenceCode, "code")}
-                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+                  variant="secondary"
+                  size="sm"
                 >
                   {copied === "code"
                     ? messages.copiedLabel
                     : messages.copyReferenceButton}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => handleCopy(shareLink, "link")}
-                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+                  variant="secondary"
+                  size="sm"
                 >
                   {copied === "link"
                     ? messages.copiedLabel
                     : messages.copyLinkButton}
-                </button>
+                </Button>
                 {session?.user && transferStatus === "COMPLETED" ? (
-                  <button
+                  <Button
                     type="button"
                     onClick={handleResendReceipt}
                     disabled={resendState === "sending"}
-                    className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed"
+                    variant="success"
+                    size="sm"
                   >
                     {resendState === "sending"
                       ? messages.receiptResendLoading
                       : messages.receiptResendButton}
-                  </button>
+                  </Button>
                 ) : null}
               </div>
               {session?.user && resendState !== "idle" ? (
@@ -1255,7 +1261,8 @@ export default function TransferReceiptPage() {
               Status updates are audit logged.
             </span>
           </div>
-        </header>
+          </CardContent>
+        </Card>
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col gap-6">
@@ -1453,7 +1460,8 @@ export default function TransferReceiptPage() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            <Card>
+              <CardContent>
               <p className="text-xs font-medium text-slate-500">
                 {messages.recipientSummaryLabel}
               </p>
@@ -1527,7 +1535,8 @@ export default function TransferReceiptPage() {
                   </div>
                 ) : null}
               </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {cryptoPayout ? (
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -1578,71 +1587,56 @@ export default function TransferReceiptPage() {
               </div>
             ) : null}
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <Card>
+              <CardContent>
               <p className="text-xs font-medium text-slate-400">
                 {messages.lockedQuoteSummaryLabel}
               </p>
-              <div className="mt-4 space-y-3 text-sm text-slate-200">
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptSendAmountLabel}</span>
-                  <span className="font-semibold text-white">
-                    {formatMoney(
-                      quote.sendAmount,
-                      quote.fromAsset.code,
-                      locale,
-                      quote.fromAsset.decimals
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptAppliedRateLabel}</span>
-                  <span className="font-semibold text-white">
-                    1 {quote.fromAsset.code} ={" "}
-                    {formatNumber(quote.appliedRate, 4, locale)}{" "}
-                    {quote.toAsset.code}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.fxMarginRow}</span>
-                  <span className="font-semibold text-white">
-                    {formatNumber(quote.fxMarginPct, 2, locale)}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptTotalFeesLabel}</span>
-                  <span className="font-semibold text-white">
-                    {formatMoney(
-                      quote.totalFee,
-                      quote.fromAsset.code,
-                      locale,
-                      quote.fromAsset.decimals
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.receiptRecipientGetsLabel}</span>
-                  <span className="font-semibold text-white">
-                    {formatMoney(
-                      quote.recipientGets,
-                      quote.toAsset.code,
-                      locale,
-                      quote.toAsset.decimals
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>{messages.rateSourceLabel}</span>
-                  <span className="font-semibold text-white">
-                    {quote.rateSource}
-                  </span>
-                </div>
+              <div className="mt-4 space-y-3 text-sm text-slate-700">
+                <StatRow
+                  label={messages.receiptSendAmountLabel}
+                  value={formatMoney(
+                    quote.sendAmount,
+                    quote.fromAsset.code,
+                    locale,
+                    quote.fromAsset.decimals
+                  )}
+                />
+                <StatRow
+                  label={messages.receiptAppliedRateLabel}
+                  value={`1 ${quote.fromAsset.code} = ${formatNumber(quote.appliedRate, 4, locale)} ${quote.toAsset.code}`}
+                />
+                <StatRow
+                  label={messages.fxMarginRow}
+                  value={`${formatNumber(quote.fxMarginPct, 2, locale)}%`}
+                />
+                <StatRow
+                  label={messages.receiptTotalFeesLabel}
+                  value={formatMoney(
+                    quote.totalFee,
+                    quote.fromAsset.code,
+                    locale,
+                    quote.fromAsset.decimals
+                  )}
+                />
+                <StatRow
+                  label={messages.receiptRecipientGetsLabel}
+                  value={formatMoney(
+                    quote.recipientGets,
+                    quote.toAsset.code,
+                    locale,
+                    quote.toAsset.decimals
+                  )}
+                />
+                <StatRow label={messages.rateSourceLabel} value={quote.rateSource} />
                 <div className="pt-2 text-xs text-slate-500">
                   {messages.expiresAtLabel}: {formatDateTime(quote.expiresAt, locale)}
                   {" · "}
                   {messages.rateUpdatedLabel}: {formatDateTime(quote.rateTimestamp, locale)}
                 </div>
               </div>
-            </div>
+              </CardContent>
+            </Card>
 
             <div
               data-testid="transfer-detail-receipt"

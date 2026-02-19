@@ -1,6 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { StatRow } from "@/components/ui/StatRow";
 
 export type QuotePreview = {
   totalFee: number;
@@ -55,14 +57,15 @@ export default function QuoteWidget({
   onToCurrencyChange,
 }: QuoteWidgetProps) {
   return (
-    <div
+    <Card
       id="send"
-      className="rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_30px_80px_-45px_rgba(15,23,42,0.45)] backdrop-blur"
+      className="border-white/70 bg-white/95 backdrop-blur"
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
-        Live estimate
-      </p>
-      <div className="mt-4 grid gap-4">
+      <CardContent className="p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          Live estimate
+        </p>
+        <div className="mt-4 grid gap-4">
         <label className="flex flex-col gap-2">
           <span className="text-xs font-medium text-slate-500">Send amount</span>
           <input
@@ -111,22 +114,18 @@ export default function QuoteWidget({
           </p>
         </div>
         <div className="space-y-2 text-xs text-slate-600">
-          <div className="flex items-center justify-between">
-            <span>Fee</span>
-            <span className="font-semibold text-slate-900">{feeLabel}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Rate</span>
-            <span className="font-semibold text-slate-900">{rateLabel}</span>
-          </div>
+          <StatRow label="Fee" value={feeLabel} />
+          <StatRow label="Rate" value={rateLabel} />
         </div>
-        <Link
+        <Button
           href={`/${locale}/signup`}
-          className="mt-1 inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+          variant="primary"
+          className="mt-1 rounded-2xl py-3 text-sm font-semibold"
         >
           {ctaLabel}
-        </Link>
+        </Button>
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

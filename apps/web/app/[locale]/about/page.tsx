@@ -1,4 +1,6 @@
-import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { Locale } from "@/src/lib/i18n/messages";
 
 export default function AboutPage({ params }: { params: { locale: string } }) {
@@ -12,11 +14,11 @@ export default function AboutPage({ params }: { params: { locale: string } }) {
             "ClariSend est le produit de GKC Financial Technologies, construit pour rendre les envois internationaux plus clairs.",
           missionTitle: "Notre mission",
           missionBody:
-            "Offrir des paiements transparents, avec des taux clairs, des frais visibles et des délais prévisibles.",
+            "Offrir des paiements transparents, avec des taux clairs, des frais visibles et des delais previsibles.",
           valuesTitle: "Ce qui nous guide",
           valuesBody:
-            "Clarté, conformité et performance pour chaque transfert, dans chaque corridor.",
-          cta: "Découvrir les tarifs",
+            "Clarte, conformite et performance pour chaque transfert, dans chaque corridor.",
+          cta: "Decouvrir les tarifs",
         }
       : {
           eyebrow: "ClariSend",
@@ -34,33 +36,28 @@ export default function AboutPage({ params }: { params: { locale: string } }) {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8">
-      <div className="max-w-3xl">
-        <p className="text-xs font-medium text-emerald-700">{content.eyebrow}</p>
-        <h1 className="mt-3 font-[var(--font-display)] text-3xl text-slate-900 sm:text-4xl">
-          {content.title}
-        </h1>
-        <p className="mt-4 text-lg text-slate-600">{content.subtitle}</p>
-      </div>
+      <SectionHeader
+        eyebrow={content.eyebrow}
+        title={content.title}
+        subtitle={content.subtitle}
+      />
       <div className="mt-10 grid gap-6 md:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200/70 bg-white p-6">
-          <p className="text-sm font-semibold text-slate-900">
-            {content.missionTitle}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">{content.missionBody}</p>
-        </div>
-        <div className="rounded-3xl border border-slate-200/70 bg-white p-6">
-          <p className="text-sm font-semibold text-slate-900">
-            {content.valuesTitle}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">{content.valuesBody}</p>
-        </div>
+        <Card>
+          <CardContent>
+            <p className="text-sm font-semibold text-slate-900">{content.missionTitle}</p>
+            <p className="mt-2 text-sm text-slate-600">{content.missionBody}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <p className="text-sm font-semibold text-slate-900">{content.valuesTitle}</p>
+            <p className="mt-2 text-sm text-slate-600">{content.valuesBody}</p>
+          </CardContent>
+        </Card>
       </div>
-      <Link
-        href={`/${locale}/fees`}
-        className="mt-10 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-      >
+      <Button href={`/${locale}/fees`} variant="primary" className="mt-10">
         {content.cta}
-      </Link>
+      </Button>
     </div>
   );
 }

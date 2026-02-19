@@ -33,3 +33,10 @@ test("transfer detail page does not import marketing components", () => {
   const source = fs.readFileSync(filePath, "utf8");
   assert.equal(source.includes("@/components/marketing"), false);
 });
+
+test("transfer detail page uses shared ui primitives", () => {
+  const source = fs.readFileSync(filePath, "utf8");
+  assert.equal(source.includes("@/components/ui/Badge"), true);
+  assert.equal(source.includes("@/components/ui/Card"), true);
+  assert.equal(source.includes("@/components/ui/Button"), true);
+});

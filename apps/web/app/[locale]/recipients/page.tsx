@@ -1,9 +1,11 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
 import RecipientsManager, { type RecipientSummary } from "@/components/RecipientsManager";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 export default async function RecipientsPage({
   params,
@@ -47,29 +49,22 @@ export default async function RecipientsPage({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium text-emerald-700">
-            {messages.recipientsTitle}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-            {messages.recipientsTitle}
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            {messages.recipientsSubtitle}
-          </p>
-        </div>
-        <Link
-          href={`/${validLocale}/dashboard`}
-          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300"
-        >
-          {messages.navDashboardLabel}
-        </Link>
-      </div>
+      <SectionHeader
+        eyebrow={messages.recipientsTitle}
+        title={messages.recipientsTitle}
+        subtitle={messages.recipientsSubtitle}
+        action={
+          <Button href={`/${validLocale}/dashboard`} variant="secondary">
+            {messages.navDashboardLabel}
+          </Button>
+        }
+      />
 
-      <div className="mt-10">
+      <Card className="mt-10">
+        <CardContent>
         <RecipientsManager locale={validLocale} initialRecipients={initialRecipients} />
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
