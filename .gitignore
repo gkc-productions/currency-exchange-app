@@ -9,6 +9,8 @@ build/
 **/.next/
 **/out/
 **/build/
+**/.turbo/
+**/.data/
 
 # env
 .env
