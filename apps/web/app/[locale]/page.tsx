@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import SendCard from "@/components/SendCard";
 import { COUNTRY_OPTIONS } from "@/components/country-options";
+import MarketingHero from "@/components/marketing/MarketingHero";
+import QuoteWidget, { calculateQuotePreview } from "@/components/marketing/QuoteWidget";
 import { formatDateTime, formatMoney, formatPercent } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 
@@ -72,13 +73,6 @@ const ratePrecision = (rate: number) => {
     return 4;
   }
   return 6;
-};
-
-const stepForDecimals = (decimals: number) => {
-  if (decimals <= 0) {
-    return "1";
-  }
-  return `0.${"0".repeat(decimals - 1)}1`;
 };
 
 type Asset = {
@@ -391,13 +385,18 @@ export default function Home() {
       : hasQuote
         ? 1
         : 0;
-  const fromAssetMeta = assetMap.get(fromAsset);
   const railMeta = payoutRailOptions.find((item) => item.code === displayRail);
-  const sendStep = stepForDecimals(fromAssetMeta?.decimals ?? 2);
   const defaultRecipientCountry = toCountry || "GH";
-  const isPrimaryCorridor = fromAsset === "USD" && toAsset === "GHS";
   const suggestionFrom = recommendation?.from ?? fromAsset;
   const suggestionTo = recommendation?.to ?? toAsset;
+  const heroQuoteRate = quote?.appliedRate ?? manualRateInfo.value ?? 1;
+  const heroPreview = useMemo(
+    () => calculateQuotePreview(Number(sendAmount), heroQuoteRate),
+    [heroQuoteRate, sendAmount]
+  );
+  const heroRateLabel = `1 ${fromAsset} = ${formatNumber(heroQuoteRate, ratePrecision(heroQuoteRate), locale)} ${toAsset}`;
+  const heroFeeLabel = formatAmount(heroPreview.totalFee, fromAsset);
+  const heroRecipientLabel = formatAmount(heroPreview.recipientGets, toAsset);
   const recommendationMap = useMemo(() => {
     if (!recommendation?.routes) {
       return new Map<string, RecommendationRoute>();
@@ -1380,44 +1379,12 @@ export default function Home() {
     console.info(`render_home count=${renderCountRef.current}`);
   });
 
-  const trustItems = [
-    messages.trustItemTransparent,
-    messages.trustItemFast,
-    messages.trustItemSecure,
-  ];
-
-  const featureCards = [
-    {
-      title: messages.featureSmartRoutingTitle,
-      description: messages.featureSmartRoutingDescription,
-    },
-    {
-      title: messages.featureMultiRailTitle,
-      description: messages.featureMultiRailDescription,
-    },
-    {
-      title: messages.featureTrackingTitle,
-      description: messages.featureTrackingDescription,
-    },
-  ];
-
   const faqItems = [
     { question: messages.faqQuestionOne, answer: messages.faqAnswerOne },
     { question: messages.faqQuestionTwo, answer: messages.faqAnswerTwo },
     { question: messages.faqQuestionThree, answer: messages.faqAnswerThree },
     { question: messages.faqQuestionFour, answer: messages.faqAnswerFour },
   ];
-
-  const countrySelectCopy = {
-    changeLabel: messages.countrySelectChangeLabel,
-    dialogTitle: messages.countrySelectDialogTitle,
-    dialogSubtitle: messages.countrySelectDialogSubtitle,
-    closeLabel: messages.countrySelectCloseLabel,
-    searchPlaceholder: messages.countrySelectSearchPlaceholder,
-    searchLabel: messages.countrySelectSearchLabel,
-    noResultsLabel: messages.countrySelectNoResultsLabel,
-    selectFallback: messages.countrySelectFallbackLabel,
-  };
 
   const inputClassName =
     "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40";
@@ -1427,92 +1394,37 @@ export default function Home() {
 
   return (
     <div className="bg-[var(--brand-surface)] text-slate-900">
-      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#e8f6f1,_#f5f7fb_55%,_#ffffff)]">
-        <div className="pointer-events-none absolute -top-24 right-8 h-56 w-56 rounded-full bg-emerald-200/30 blur-3xl motion-safe:animate-[float-slow_12s_ease-in-out_infinite]" />
-        <div className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
-          <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-6">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700">
-                ClariSend
-              </span>
-              <h1 className="font-[var(--font-display)] text-4xl leading-tight text-slate-900 sm:text-5xl">
-                {messages.heroTitle}
-              </h1>
-              <p className="max-w-xl text-lg text-slate-600">
-                {messages.heroSubtitle}
-              </p>
-              <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-600">
-                <Link
-                  href={`/${locale}#features`}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-                >
-                  {messages.featuresLinkLabel}
-                </Link>
-                <Link
-                  href={`/${locale}#faq`}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-                >
-                  {messages.footerFaqLinkLabel}
-                </Link>
+      <MarketingHero locale={locale} title={messages.heroTitle} subtitle={messages.heroSubtitle}>
+        <QuoteWidget
+          locale={locale}
+          sendAmount={sendAmount}
+          fromCurrency={fromAsset}
+          toCurrency={toAsset}
+          rateLabel={heroRateLabel}
+          feeLabel={heroFeeLabel}
+          recipientGetsLabel={messages.recipientGetsLabel}
+          ctaLabel={messages.sendCtaLabel}
+          currencies={assetsList.map((asset) => ({ code: asset.code, name: asset.name }))}
+          recipientGetsValue={heroRecipientLabel}
+          onSendAmountChange={setSendAmount}
+          onFromCurrencyChange={setFromAsset}
+          onToCurrencyChange={setToAsset}
+        />
+      </MarketingHero>
+
+      <section className="border-b border-slate-200/70 bg-white/80">
+        <div className="mx-auto w-full max-w-7xl px-6 py-6 lg:px-8">
+          <div className="grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
+            {["Transparent fees", "Secure sign-in", "Clear tracking"].map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm"
+              >
+                {item}
               </div>
-            </div>
-            <div id="send" className="w-full">
-              <SendCard
-                title={messages.sendCardTitle}
-                subtitle={messages.sendCardSubtitle}
-                fromLabel={messages.sendFromLabel}
-                toLabel={messages.sendToLabel}
-                railLabel={messages.railLabel}
-                amountLabel={messages.sendAmountLabel}
-                amountHint={messages.sendAmountHint}
-                submitLabel={messages.sendCtaLabel}
-                assetsLoadingLabel={messages.assetsLoading}
-                fromCountry={fromCountry}
-                toCountry={toCountry}
-                fromAsset={fromAsset}
-                toAsset={toAsset}
-                rail={rail}
-                sendAmount={sendAmount}
-                sendStep={sendStep}
-                railOptions={payoutRailOptions}
-                countryOptions={countryOptions}
-                assetsLoading={assetsLoading}
-                assetsError={assetsError}
-                onChangeFrom={setFromCountry}
-                onChangeTo={setToCountry}
-                onChangeRail={setRail}
-                onChangeAmount={setSendAmount}
-                onSubmit={handleGetStarted}
-                countrySelectCopy={countrySelectCopy}
-              />
-              <p className="mt-3 text-xs text-slate-500">
-                {isPrimaryCorridor
-                  ? messages.primaryCorridorNote
-                  : messages.secondaryCorridorNote}
-              </p>
-            </div>
-          </div>
-          <div className="mt-10">
-            <p className="text-xs font-medium text-slate-500">
-              {messages.trustTitle}
-            </p>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              {trustItems.map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-                      <path
-                        fill="currentColor"
-                        d="M9.55 17.2L4.8 12.45l1.77-1.77 2.98 2.98 7.5-7.5 1.77 1.77-9.27 9.27z"
-                      />
-                    </svg>
-                  </span>
-                  <span>{item}</span>
-                </div>
-              ))}
+            ))}
+            <div className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              As seen in <span className="rounded bg-white px-2 py-1">Global remit</span>
             </div>
           </div>
         </div>
@@ -2463,38 +2375,75 @@ export default function Home() {
         </section>
       ) : null}
 
-      <section id="features" className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-medium text-emerald-700">
-            {messages.featuresLinkLabel}
+      <section id="features" className="mx-auto w-full max-w-7xl space-y-14 px-6 py-16 lg:px-8 lg:py-24">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
+            Why ClariSend
           </p>
-          <h2 className="font-[var(--font-display)] text-3xl text-slate-900">
-            {messages.featuresTitle}
+          <h2 className="mt-2 font-[var(--font-display)] text-3xl text-slate-900">
+            Premium clarity for every transfer
           </h2>
-          <p className="text-sm text-slate-600">{messages.featuresSubtitle}</p>
-        </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {featureCards.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
-                  <path
-                    fill="currentColor"
-                    d="M12 2l8 4v6c0 5.25-3.4 9.9-8 11-4.6-1.1-8-5.75-8-11V6l8-4zm0 2.2L6 6.1v5.9c0 4.15 2.6 7.9 6 9 3.4-1.1 6-4.85 6-9V6.1l-6-1.9z"
-                  />
-                </svg>
+          <div className="mt-6 grid gap-5 md:grid-cols-3">
+            {[
+              { title: "Transparent pricing", body: "See estimated fees and rate details before you continue." },
+              { title: "Fast quote experience", body: "Get an instant estimate and start your transfer in seconds." },
+              { title: "Built-in trust signals", body: "Security highlights and clear tracking language at each step." },
+            ].map((card) => (
+              <div key={card.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_45px_-35px_rgba(15,23,42,0.35)]">
+                <h3 className="text-lg font-semibold text-slate-900">{card.title}</h3>
+                <p className="mt-2 text-sm text-slate-600">{card.body}</p>
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-slate-900">
-                {feature.title}
-              </h3>
-              <p className="mt-2 text-sm text-slate-600">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">How it works</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {[
+              "1. Start a quote with your send amount and currency.",
+              "2. Review recipient details, fees, and locked rate.",
+              "3. Track progress and download your final receipt.",
+            ].map((step) => (
+              <div key={step} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-700">
+                {step}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Ways to send and receive</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {[
+              "Bank transfer payouts",
+              "Mobile money delivery",
+              "Digital asset corridors",
+            ].map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-800">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Link
+            href={`/${locale}/security`}
+            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Security & compliance</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">Review how we protect your account</p>
+            <p className="mt-2 text-sm text-slate-600">See our security practices and compliance-ready controls.</p>
+          </Link>
+          <Link
+            href={`/${locale}/help`}
+            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Help center</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">Get answers before you send</p>
+            <p className="mt-2 text-sm text-slate-600">Find quote, lock, and tracking guidance in plain language.</p>
+          </Link>
         </div>
       </section>
 
