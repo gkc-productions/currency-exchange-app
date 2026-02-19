@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatRow } from "@/components/ui/StatRow";
+import FirstTransferChecklist from "@/app/[locale]/(app)/_components/FirstTransferChecklist";
 
 const statusStyles: Record<string, string> = {
   READY: "bg-amber-100 text-amber-800",
@@ -55,6 +56,9 @@ export default async function DashboardPage({
       },
     },
   });
+  const recipientsCount = await prisma.recipient.count({
+    where: { userId: user.id },
+  });
 
   const statusLabels: Record<string, string> = {
     READY: messages.statusReadyLabel,
@@ -77,6 +81,11 @@ export default async function DashboardPage({
             {messages.recipientsTitle}
           </Button>
         }
+      />
+      <FirstTransferChecklist
+        locale={validLocale}
+        hasTransfers={transfers.length > 0}
+        hasRecipients={recipientsCount > 0}
       />
 
       <div className="mt-10 grid gap-4">

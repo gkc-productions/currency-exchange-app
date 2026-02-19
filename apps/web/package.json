@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0 --port 3000",
     "build": "next build",
+    "smoke:marketing": "sh -c 'DATABASE_URL= AUTH_SESSION_SECRET=; export DATABASE_URL AUTH_SESSION_SECRET; if [ -f scripts/check-boundaries.mjs ]; then node scripts/check-boundaries.mjs; fi; if [ -f scripts/build-target.mjs ]; then CLARISEND_TARGET=marketing node scripts/build-target.mjs; else next build; fi'",
+    "smoke:app": "sh -c 'if [ -z \"$DATABASE_URL\" ] || [ -z \"$AUTH_SESSION_SECRET\" ]; then echo \"Missing DATABASE_URL or AUTH_SESSION_SECRET\"; exit 1; fi; if [ -f scripts/build-target.mjs ]; then CLARISEND_TARGET=app node scripts/build-target.mjs; else next build; fi'",
     "start": "next start",
     "lint": "eslint .",
     "test": "tsx --test $(find tests -maxdepth 1 -name '*.test.ts' ! -name 'auth-password.test.ts' ! -name 'mfa-ui.test.ts' | sort)",

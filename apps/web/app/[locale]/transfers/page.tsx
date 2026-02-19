@@ -157,9 +157,25 @@ export default function TransfersHistoryPage() {
             {messages.transfersHistoryErrorLabel}
           </p>
         ) : filtered.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            {messages.transfersHistoryEmptyLabel}
-          </p>
+          <div
+            data-testid="transfers-empty-state"
+            className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6"
+          >
+            <p className="text-sm text-slate-700">
+              This page shows your transfer history, status, and recipient details.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button href={`/${locale}`} variant="primary">
+                Start transfer
+              </Button>
+              <Link
+                href={`/${locale}/help`}
+                className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              >
+                Help
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">

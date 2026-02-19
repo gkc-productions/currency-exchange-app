@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/src/lib/prisma";
 import { getServerAuthSession } from "@/src/lib/auth";
 import RecipientsManager, { type RecipientSummary } from "@/components/RecipientsManager";
@@ -62,6 +63,27 @@ export default async function RecipientsPage({
 
       <Card className="mt-10">
         <CardContent>
+        {initialRecipients.length === 0 ? (
+          <div
+            data-testid="recipients-empty-state"
+            className="mb-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5"
+          >
+            <p className="text-sm text-slate-700">
+              Save recipient details once, then reuse them for faster transfers.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button href={`/${validLocale}`} variant="primary">
+                Create transfer
+              </Button>
+              <Link
+                href={`/${validLocale}/help`}
+                className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              >
+                Help
+              </Link>
+            </div>
+          </div>
+        ) : null}
         <RecipientsManager locale={validLocale} initialRecipients={initialRecipients} />
         </CardContent>
       </Card>

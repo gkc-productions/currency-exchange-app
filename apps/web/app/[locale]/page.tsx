@@ -1797,6 +1797,9 @@ export default function Home() {
                       ? messages.lockQuoteRefreshing
                       : messages.lockQuoteButton}
                   </button>
+                  <p className="mt-2 text-xs text-slate-500">
+                    What happens next: add recipient details, confirm fees, then track status updates.
+                  </p>
                   {hasQuote && isExpired ? (
                     <button
                       type="button"

@@ -1838,6 +1838,12 @@ export default function TransferReceiptPage() {
               <p className="mt-2 text-sm text-slate-700">
                 Need help with this transfer? We can review status and receipt details with you.
               </p>
+              <p className="mt-2 text-xs text-slate-500">
+                Reference: <span className="font-medium text-slate-700">{referenceCode}</span>
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Support usually replies within one business day.
+              </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
                   href={`/${locale}/help`}
