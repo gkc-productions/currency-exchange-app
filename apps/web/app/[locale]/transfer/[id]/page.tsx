@@ -8,6 +8,7 @@ import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 import { resolveReceiptUiState } from "@/src/lib/receipt-ui";
+import { copyText as copyTextSafe } from "@/src/lib/clipboard";
 import AccountingPanel from "@/src/lib/accounting-ui";
 import {
   parseTimelineMessage,
@@ -15,6 +16,10 @@ import {
   resolvePayoutAction,
   shouldShowPayoutInfo,
 } from "@/src/lib/transfer-events-ui";
+import {
+  buildUserStatusTimeline,
+  resolveUserStatusModel,
+} from "@/src/lib/transfer-status-model";
 
 type TransferEvent = {
   id: string;
@@ -136,13 +141,10 @@ type ReceiptError = "not_found" | "expired" | "generic";
 type ReceiptFetchError = "unauthorized" | "not_found" | "snapshot_missing" | "generic";
 
 const statusStyles: Record<string, string> = {
-  READY: "bg-amber-100 text-amber-800",
+  PENDING_PAYMENT: "bg-amber-100 text-amber-800",
   PROCESSING: "bg-sky-100 text-sky-800",
   COMPLETED: "bg-emerald-100 text-emerald-800",
   FAILED: "bg-rose-100 text-rose-800",
-  CANCELED: "bg-slate-200 text-slate-700",
-  DRAFT: "bg-slate-200 text-slate-700",
-  EXPIRED: "bg-slate-200 text-slate-700",
 };
 
 const formatNumber = (value: number, digits = 2, locale: Locale = "en") =>
@@ -240,19 +242,6 @@ export default function TransferReceiptPage() {
   const [forceResult, setForceResult] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const { data: session } = useSession();
-
-  const statusLabels = useMemo(
-    () => ({
-      READY: messages.statusReadyLabel,
-      PROCESSING: messages.statusProcessingLabel,
-      COMPLETED: messages.statusCompletedLabel,
-      FAILED: messages.statusFailedLabel,
-      CANCELED: messages.statusCanceledLabel,
-      DRAFT: messages.statusDraftLabel,
-      EXPIRED: messages.statusExpiredLabel,
-    }),
-    [messages]
-  );
 
   const payoutRailLabels = useMemo(
     () => ({
@@ -620,41 +609,13 @@ export default function TransferReceiptPage() {
     return () => window.clearTimeout(timer);
   }, [copied]);
 
-  const copyText = async (value: string) => {
-    if (!value) {
-      return false;
-    }
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(value);
-        return true;
-      } catch {
-        // Fall through to manual copy.
-      }
-    }
-    try {
-      const textarea = document.createElement("textarea");
-      textarea.value = value;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "absolute";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      const success = document.execCommand("copy");
-      document.body.removeChild(textarea);
-      return success;
-    } catch {
-      return false;
-    }
-  };
-
   const handleCopy = async (value: string, kind: "code" | "link") => {
-    const success = await copyText(value);
+    const success = await copyTextSafe(value);
     setCopied(success ? kind : null);
   };
 
   const handleCopyInvoice = async (value: string) => {
-    const success = await copyText(value);
+    const success = await copyTextSafe(value);
     setCopied(success ? "invoice" : null);
   };
 
@@ -1133,10 +1094,9 @@ export default function TransferReceiptPage() {
         return event.message;
     }
   };
-  const statusStyle = statusStyles[transferStatus] ?? "bg-slate-200 text-slate-700";
-  const statusLabel =
-    statusLabels[transferStatus as keyof typeof statusLabels] ??
-    transferStatus.replaceAll("_", " ");
+  const userStatus = resolveUserStatusModel(transferStatus);
+  const statusStyle = statusStyles[userStatus.key] ?? "bg-slate-200 text-slate-700";
+  const statusLabel = userStatus.label;
   const flowSteps = [
     messages.flowStepQuote,
     messages.flowStepReview,
@@ -1149,87 +1109,8 @@ export default function TransferReceiptPage() {
       ? `/${locale}/transfer/${transfer.id}`
       : `${window.location.origin}/${locale}/transfer/${transfer.id}`;
   const eventsForTimeline = timelineEvents ?? events;
-  const eventByType = new Map(eventsForTimeline.map((event) => [event.type, event]));
-  const finalStatus =
-    transferStatus === "FAILED" || transferStatus === "CANCELED"
-      ? "FAILED"
-      : transferStatus === "EXPIRED"
-        ? "EXPIRED"
-        : transferStatus === "COMPLETED"
-          ? "COMPLETED"
-          : "COMPLETED";
-  const finalLabel =
-    finalStatus === "FAILED"
-      ? messages.lifecycleFailedLabel
-      : finalStatus === "EXPIRED"
-        ? messages.lifecycleExpiredLabel
-        : messages.lifecycleCompletedLabel;
-  const finalDescription =
-    finalStatus === "FAILED"
-      ? messages.lifecycleFailedDescription
-      : finalStatus === "EXPIRED"
-        ? messages.lifecycleExpiredDescription
-        : messages.lifecycleCompletedDescription;
-  const lifecycleSteps = [
-    {
-      key: "CREATED",
-      label: messages.lifecycleCreatedLabel,
-      description: messages.lifecycleCreatedDescription,
-      timestamp: eventByType.get("CREATED")?.createdAt ?? transfer.createdAt,
-    },
-    {
-      key: "QUOTED",
-      label: messages.lifecycleQuotedLabel,
-      description: messages.lifecycleQuotedDescription,
-      timestamp: quote.createdAt,
-    },
-    {
-      key: "INITIATED",
-      label: messages.lifecycleInitiatedLabel,
-      description: messages.lifecycleInitiatedDescription,
-      timestamp:
-        eventByType.get("QUOTE_LOCKED")?.createdAt ?? transfer.createdAt,
-    },
-    {
-      key: "PENDING",
-      label: messages.lifecyclePendingLabel,
-      description: messages.lifecyclePendingDescription,
-      timestamp:
-        eventByType.get("PROCESSING")?.createdAt ??
-        (transferStatus === "PROCESSING" ? transfer.updatedAt : null),
-    },
-    {
-      key: finalStatus,
-      label: finalLabel,
-      description: finalDescription,
-      timestamp:
-        eventByType.get(finalStatus)?.createdAt ??
-        (["COMPLETED", "FAILED", "EXPIRED", "CANCELED"].includes(transferStatus)
-          ? transfer.updatedAt
-          : null),
-    },
-  ];
-  const stageIndexByStatus: Record<string, number> = {
-    DRAFT: 0,
-    READY: 2,
-    PROCESSING: 3,
-    COMPLETED: 4,
-    FAILED: 4,
-    EXPIRED: 4,
-    CANCELED: 4,
-  };
-  const currentStageIndex =
-    stageIndexByStatus[transferStatus] ?? stageIndexByStatus.READY;
-  const nextStepMessage =
-    transferStatus === "PROCESSING"
-      ? messages.nextStepProcessing
-      : transferStatus === "COMPLETED"
-        ? messages.nextStepCompleted
-        : transferStatus === "FAILED" || transferStatus === "CANCELED"
-          ? messages.nextStepFailed
-          : transferStatus === "EXPIRED"
-            ? messages.nextStepExpired
-            : messages.nextStepReady;
+  const groupedStatusTimeline = buildUserStatusTimeline(transferStatus, eventsForTimeline);
+  const nextStepMessage = userStatus.description;
   const receiptSnapshot = receiptData?.snapshot ?? null;
   const accountingSnapshot = receiptSnapshot
     ? {
@@ -1263,21 +1144,42 @@ export default function TransferReceiptPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-16 lg:px-8">
-        <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-8 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.9)]">
+        <header
+          data-testid="transfer-detail-header"
+          className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]"
+        >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-medium text-slate-400">
+              <p className="text-xs font-medium text-slate-500">
                 {messages.transferReceiptTitle}
               </p>
-              <h1 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">
+              <h1 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">
                 {referenceCode}
               </h1>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-slate-600">
                 {messages.referenceCodeLabel}
               </p>
-              <div className="mt-4 grid gap-2 text-xs text-slate-400 sm:grid-cols-2">
+              <div className="mt-4 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+                <div>
+                  Amount sent:{" "}
+                  {formatMoney(
+                    quote.sendAmount,
+                    quote.fromAsset.code,
+                    locale,
+                    quote.fromAsset.decimals
+                  )}
+                </div>
+                <div>
+                  Recipient gets:{" "}
+                  {formatMoney(
+                    quote.recipientGets,
+                    quote.toAsset.code,
+                    locale,
+                    quote.toAsset.decimals
+                  )}
+                </div>
                 <div>
                   {messages.createdAtLabel}:{" "}
                   {formatDateTime(transfer.createdAt, locale)}
@@ -1287,7 +1189,10 @@ export default function TransferReceiptPage() {
                   {formatDateTime(transfer.updatedAt, locale)}
                 </div>
               </div>
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+              <div
+                data-testid="transfer-detail-what-next"
+                className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+              >
                 <p className="text-xs font-medium text-slate-400">
                   {messages.nextStepTitle}
                 </p>
@@ -1296,7 +1201,7 @@ export default function TransferReceiptPage() {
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle}`}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyle}`}
               >
                 {statusLabel}
               </span>
@@ -1304,7 +1209,7 @@ export default function TransferReceiptPage() {
                 <button
                   type="button"
                   onClick={() => handleCopy(referenceCode, "code")}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                 >
                   {copied === "code"
                     ? messages.copiedLabel
@@ -1313,7 +1218,7 @@ export default function TransferReceiptPage() {
                 <button
                   type="button"
                   onClick={() => handleCopy(shareLink, "link")}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                 >
                   {copied === "link"
                     ? messages.copiedLabel
@@ -1324,7 +1229,7 @@ export default function TransferReceiptPage() {
                     type="button"
                     onClick={handleResendReceipt}
                     disabled={resendState === "sending"}
-                    className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed"
+                    className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed"
                   >
                     {resendState === "sending"
                       ? messages.receiptResendLoading
@@ -1333,7 +1238,7 @@ export default function TransferReceiptPage() {
                 ) : null}
               </div>
               {session?.user && resendState !== "idle" ? (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   {resendState === "sent"
                     ? messages.receiptResendSuccess
                     : resendState === "rate"
@@ -1345,23 +1250,17 @@ export default function TransferReceiptPage() {
               ) : null}
             </div>
           </div>
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-400">
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-              {messages.trustEncryptionLabel}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-              {messages.trustSecureConnectionLabel}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-              {messages.trustRegulatoryIntentLabel}
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+              Status updates are audit logged.
             </span>
           </div>
         </header>
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col gap-6">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs font-medium text-slate-400">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5">
+              <p className="text-xs font-medium text-slate-500">
                 {messages.flowStepsTitle}
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-4">
@@ -1373,10 +1272,10 @@ export default function TransferReceiptPage() {
                       key={label}
                       className={`rounded-2xl border px-3 py-2 text-xs font-medium ${
                         isActive
-                          ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+                          ? "border-emerald-300 bg-emerald-100 text-emerald-800"
                           : isComplete
-                            ? "border-white/10 bg-white/5 text-slate-200"
-                            : "border-white/5 bg-white/5 text-slate-500"
+                            ? "border-slate-200 bg-white text-slate-700"
+                            : "border-slate-200 bg-slate-50 text-slate-500"
                       }`}
                     >
                       {label}
@@ -1385,27 +1284,30 @@ export default function TransferReceiptPage() {
                 })}
               </div>
             </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div
+              data-testid="transfer-detail-timeline"
+              className="rounded-3xl border border-slate-200 bg-white p-6"
+            >
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-400">
-                  {messages.lifecycleTitle}
+                <p className="text-xs font-medium text-slate-500">
+                  Transfer status timeline
                 </p>
                 <span className="text-xs text-slate-500">{referenceCode}</span>
               </div>
               <div className="mt-5 space-y-4">
-                {lifecycleSteps.map((step, index) => {
-                  const isComplete = index < currentStageIndex;
-                  const isCurrent = index === currentStageIndex;
+                {groupedStatusTimeline.map((step) => {
+                  const isComplete = step.isComplete;
+                  const isCurrent = step.isActive;
                   const indicatorClass = isComplete
-                    ? "bg-emerald-400"
+                    ? "bg-emerald-500"
                     : isCurrent
-                      ? "bg-amber-400"
-                      : "bg-white/10";
+                      ? "bg-amber-500"
+                      : "bg-slate-300";
                   const textClass = isComplete
-                    ? "text-slate-100"
+                    ? "text-slate-900"
                     : isCurrent
-                      ? "text-white"
-                      : "text-slate-400";
+                      ? "text-slate-900"
+                      : "text-slate-500";
                   return (
                     <div key={step.key} className="flex items-start gap-3">
                       <span
@@ -1432,14 +1334,14 @@ export default function TransferReceiptPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-slate-400">
+                  <p className="text-xs font-medium text-slate-500">
                     {messages.timelineLabel}
                   </p>
                   {executeUi.message === "processing" ? (
-                    <p className="mt-1 text-xs text-slate-300">
+                    <p className="mt-1 text-xs text-slate-600">
                       {messages.executePayoutProcessingLabel}
                     </p>
                   ) : executeUi.message === "failed" ? (
@@ -1459,7 +1361,7 @@ export default function TransferReceiptPage() {
                       type="button"
                       onClick={handleExecutePayout}
                       disabled={executeState === "loading"}
-                      className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {executeState === "loading"
                         ? messages.executePayoutLoadingLabel
@@ -1471,7 +1373,7 @@ export default function TransferReceiptPage() {
                       type="button"
                       onClick={handleExecutePayout}
                       disabled={executeState === "loading"}
-                      className="rounded-full border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-xs font-medium text-amber-100 transition hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {executeState === "loading"
                         ? messages.executePayoutLoadingLabel
@@ -1483,7 +1385,7 @@ export default function TransferReceiptPage() {
                       type="button"
                       onClick={handleCancelPayout}
                       disabled={cancelState === "loading"}
-                      className="rounded-full border border-rose-400/40 bg-rose-500/20 px-4 py-2 text-xs font-medium text-rose-100 transition hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {cancelState === "loading"
                         ? messages.cancelPayoutLoadingLabel
@@ -1495,7 +1397,7 @@ export default function TransferReceiptPage() {
                   </span>
                 </div>
               </div>
-              <div className="mt-5 space-y-4 border-l border-white/10 pl-4">
+              <div className="mt-5 space-y-4 border-l border-slate-200 pl-4">
                 {timelineError ? (
                   <p className="text-sm text-slate-400">
                     {messages.receiptLoadError}
@@ -1512,20 +1414,20 @@ export default function TransferReceiptPage() {
                         key={`${event.type}-${event.createdAt}-${index}`}
                         className="relative"
                       >
-                        <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-white/60" />
-                        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                        <span className="absolute -left-[9px] top-1.5 h-2.5 w-2.5 rounded-full bg-slate-400" />
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                           <div className="flex items-center justify-between gap-4">
-                            <p className="text-sm font-semibold text-white">
+                            <p className="text-sm font-semibold text-slate-900">
                               {typeLabel}
                             </p>
                             <span className="text-xs text-slate-500">
                               {formatDateTime(event.createdAt, locale)}
                             </span>
                           </div>
-                          <p className="mt-2 text-sm text-slate-200">
+                          <p className="mt-2 text-sm text-slate-700">
                             {messageText}
                           </p>
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-300">
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
                             {parsed.ref ? (
                               <span>
                                 {messages.payoutRefLabel} {parsed.ref}
@@ -1551,34 +1453,34 @@ export default function TransferReceiptPage() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <p className="text-xs font-medium text-slate-400">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6">
+              <p className="text-xs font-medium text-slate-500">
                 {messages.recipientSummaryLabel}
               </p>
-              <div className="mt-4 space-y-3 text-sm text-slate-200">
+              <div className="mt-4 space-y-3 text-sm text-slate-700">
                 <div className="flex items-center justify-between">
                   <span>{messages.recipientNameLabel}</span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-slate-900">
                     {transfer.recipientName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>{messages.recipientCountryLabel}</span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-slate-900">
                     {transfer.recipientCountry}
                   </span>
                 </div>
                 {transfer.recipientPhone ? (
                   <div className="flex items-center justify-between">
                     <span>{messages.recipientPhoneLabel}</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {transfer.recipientPhone}
                     </span>
                   </div>
                 ) : null}
                 <div className="flex items-center justify-between">
                   <span>{messages.payoutSummaryLabel}</span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-slate-900">
                     {payoutRailLabels[
                       transfer.payoutRail as keyof typeof payoutRailLabels
                     ] ?? transfer.payoutRail}
@@ -1587,7 +1489,7 @@ export default function TransferReceiptPage() {
                 {transfer.recipientBankName ? (
                   <div className="flex items-center justify-between">
                     <span>{messages.bankNameLabel}</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {transfer.recipientBankName}
                     </span>
                   </div>
@@ -1595,7 +1497,7 @@ export default function TransferReceiptPage() {
                 {transfer.recipientBankAccount ? (
                   <div className="flex items-center justify-between">
                     <span>{messages.bankAccountLabel}</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {transfer.recipientBankAccount}
                     </span>
                   </div>
@@ -1603,7 +1505,7 @@ export default function TransferReceiptPage() {
                 {transfer.recipientMobileMoneyProvider ? (
                   <div className="flex items-center justify-between">
                     <span>{messages.mobileMoneyProviderLabel}</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {transfer.recipientMobileMoneyProvider}
                     </span>
                   </div>
@@ -1611,7 +1513,7 @@ export default function TransferReceiptPage() {
                 {transfer.recipientMobileMoneyNumber ? (
                   <div className="flex items-center justify-between">
                     <span>{messages.mobileMoneyNumberLabel}</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {transfer.recipientMobileMoneyNumber}
                     </span>
                   </div>
@@ -1619,7 +1521,7 @@ export default function TransferReceiptPage() {
                 {transfer.recipientLightningInvoice ? (
                   <div className="flex items-center justify-between">
                     <span>{messages.recipientLightningInvoiceLabel}</span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {transfer.recipientLightningInvoice}
                     </span>
                   </div>
@@ -1742,32 +1644,61 @@ export default function TransferReceiptPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div
+              data-testid="transfer-detail-receipt"
+              className="rounded-3xl border border-slate-200 bg-white p-6"
+            >
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs font-medium text-slate-500">
                   {messages.transferReceiptTitle}
                 </p>
-                {receiptUi.showViewLink && receiptUrl ? (
-                  <a
-                    href={receiptUrl}
-                    className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-4 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-500/30"
-                    target="_blank"
-                    rel="noreferrer"
+                <div className="flex items-center gap-2">
+                  {receiptUi.showViewLink && receiptUrl ? (
+                    <a
+                      href={receiptUrl}
+                      className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Download receipt
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(referenceCode, "code")}
+                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                   >
-                    {messages.viewReceiptButton}
-                  </a>
-                ) : null}
+                    {copied === "code" ? messages.copiedLabel : "Copy reference"}
+                  </button>
+                </div>
               </div>
 
-              <div className="mt-4 space-y-4 text-sm text-slate-200">
+              <div className="mt-4 space-y-4 text-sm text-slate-700">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Receipt preview
+                  </p>
+                  <div className="mt-2 grid gap-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>{messages.referenceCodeLabel}</span>
+                      <span className="font-semibold text-slate-900">{referenceCode}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{messages.createdAtLabel}</span>
+                      <span className="font-semibold text-slate-900">
+                        {formatDateTime(transfer.createdAt, locale)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
                 {receiptError === "unauthorized" ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
-                    <p className="font-medium text-white">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                    <p className="font-medium text-slate-900">
                       {messages.receiptUnauthorizedLabel}
                     </p>
                     <Link
                       href="/api/auth/signin"
-                      className="mt-3 inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                      className="mt-3 inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                     >
                       {messages.navSignInLabel}
                     </Link>
@@ -1777,44 +1708,44 @@ export default function TransferReceiptPage() {
                     {messages.receiptNotFoundLabel}
                   </p>
                 ) : receiptError === "snapshot_missing" ? (
-                  <div className="space-y-2 text-sm text-slate-400">
+                  <div className="space-y-2 text-sm text-slate-600">
                     <p>{messages.receiptSnapshotUnavailableLabel}</p>
                     <button
                       type="button"
                       onClick={retryReceiptSnapshot}
-                      className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                      className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                     >
-                      {messages.receiptRetryButton}
+                      Try again
                     </button>
                   </div>
                 ) : receiptError === "generic" ? (
-                  <div className="space-y-2 text-sm text-slate-400">
+                  <div className="space-y-2 text-sm text-slate-600">
                     <p>{messages.receiptLoadError}</p>
                     <button
                       type="button"
                       onClick={retryReceiptSnapshot}
-                      className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20"
+                      className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                     >
-                      {messages.receiptRetryButton}
+                      Try again
                     </button>
                   </div>
                 ) : receiptSnapshot ? (
-                  <div className="space-y-3 text-sm text-slate-200">
+                  <div className="space-y-3 text-sm text-slate-700">
                     <div className="flex items-center justify-between">
                       <span>{messages.receiptSendAmountLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {formatMoney(receiptSnapshot.sendAmount, receiptSnapshot.fromAsset, locale)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.fundingMethodLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {receiptSnapshot.fundingMethod ?? "—"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.receiptAppliedRateLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         1 {receiptSnapshot.fromAsset} ={" "}
                         {formatNumber(receiptSnapshot.appliedRate, 4, locale)}{" "}
                         {receiptSnapshot.toAsset}
@@ -1822,7 +1753,7 @@ export default function TransferReceiptPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.marketRateLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         1 {receiptSnapshot.fromAsset} ={" "}
                         {formatNumber(receiptSnapshot.marketRate, 4, locale)}{" "}
                         {receiptSnapshot.toAsset}
@@ -1830,37 +1761,37 @@ export default function TransferReceiptPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.fxMarginRow}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {formatNumber(receiptSnapshot.fxMarginPct, 2, locale)}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.fixedFeeLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {formatMoney(receiptSnapshot.fixedFee, receiptSnapshot.fromAsset, locale)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.percentFeeLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {formatNumber(receiptSnapshot.percentFee, 2, locale)}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.receiptTotalFeesLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {formatMoney(receiptSnapshot.totalFees, receiptSnapshot.fromAsset, locale)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.receiptRecipientGetsLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {formatMoney(receiptSnapshot.recipientGets, receiptSnapshot.toAsset, locale)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>{messages.rateSourceLabel}</span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-slate-900">
                         {receiptSnapshot.rateSource}
                       </span>
                     </div>
@@ -1874,21 +1805,21 @@ export default function TransferReceiptPage() {
                   </p>
                 )}
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                   {receiptUi.showPendingText ? (
                     <p>{messages.receiptAvailableAfterCompletionLabel}</p>
                   ) : receiptUi.showViewLink ? (
                     <p>{messages.receiptReadyLabel}</p>
                   ) : (
                     <div className="flex flex-col gap-3">
-                      <p className="text-sm text-slate-300">
+                      <p className="text-sm text-slate-700">
                         {messages.receiptGetPromptLabel}
                       </p>
                       <button
                         type="button"
                         onClick={handleGetReceipt}
                         disabled={receiptUi.disableGetButton}
-                        className="w-fit rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-fit rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {receiptActionState === "loading"
                           ? messages.receiptResendLoading
@@ -1902,6 +1833,30 @@ export default function TransferReceiptPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+
+            <div
+              data-testid="transfer-detail-support"
+              className="rounded-3xl border border-slate-200 bg-white p-6"
+            >
+              <p className="text-xs font-medium text-slate-500">Support</p>
+              <p className="mt-2 text-sm text-slate-700">
+                Need help with this transfer? We can review status and receipt details with you.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={`/${locale}/help`}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+                >
+                  Help center
+                </Link>
+                <Link
+                  href={`/${locale}/help`}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+                >
+                  Report an issue
+                </Link>
               </div>
             </div>
 
