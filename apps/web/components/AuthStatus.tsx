@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
+import { signOutClient, useAuthSession } from "@/components/SessionProvider";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 
 export default function AuthStatus({ locale }: { locale: Locale }) {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuthSession();
   const messages = getMessages(locale);
 
   if (status === "loading") {
@@ -37,7 +37,9 @@ export default function AuthStatus({ locale }: { locale: Locale }) {
       </Link>
       <button
         type="button"
-        onClick={() => signOut({ callbackUrl: `/${locale}` })}
+        onClick={() => {
+          void signOutClient(locale);
+        }}
         className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300"
       >
         {messages.navSignOutLabel}

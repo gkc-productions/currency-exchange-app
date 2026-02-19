@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useAuthSession } from "@/components/SessionProvider";
 import { COUNTRY_OPTIONS } from "@/components/country-options";
 import MarketingHero from "@/components/marketing/MarketingHero";
 import QuoteWidget, { calculateQuotePreview } from "@/components/marketing/QuoteWidget";
@@ -174,7 +174,7 @@ export default function Home() {
     return value === "fr" ? "fr" : "en";
   }, [params]);
   const messages = getMessages(locale);
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetsError, setAssetsError] = useState<string | null>(null);
   const [assetsLoading, setAssetsLoading] = useState(false);

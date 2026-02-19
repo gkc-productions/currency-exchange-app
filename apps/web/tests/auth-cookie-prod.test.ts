@@ -8,7 +8,7 @@ test("production auth cookies use secure httpOnly sameSite=lax defaults", () => 
   const sessionCookie = options.cookies?.sessionToken;
 
   assert.ok(sessionCookie);
-  assert.equal(sessionCookie?.name, "__Secure-next-auth.session-token");
+  assert.equal(sessionCookie?.name, "clarisend_session");
   assert.equal(sessionCookie?.options.httpOnly, true);
   assert.equal(sessionCookie?.options.sameSite, "lax");
   assert.equal(sessionCookie?.options.secure, true);

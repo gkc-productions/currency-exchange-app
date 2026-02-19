@@ -2,10 +2,10 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { useAuthSession } from "@/components/SessionProvider";
 import type { Locale } from "@/src/lib/i18n/messages";
 import { withLocale } from "@/src/lib/with-locale";
 
@@ -16,7 +16,7 @@ function normalizeReference(value: string) {
 export default function TrackTransferPage() {
   const router = useRouter();
   const params = useParams();
-  const { status } = useSession();
+  const { status } = useAuthSession();
   const locale = useMemo<Locale>(() => {
     const value = params?.locale;
     if (Array.isArray(value)) {

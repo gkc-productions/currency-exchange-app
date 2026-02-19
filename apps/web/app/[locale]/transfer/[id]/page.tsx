@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useAuthSession } from "@/components/SessionProvider";
 import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
@@ -268,7 +268,7 @@ export default function TransferReceiptPage() {
   const [forceError, setForceError] = useState<string | null>(null);
   const [forceResult, setForceResult] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
 
   const payoutRailLabels = useMemo(
     () => ({
@@ -1780,7 +1780,7 @@ export default function TransferReceiptPage() {
                       {messages.receiptUnauthorizedLabel}
                     </p>
                     <Link
-                      href="/api/auth/signin"
+                      href={`/${locale}/login`}
                       className="mt-3 inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                     >
                       {messages.navSignInLabel}
