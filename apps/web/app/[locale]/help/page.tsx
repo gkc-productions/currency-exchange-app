@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { Locale } from "@/src/lib/i18n/messages";
+import { withLocale } from "@/src/lib/with-locale";
 
 export default function HelpPage({ params }: { params: { locale: string } }) {
   const locale: Locale = params.locale === "fr" ? "fr" : "en";
@@ -17,6 +18,10 @@ export default function HelpPage({ params }: { params: { locale: string } }) {
             "Statuts en direct et confirmations envoyees automatiquement.",
             "Support prioritaire pour les corridors critiques.",
           ],
+          trackingTitle: "Suivi de votre transfert",
+          trackingBody:
+            "Utilisez votre reference de transfert pour ouvrir la page de suivi en quelques secondes.",
+          trackingCta: "Ouvrir le suivi",
           cta: "Retour a l'accueil",
         }
       : {
@@ -29,6 +34,9 @@ export default function HelpPage({ params }: { params: { locale: string } }) {
             "Live status updates and automated confirmations.",
             "Priority support for critical corridors.",
           ],
+          trackingTitle: "Tracking your transfer",
+          trackingBody: "Use your transfer reference to jump straight to secure tracking.",
+          trackingCta: "Open tracking",
           cta: "Back to home",
         };
 
@@ -46,7 +54,16 @@ export default function HelpPage({ params }: { params: { locale: string } }) {
           </Card>
         ))}
       </div>
-      <Button href={`/${locale}`} variant="primary" className="mt-10">
+      <Card className="mt-6">
+        <CardContent className="space-y-3">
+          <p className="text-sm font-semibold text-slate-900">{content.trackingTitle}</p>
+          <p className="text-sm text-slate-600">{content.trackingBody}</p>
+          <Button href={withLocale("/track", locale)} variant="secondary">
+            {content.trackingCta}
+          </Button>
+        </CardContent>
+      </Card>
+      <Button href={withLocale("/", locale)} variant="primary" className="mt-10">
         {content.cta}
       </Button>
     </div>

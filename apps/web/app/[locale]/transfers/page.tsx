@@ -12,6 +12,7 @@ import {
   type TransferSort,
 } from "@/src/lib/transfer-history";
 import { resolveUserStatusModel, type UserTransferStatus } from "@/src/lib/transfer-status-model";
+import { withLocale } from "@/src/lib/with-locale";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -126,6 +127,11 @@ export default function TransfersHistoryPage() {
         title={messages.transfersHistoryTitle}
         subtitle="Search by recipient, reference, or destination."
       />
+      <div className="mt-4">
+        <Button href={withLocale("/track", locale)} variant="secondary">
+          Track a transfer
+        </Button>
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-2" data-testid="transfers-filter-chips">
         {quickFilters.map((item) => {

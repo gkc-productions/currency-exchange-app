@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
+import { withLocale } from "@/src/lib/with-locale";
 
 const SOCIAL_LINKS = [
   {
@@ -48,29 +49,29 @@ export default function Footer({ locale }: { locale: Locale }) {
     {
       title: messages.footerCompanyLabel,
       links: [
-        { href: `/${locale}/about`, label: messages.navAboutLabel },
-        { href: `/${locale}/security`, label: messages.navSecurityLabel },
+        { href: withLocale("/about", locale), label: messages.navAboutLabel },
+        { href: withLocale("/security", locale), label: messages.navSecurityLabel },
       ],
     },
     {
       title: messages.footerProductLabel,
       links: [
-        { href: `/${locale}/fees`, label: messages.navFeesLabel },
-        { href: `/${locale}#send`, label: messages.footerSendLinkLabel },
+        { href: withLocale("/fees", locale), label: messages.navFeesLabel },
+        { href: `${withLocale("/", locale)}#send`, label: messages.footerSendLinkLabel },
       ],
     },
     {
       title: messages.footerResourcesLabel,
       links: [
-        { href: `/${locale}/help`, label: messages.navHelpLabel },
-        { href: `/${locale}#faq`, label: messages.footerFaqLinkLabel },
+        { href: withLocale("/help", locale), label: messages.navHelpLabel },
+        { href: withLocale("/track", locale), label: "Track transfer" },
       ],
     },
     {
       title: messages.footerSupportLabel,
       links: [
-        { href: `/${locale}/help`, label: messages.footerContactLinkLabel },
-        { href: `/${locale}/help`, label: messages.footerStatusLinkLabel },
+        { href: withLocale("/help", locale), label: messages.footerContactLinkLabel },
+        { href: withLocale("/help", locale), label: messages.footerStatusLinkLabel },
       ],
     },
   ];
