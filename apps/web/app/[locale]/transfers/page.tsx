@@ -6,10 +6,12 @@ import { useParams } from "next/navigation";
 import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import {
+  filterAndSortTransfers,
   resolveProviderLabel,
   type TransferHistoryRow,
+  type TransferSort,
 } from "@/src/lib/transfer-history";
-import { resolveUserStatusModel, toUserTransferStatus, type UserTransferStatus } from "@/src/lib/transfer-status-model";
+import { resolveUserStatusModel, type UserTransferStatus } from "@/src/lib/transfer-status-model";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -69,6 +71,7 @@ export default function TransfersHistoryPage() {
   const [error, setError] = useState<"unauthorized" | "generic" | null>(null);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("ALL");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<TransferSort>("NEWEST");
 
   useEffect(() => {
     let active = true;
@@ -108,27 +111,11 @@ export default function TransfersHistoryPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return [...transfers]
-      .filter((transfer) => {
-        const mappedStatus = toUserTransferStatus(transfer.status);
-        if (quickFilter !== "ALL" && mappedStatus !== quickFilter) {
-          return false;
-        }
-        if (!normalizedQuery) {
-          return true;
-        }
-        return (
-          transfer.referenceCode.toLowerCase().includes(normalizedQuery) ||
-          transfer.recipientName.toLowerCase().includes(normalizedQuery)
-        );
-      })
-      .sort((a, b) => {
-        const aTime = new Date(a.updatedAt ?? a.createdAt).getTime();
-        const bTime = new Date(b.updatedAt ?? b.createdAt).getTime();
-        return bTime - aTime;
-      });
-  }, [transfers, quickFilter, query]);
+    const rawStatus =
+      quickFilter === "PENDING_PAYMENT" ? "READY" : quickFilter === "ALL" ? "ALL" : quickFilter;
+    const status = rawStatus as "ALL" | "READY" | "PROCESSING" | "COMPLETED" | "FAILED";
+    return filterAndSortTransfers(transfers, status, query, sort);
+  }, [query, quickFilter, sort, transfers]);
 
   const hasTransfers = transfers.length > 0;
 
@@ -137,7 +124,7 @@ export default function TransfersHistoryPage() {
       <SectionHeader
         eyebrow={messages.transfersHistoryLabel}
         title={messages.transfersHistoryTitle}
-        subtitle={messages.transfersHistorySubtitle}
+        subtitle="Search by recipient, reference, or destination."
       />
 
       <div className="mt-6 flex flex-wrap gap-2" data-testid="transfers-filter-chips">
@@ -160,7 +147,7 @@ export default function TransfersHistoryPage() {
         })}
       </div>
 
-      <div className="mt-4 flex w-full items-center gap-3">
+      <div className="mt-4 flex w-full flex-wrap items-center gap-3">
         <label className="text-xs font-semibold text-slate-500">
           {messages.transfersHistorySearchLabel}
         </label>
@@ -171,6 +158,19 @@ export default function TransfersHistoryPage() {
           placeholder={messages.transfersHistorySearchPlaceholder}
           className="w-full max-w-sm rounded-full border border-slate-200 bg-white px-4 py-2 text-xs text-slate-700"
         />
+        <label className="text-xs font-semibold text-slate-500 sm:ml-2">
+          Sort
+        </label>
+        <select
+          value={sort}
+          onChange={(event) => setSort(event.target.value as TransferSort)}
+          className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
+        >
+          <option value="NEWEST">Newest first</option>
+          <option value="OLDEST">Oldest first</option>
+          <option value="AMOUNT_HIGH">Amount high → low</option>
+          <option value="AMOUNT_LOW">Amount low → high</option>
+        </select>
       </div>
 
       <div className="mt-8 space-y-3">

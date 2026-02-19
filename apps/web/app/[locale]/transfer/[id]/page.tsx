@@ -8,7 +8,7 @@ import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import { ALLOW_SIMULATED_PAYOUTS } from "@/src/lib/runtime";
 import { resolveReceiptUiState } from "@/src/lib/receipt-ui";
-import { copyText as copyTextSafe } from "@/src/lib/clipboard";
+import { copyText as copyTextSafe, shareOrCopyReceiptLink } from "@/src/lib/clipboard";
 import AccountingPanel from "@/src/lib/accounting-ui";
 import {
   parseTimelineMessage,
@@ -22,6 +22,7 @@ import {
 } from "@/src/lib/transfer-status-model";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Callout } from "@/components/ui/Callout";
 import { Card, CardContent } from "@/components/ui/Card";
 import { StatRow } from "@/components/ui/StatRow";
 
@@ -203,9 +204,10 @@ export default function TransferReceiptPage() {
     data: TransferReceiptResponse | null;
     error: ReceiptError | null;
   } | null>(null);
-  const [copied, setCopied] = useState<"code" | "link" | "invoice" | null>(
+  const [copied, setCopied] = useState<"code" | "link" | "invoice" | "receipt" | null>(
     null
   );
+  const [shareState, setShareState] = useState<"idle" | "shared" | "copied" | "error">("idle");
   const [isSimulating, setIsSimulating] = useState(false);
   const [resendState, setResendState] = useState<
     "idle" | "sending" | "sent" | "error" | "rate"
@@ -643,6 +645,38 @@ export default function TransferReceiptPage() {
     const success = await copyTextSafe(value);
     setCopied(success ? "invoice" : null);
   };
+
+  const handleShareReceipt = useCallback(async () => {
+    if (!transferId) {
+      return;
+    }
+    const result = await shareOrCopyReceiptLink({ locale, transferId });
+    if (result.shared) {
+      setShareState("shared");
+      return;
+    }
+    if (result.copied) {
+      setCopied("receipt");
+      setShareState("copied");
+      return;
+    }
+    setShareState("error");
+  }, [locale, transferId]);
+
+  const handleCopyReceiptLink = useCallback(async () => {
+    if (!transferId || typeof window === "undefined") {
+      return;
+    }
+    const success = await copyTextSafe(
+      `${window.location.origin}/${locale}/transfer/${transferId}?receipt=1`
+    );
+    if (success) {
+      setCopied("receipt");
+      setShareState("copied");
+      return;
+    }
+    setShareState("error");
+  }, [locale, transferId]);
 
   const handleSimulatePayment = useCallback(async () => {
     if (!transferId) {
@@ -1281,7 +1315,7 @@ export default function TransferReceiptPage() {
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-600">
             <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
-              Status updates are audit logged.
+              Status updates are timestamped for transparency.
             </span>
           </div>
           </CardContent>
@@ -1680,6 +1714,26 @@ export default function TransferReceiptPage() {
                       Download receipt
                     </a>
                   ) : null}
+                  {transferStatus === "COMPLETED" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleShareReceipt}
+                    >
+                      Share receipt
+                    </Button>
+                  ) : null}
+                  {transferStatus === "COMPLETED" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleCopyReceiptLink}
+                    >
+                      {copied === "receipt" ? "Copied" : "Copy receipt link"}
+                    </Button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => handleCopy(referenceCode, "code")}
@@ -1689,6 +1743,15 @@ export default function TransferReceiptPage() {
                   </button>
                 </div>
               </div>
+              {shareState !== "idle" ? (
+                <p className="mt-2 text-xs text-slate-600">
+                  {shareState === "shared"
+                    ? "Receipt link shared."
+                    : shareState === "copied"
+                      ? "Receipt link copied."
+                      : "Unable to share receipt link."}
+                </p>
+              ) : null}
 
               <div className="mt-4 space-y-4 text-sm text-slate-700">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -1826,6 +1889,11 @@ export default function TransferReceiptPage() {
                 )}
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  {transferStatus !== "COMPLETED" ? (
+                    <Callout tone="info" className="mb-3">
+                      Receipt is available after completion.
+                    </Callout>
+                  ) : null}
                   {receiptUi.showPendingText ? (
                     <p>{messages.receiptAvailableAfterCompletionLabel}</p>
                   ) : receiptUi.showViewLink ? (

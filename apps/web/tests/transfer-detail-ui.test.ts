@@ -28,10 +28,11 @@ test("transfer detail receipt panel exposes download and copy reference actions"
   const source = fs.readFileSync(filePath, "utf8");
 
   assert.equal(source.includes("Download receipt"), true);
+  assert.equal(source.includes("Share receipt"), true);
+  assert.equal(source.includes("Copy receipt link"), true);
   assert.equal(source.includes("Copy reference"), true);
   assert.equal(source.includes("Share this reference with support"), true);
-  assert.equal(source.includes("receiptUi.showPendingText"), true);
-  assert.equal(source.includes("receiptAvailableAfterCompletionLabel"), true);
+  assert.equal(source.includes("Receipt is available after completion."), true);
 });
 
 test("transfer detail page does not import marketing components", () => {
