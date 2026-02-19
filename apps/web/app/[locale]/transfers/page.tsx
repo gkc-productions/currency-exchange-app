@@ -3,27 +3,56 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { formatDateTime } from "@/src/lib/format";
+import { formatDateTime, formatMoney } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
 import {
-  filterTransfers,
   resolveProviderLabel,
   type TransferHistoryRow,
-  type TransferStatusFilter,
 } from "@/src/lib/transfer-history";
+import { resolveUserStatusModel, toUserTransferStatus, type UserTransferStatus } from "@/src/lib/transfer-status-model";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
-const statusOptions: TransferStatusFilter[] = [
-  "ALL",
-  "READY",
-  "PROCESSING",
-  "FAILED",
-  "COMPLETED",
-  "DRAFT",
-];
+const quickFilters = [
+  { key: "ALL", label: "All" },
+  { key: "PENDING_PAYMENT", label: "Pending" },
+  { key: "PROCESSING", label: "Processing" },
+  { key: "COMPLETED", label: "Completed" },
+  { key: "FAILED", label: "Failed" },
+] as const;
+
+type QuickFilter = (typeof quickFilters)[number]["key"];
+
+function formatRelativeTime(value: string, locale: Locale) {
+  const now = Date.now();
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) {
+    return "—";
+  }
+  const diffMs = now - timestamp;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diffMs < hour) {
+    const minutes = Math.max(1, Math.round(diffMs / minute));
+    return locale === "fr" ? `Mis a jour il y a ${minutes} min` : `Updated ${minutes}m ago`;
+  }
+  if (diffMs < day) {
+    const hours = Math.max(1, Math.round(diffMs / hour));
+    return locale === "fr" ? `Mis a jour il y a ${hours} h` : `Updated ${hours}h ago`;
+  }
+  const days = Math.max(1, Math.round(diffMs / day));
+  return locale === "fr" ? `Mis a jour il y a ${days} j` : `Updated ${days}d ago`;
+}
+
+function statusTone(status: UserTransferStatus) {
+  if (status === "COMPLETED") return "bg-emerald-100 text-emerald-800";
+  if (status === "PROCESSING") return "bg-sky-100 text-sky-800";
+  if (status === "FAILED") return "bg-rose-100 text-rose-800";
+  return "bg-amber-100 text-amber-800";
+}
 
 export default function TransfersHistoryPage() {
   const params = useParams();
@@ -38,7 +67,7 @@ export default function TransfersHistoryPage() {
   const [transfers, setTransfers] = useState<TransferHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<"unauthorized" | "generic" | null>(null);
-  const [statusFilter, setStatusFilter] = useState<TransferStatusFilter>("ALL");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("ALL");
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -78,28 +107,30 @@ export default function TransfersHistoryPage() {
     };
   }, []);
 
-  const filtered = useMemo(
-    () => filterTransfers(transfers, statusFilter, query),
-    [transfers, statusFilter, query]
-  );
+  const filtered = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return [...transfers]
+      .filter((transfer) => {
+        const mappedStatus = toUserTransferStatus(transfer.status);
+        if (quickFilter !== "ALL" && mappedStatus !== quickFilter) {
+          return false;
+        }
+        if (!normalizedQuery) {
+          return true;
+        }
+        return (
+          transfer.referenceCode.toLowerCase().includes(normalizedQuery) ||
+          transfer.recipientName.toLowerCase().includes(normalizedQuery)
+        );
+      })
+      .sort((a, b) => {
+        const aTime = new Date(a.updatedAt ?? a.createdAt).getTime();
+        const bTime = new Date(b.updatedAt ?? b.createdAt).getTime();
+        return bTime - aTime;
+      });
+  }, [transfers, quickFilter, query]);
 
-  const statusLabels = useMemo(
-    () => ({
-      READY: messages.statusReadyLabel,
-      PROCESSING: messages.statusProcessingLabel,
-      COMPLETED: messages.statusCompletedLabel,
-      FAILED: messages.statusFailedLabel,
-      DRAFT: messages.statusDraftLabel,
-    }),
-    [messages]
-  );
-  const statusClasses: Record<string, string> = {
-    READY: "bg-amber-100 text-amber-800",
-    PROCESSING: "bg-sky-100 text-sky-800",
-    COMPLETED: "bg-emerald-100 text-emerald-800",
-    FAILED: "bg-rose-100 text-rose-800",
-    DRAFT: "bg-slate-100 text-slate-700",
-  };
+  const hasTransfers = transfers.length > 0;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-16 lg:px-8 lg:py-24">
@@ -109,132 +140,142 @@ export default function TransfersHistoryPage() {
         subtitle={messages.transfersHistorySubtitle}
       />
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex w-full flex-1 items-center gap-3">
-          <label className="text-xs font-semibold text-slate-500">
-            {messages.transfersHistoryStatusLabel}
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as TransferStatusFilter)}
-            className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
-          >
-            {statusOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "ALL" ? messages.transfersHistoryAllLabel : statusLabels[option]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex w-full flex-1 items-center gap-3 sm:justify-end">
-          <label className="text-xs font-semibold text-slate-500">
-            {messages.transfersHistorySearchLabel}
-          </label>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={messages.transfersHistorySearchPlaceholder}
-            className="w-full max-w-xs rounded-full border border-slate-200 bg-white px-4 py-2 text-xs text-slate-700"
-          />
-        </div>
+      <div className="mt-6 flex flex-wrap gap-2" data-testid="transfers-filter-chips">
+        {quickFilters.map((item) => {
+          const isActive = quickFilter === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setQuickFilter(item.key)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                isActive
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </div>
 
-      <Card className="mt-8">
-        <CardContent>
+      <div className="mt-4 flex w-full items-center gap-3">
+        <label className="text-xs font-semibold text-slate-500">
+          {messages.transfersHistorySearchLabel}
+        </label>
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={messages.transfersHistorySearchPlaceholder}
+          className="w-full max-w-sm rounded-full border border-slate-200 bg-white px-4 py-2 text-xs text-slate-700"
+        />
+      </div>
+
+      <div className="mt-8 space-y-3">
         {loading ? (
-          <p className="text-sm text-slate-500">
-            {messages.transfersHistoryLoadingLabel}
-          </p>
+          <Card>
+            <CardContent>
+              <p className="text-sm text-slate-500">{messages.transfersHistoryLoadingLabel}</p>
+            </CardContent>
+          </Card>
         ) : error === "unauthorized" ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6">
-            <p className="text-sm font-semibold text-rose-700">
-              {messages.transfersHistoryUnauthorizedLabel}
-            </p>
-            <Button
-              href={`/${locale}/login`}
-              variant="secondary"
-              className="mt-3 border-rose-200 text-rose-700"
-            >
-              {messages.transfersHistoryLoginLabel}
-            </Button>
-          </div>
-        ) : error ? (
-          <p className="text-sm text-rose-600">
-            {messages.transfersHistoryErrorLabel}
-          </p>
-        ) : filtered.length === 0 ? (
-          <div
-            data-testid="transfers-empty-state"
-            className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6"
-          >
-            <p className="text-sm text-slate-700">
-              This page shows your transfer history, status, and recipient details.
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button href={`/${locale}`} variant="primary">
-                Start transfer
+          <Card>
+            <CardContent>
+              <p className="text-sm font-semibold text-rose-700">{messages.transfersHistoryUnauthorizedLabel}</p>
+              <Button href={`/${locale}/login`} variant="secondary" className="mt-3 border-rose-200 text-rose-700">
+                {messages.transfersHistoryLoginLabel}
               </Button>
-              <Link
-                href={`/${locale}/help`}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900"
-              >
-                Help
-              </Link>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        ) : error ? (
+          <Card>
+            <CardContent>
+              <p className="text-sm text-rose-600">{messages.transfersHistoryErrorLabel}</p>
+            </CardContent>
+          </Card>
+        ) : !hasTransfers ? (
+          <Card data-testid="transfers-empty-state" className="border-dashed">
+            <CardContent>
+              <p className="text-sm text-slate-700">
+                This page tracks every transfer, current status, and next action in one place.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button href={`/${locale}`} variant="primary">Start a transfer</Button>
+                <Link href={`/${locale}/help`} className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                  Help
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Card data-testid="transfers-filter-empty-state">
+            <CardContent>
+              <p className="text-sm text-slate-600">No transfers match this filter.</p>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="text-xs uppercase tracking-wide text-slate-400">
-                <tr>
-                  <th className="pb-3">{messages.transfersHistoryReferenceLabel}</th>
-                  <th className="pb-3">{messages.transfersHistoryStatusLabel}</th>
-                  <th className="pb-3">{messages.transfersHistoryRailLabel}</th>
-                  <th className="pb-3">{messages.providerLabel}</th>
-                  <th className="pb-3">{messages.transfersHistoryRecipientLabel}</th>
-                  <th className="pb-3">{messages.transfersHistoryDateLabel}</th>
-                  <th className="pb-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((transfer) => (
-                  <tr key={transfer.id} className="rounded-2xl hover:bg-slate-50/80">
-                    <td className="py-3 text-slate-900">
-                      <Link
-                        href={`/${locale}/transfer/${transfer.id}`}
-                        className="font-semibold text-emerald-700"
-                      >
-                        {transfer.referenceCode}
-                      </Link>
-                    </td>
-                    <td className="py-3">
-                      <Badge className={statusClasses[transfer.status] ?? "bg-slate-100 text-slate-700"}>
-                        {statusLabels[transfer.status as keyof typeof statusLabels] ??
-                          transfer.status}
-                      </Badge>
-                    </td>
-                    <td className="py-3">{transfer.payoutRail}</td>
-                    <td className="py-3">
+          filtered.map((transfer) => {
+            const status = resolveUserStatusModel(transfer.status, transfer.providerPayoutStatus);
+            const updatedAt = transfer.updatedAt ?? transfer.createdAt;
+            const actionHref = `/${locale}/transfer/${transfer.id}`;
+            return (
+              <Card key={transfer.id} className="transition hover:border-slate-300">
+                <CardContent>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="font-mono text-sm font-semibold text-slate-900">{transfer.referenceCode}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {transfer.recipientCountry ?? "—"} · {formatRelativeTime(updatedAt, locale)}
+                      </p>
+                    </div>
+                    <Badge className={statusTone(status.key)}>{status.label}</Badge>
+                  </div>
+
+                  <p className="mt-3 text-xs font-medium text-slate-600">{status.substatus}</p>
+
+                  <div className="mt-3 grid gap-3 text-xs text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <p className="text-slate-400">Amount sent</p>
+                      <p className="font-semibold text-slate-900">
+                        {transfer.sendAmount != null && transfer.fromAsset
+                          ? formatMoney(transfer.sendAmount, transfer.fromAsset, locale)
+                          : "Open transfer"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Recipient gets</p>
+                      <p className="font-semibold text-slate-900">
+                        {transfer.recipientGets != null && transfer.toAsset
+                          ? formatMoney(transfer.recipientGets, transfer.toAsset, locale)
+                          : "Open transfer"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Destination</p>
+                      <p className="font-semibold text-slate-900">{transfer.recipientCountry ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Last updated</p>
+                      <p className="font-semibold text-slate-900">{formatDateTime(updatedAt, locale)}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-xs text-slate-500">
                       {resolveProviderLabel(transfer.providerPayoutProvider)}
-                    </td>
-                    <td className="py-3">{transfer.recipientName}</td>
-                    <td className="py-3">
-                      {formatDateTime(transfer.createdAt, locale)}
-                    </td>
-                    <td className="py-3 text-right">
-                      <Button href={`/${locale}/transfer/${transfer.id}`} size="sm" variant="secondary">
-                        View
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </p>
+                    <Button href={actionHref} variant="secondary" size="sm">
+                      {status.actionLabel}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
         )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -16,9 +16,32 @@ test("status model maps internal statuses to four user states", () => {
 
 test("status pill copy matches user-facing labels", () => {
   assert.equal(resolveUserStatusModel("READY").label, "Pending payment");
+  assert.equal(resolveUserStatusModel("READY").substatus, "Waiting for payment");
+  assert.equal(resolveUserStatusModel("READY").actionLabel, "Finish payment");
+
   assert.equal(resolveUserStatusModel("PROCESSING").label, "Processing");
+  assert.equal(resolveUserStatusModel("PROCESSING", "QUEUED").substatus, "Queued");
+  assert.equal(resolveUserStatusModel("PROCESSING", "SENDING").substatus, "Sending");
+  assert.equal(
+    resolveUserStatusModel("PROCESSING", "CONFIRMING").substatus,
+    "Confirming delivery"
+  );
+  assert.equal(resolveUserStatusModel("PROCESSING").actionLabel, "Track transfer");
+
   assert.equal(resolveUserStatusModel("COMPLETED").label, "Completed");
+  assert.equal(resolveUserStatusModel("COMPLETED").substatus, "Delivered");
+  assert.equal(resolveUserStatusModel("COMPLETED").actionLabel, "View receipt");
+
   assert.equal(resolveUserStatusModel("FAILED").label, "Failed");
+  assert.equal(resolveUserStatusModel("FAILED").substatus, "Action required");
+  assert.equal(resolveUserStatusModel("FAILED").actionLabel, "Fix issue");
+});
+
+test("status model returns what happens next copy", () => {
+  assert.match(resolveUserStatusModel("READY").nextStep, /Complete payment/);
+  assert.match(resolveUserStatusModel("PROCESSING").nextStep, /Tracking updates/);
+  assert.match(resolveUserStatusModel("COMPLETED").nextStep, /receipt/i);
+  assert.match(resolveUserStatusModel("FAILED").nextStep, /attention/i);
 });
 
 test("timeline builds four grouped steps with timestamps", () => {

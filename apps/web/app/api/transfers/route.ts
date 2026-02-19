@@ -148,6 +148,12 @@ function buildTransferResponse(transfer: {
   providerPayoutUpdatedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  quote?: {
+    sendAmount: Prisma.Decimal;
+    recipientGets: Prisma.Decimal;
+    fromAsset: { code: string };
+    toAsset: { code: string };
+  } | null;
 }) {
   return {
     id: transfer.id,
@@ -169,6 +175,10 @@ function buildTransferResponse(transfer: {
     providerPayoutStatus: transfer.providerPayoutStatus,
     providerPayoutProvider: transfer.providerPayoutProvider,
     providerPayoutUpdatedAt: transfer.providerPayoutUpdatedAt,
+    sendAmount: transfer.quote ? Number(transfer.quote.sendAmount) : null,
+    recipientGets: transfer.quote ? Number(transfer.quote.recipientGets) : null,
+    fromAsset: transfer.quote?.fromAsset.code ?? null,
+    toAsset: transfer.quote?.toAsset.code ?? null,
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
   };
@@ -211,6 +221,16 @@ export async function GET(req: Request) {
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
       take: 50,
+      include: {
+        quote: {
+          select: {
+            sendAmount: true,
+            recipientGets: true,
+            fromAsset: { select: { code: true } },
+            toAsset: { select: { code: true } },
+          },
+        },
+      },
     });
 
     return NextResponse.json(transfers.map(buildTransferResponse));
@@ -234,6 +254,16 @@ export async function GET(req: Request) {
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
       take: 50,
+      include: {
+        quote: {
+          select: {
+            sendAmount: true,
+            recipientGets: true,
+            fromAsset: { select: { code: true } },
+            toAsset: { select: { code: true } },
+          },
+        },
+      },
     });
 
     return NextResponse.json(transfers.map(buildTransferResponse));

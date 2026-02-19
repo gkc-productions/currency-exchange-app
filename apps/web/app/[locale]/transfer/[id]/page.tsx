@@ -157,6 +157,27 @@ const formatNumber = (value: number, digits = 2, locale: Locale = "en") =>
     maximumFractionDigits: digits,
   }).format(value);
 
+const formatRelativeUpdate = (value: string, locale: Locale) => {
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) {
+    return "—";
+  }
+  const diff = Date.now() - timestamp;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diff < hour) {
+    const minutes = Math.max(1, Math.round(diff / minute));
+    return locale === "fr" ? `Mis a jour il y a ${minutes} min` : `Updated ${minutes}m ago`;
+  }
+  if (diff < day) {
+    const hours = Math.max(1, Math.round(diff / hour));
+    return locale === "fr" ? `Mis a jour il y a ${hours} h` : `Updated ${hours}h ago`;
+  }
+  const days = Math.max(1, Math.round(diff / day));
+  return locale === "fr" ? `Mis a jour il y a ${days} j` : `Updated ${days}d ago`;
+};
+
 export default function TransferReceiptPage() {
   const shouldLogRenders = process.env.NEXT_PUBLIC_DEV_RENDER_LOGS === "1";
   const renderCountRef = useRef(0);
@@ -1098,7 +1119,7 @@ export default function TransferReceiptPage() {
         return event.message;
     }
   };
-  const userStatus = resolveUserStatusModel(transferStatus);
+  const userStatus = resolveUserStatusModel(transferStatus, transfer.providerPayoutStatus);
   const statusStyle = statusStyles[userStatus.key] ?? "bg-slate-200 text-slate-700";
   const statusLabel = userStatus.label;
   const flowSteps = [
@@ -1114,7 +1135,7 @@ export default function TransferReceiptPage() {
       : `${window.location.origin}/${locale}/transfer/${transfer.id}`;
   const eventsForTimeline = timelineEvents ?? events;
   const groupedStatusTimeline = buildUserStatusTimeline(transferStatus, eventsForTimeline);
-  const nextStepMessage = userStatus.description;
+  const nextStepMessage = userStatus.nextStep;
   const receiptSnapshot = receiptData?.snapshot ?? null;
   const accountingSnapshot = receiptSnapshot
     ? {
@@ -1163,8 +1184,9 @@ export default function TransferReceiptPage() {
               <h1 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">
                 {referenceCode}
               </h1>
-              <p className="mt-2 text-sm text-slate-600">
-                {messages.referenceCodeLabel}
+              <p className="mt-2 text-sm text-slate-600">{messages.referenceCodeLabel}</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {formatRelativeUpdate(transfer.updatedAt, locale)}
               </p>
               <div className="mt-4 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
                 <div>
@@ -1208,6 +1230,7 @@ export default function TransferReceiptPage() {
               <Badge className={statusStyle}>
                 {statusLabel}
               </Badge>
+              <p className="text-xs font-medium text-slate-600">{userStatus.substatus}</p>
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -1848,18 +1871,26 @@ export default function TransferReceiptPage() {
                 Support usually replies within one business day.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={() => handleCopy(referenceCode, "code")}
+                  variant="secondary"
+                  size="sm"
+                >
+                  {copied === "code" ? messages.copiedLabel : "Copy reference"}
+                </Button>
                 <Link
                   href={`/${locale}/help`}
                   className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                 >
-                  Help center
+                  Open Help
                 </Link>
-                <Link
-                  href={`/${locale}/help`}
+                <a
+                  href="mailto:support@clarisend.co?subject=Transfer%20issue"
                   className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                 >
                   Report an issue
-                </Link>
+                </a>
               </div>
             </div>
 

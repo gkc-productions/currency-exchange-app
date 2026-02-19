@@ -11,7 +11,7 @@ test("transfers empty state renders CTA and help link", () => {
   const source = fs.readFileSync(filePath, "utf8");
 
   assert.equal(source.includes('data-testid="transfers-empty-state"'), true);
-  assert.equal(source.includes("Start transfer"), true);
+  assert.equal(source.includes("Start a transfer"), true);
   assert.equal(source.includes("/help"), true);
 });
 

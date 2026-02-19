@@ -1,9 +1,20 @@
 export type UserTransferStatus = "PENDING_PAYMENT" | "PROCESSING" | "COMPLETED" | "FAILED";
 
+export type UserSubstatus =
+  | "Waiting for payment"
+  | "Payment started"
+  | "Queued"
+  | "Sending"
+  | "Confirming delivery"
+  | "Delivered"
+  | "Action required";
+
 export type UserStatusModel = {
   key: UserTransferStatus;
   label: "Pending payment" | "Processing" | "Completed" | "Failed";
-  description: string;
+  substatus: UserSubstatus;
+  nextStep: string;
+  actionLabel: "Finish payment" | "Track transfer" | "View receipt" | "Fix issue";
 };
 
 export function toUserTransferStatus(status: string): UserTransferStatus {
@@ -13,33 +24,65 @@ export function toUserTransferStatus(status: string): UserTransferStatus {
   return "PENDING_PAYMENT";
 }
 
-export function resolveUserStatusModel(status: string): UserStatusModel {
+export function resolveSubstatus(status: string, providerStatus?: string | null): UserSubstatus {
+  const userStatus = toUserTransferStatus(status);
+  const normalizedProvider = providerStatus?.toUpperCase() ?? "";
+  if (userStatus === "PENDING_PAYMENT") {
+    if (normalizedProvider === "INITIATED" || normalizedProvider === "PENDING") {
+      return "Payment started";
+    }
+    return "Waiting for payment";
+  }
+  if (userStatus === "PROCESSING") {
+    if (normalizedProvider.includes("QUEUE")) return "Queued";
+    if (normalizedProvider.includes("SEND")) return "Sending";
+    return "Confirming delivery";
+  }
+  if (userStatus === "COMPLETED") {
+    return "Delivered";
+  }
+  return "Action required";
+}
+
+export function resolveUserStatusModel(
+  status: string,
+  providerStatus?: string | null
+): UserStatusModel {
   const key = toUserTransferStatus(status);
+  const substatus = resolveSubstatus(status, providerStatus);
   if (key === "COMPLETED") {
     return {
       key,
       label: "Completed",
-      description: "Your transfer is complete and your receipt is ready.",
+      substatus,
+      nextStep: "Your transfer is complete. You can download or share the receipt now.",
+      actionLabel: "View receipt",
     };
   }
   if (key === "PROCESSING") {
     return {
       key,
       label: "Processing",
-      description: "Your payment is confirmed and delivery is in progress.",
+      substatus,
+      nextStep: "Your payment is being delivered. Tracking updates will appear here automatically.",
+      actionLabel: "Track transfer",
     };
   }
   if (key === "FAILED") {
     return {
       key,
       label: "Failed",
-      description: "This transfer needs attention before it can continue.",
+      substatus,
+      nextStep: "This transfer needs your attention. Review details and fix the issue to continue.",
+      actionLabel: "Fix issue",
     };
   }
   return {
     key,
     label: "Pending payment",
-    description: "Complete payment to move this transfer forward.",
+    substatus,
+    nextStep: "Complete payment to start processing this transfer.",
+    actionLabel: "Finish payment",
   };
 }
 
@@ -60,7 +103,7 @@ export function buildUserStatusTimeline(
 ) {
   const normalized = toUserTransferStatus(status);
   const pendingAt = findEventTime(events, ["CREATED", "QUOTE_LOCKED"]);
-  const processingAt = findEventTime(events, ["PROCESSING"]);
+  const processingAt = findEventTime(events, ["PROCESSING", "PAYOUT_EXECUTED"]);
   const completedAt = findEventTime(events, ["COMPLETED"]);
   const failedAt = findEventTime(events, ["FAILED", "CANCELED", "EXPIRED"]);
 
@@ -76,7 +119,7 @@ export function buildUserStatusTimeline(
       key: "PENDING_PAYMENT" as const,
       label: "Pending payment",
       timestamp: pendingAt,
-      description: "Waiting for payment confirmation before processing.",
+      description: "Waiting for payment confirmation before transfer processing starts.",
       isActive: activeByState[normalized] === 0,
       isComplete: activeByState[normalized] > 0,
     },
@@ -84,7 +127,7 @@ export function buildUserStatusTimeline(
       key: "PROCESSING" as const,
       label: "Processing",
       timestamp: processingAt,
-      description: "Transfer is moving through verification and delivery.",
+      description: "Transfer is queued, sent, and then confirmed with the destination provider.",
       isActive: activeByState[normalized] === 1,
       isComplete: activeByState[normalized] > 1,
     },
@@ -92,7 +135,7 @@ export function buildUserStatusTimeline(
       key: "COMPLETED" as const,
       label: "Completed",
       timestamp: completedAt,
-      description: "Recipient has received the transfer.",
+      description: "Transfer delivered successfully. Receipt is now available.",
       isActive: activeByState[normalized] === 2,
       isComplete: activeByState[normalized] > 2 || normalized === "COMPLETED",
     },
@@ -100,7 +143,7 @@ export function buildUserStatusTimeline(
       key: "FAILED" as const,
       label: "Failed",
       timestamp: failedAt,
-      description: "Transfer failed and requires retry or support.",
+      description: "Transfer failed. Review issue details and retry when ready.",
       isActive: activeByState[normalized] === 3,
       isComplete: normalized === "FAILED",
     },

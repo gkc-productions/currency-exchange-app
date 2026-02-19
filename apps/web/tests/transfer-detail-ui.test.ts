@@ -20,6 +20,8 @@ test("transfer detail page includes premium section layout", () => {
   assert.equal(source.includes('data-testid="transfer-detail-timeline"'), true);
   assert.equal(source.includes('data-testid="transfer-detail-receipt"'), true);
   assert.equal(source.includes('data-testid="transfer-detail-support"'), true);
+  assert.equal(source.includes("Updated"), true);
+  assert.equal(source.includes("Reference"), true);
 });
 
 test("transfer detail receipt panel exposes download and copy reference actions", () => {
@@ -28,6 +30,8 @@ test("transfer detail receipt panel exposes download and copy reference actions"
   assert.equal(source.includes("Download receipt"), true);
   assert.equal(source.includes("Copy reference"), true);
   assert.equal(source.includes("Share this reference with support"), true);
+  assert.equal(source.includes("receiptUi.showPendingText"), true);
+  assert.equal(source.includes("receiptAvailableAfterCompletionLabel"), true);
 });
 
 test("transfer detail page does not import marketing components", () => {
@@ -41,4 +45,6 @@ test("transfer detail page uses shared ui primitives", () => {
   assert.equal(source.includes("@/components/ui/Card"), true);
   assert.equal(source.includes("@/components/ui/Button"), true);
   assert.equal(source.includes("Support usually replies within one business day."), true);
+  assert.equal(source.includes("Open Help"), true);
+  assert.equal(source.includes("mailto:support@clarisend.co"), true);
 });

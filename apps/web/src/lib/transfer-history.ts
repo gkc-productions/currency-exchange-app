@@ -4,8 +4,15 @@ export type TransferHistoryRow = {
   status: string;
   payoutRail: string;
   recipientName: string;
+  recipientCountry?: string | null;
   providerPayoutProvider?: string | null;
+  providerPayoutStatus?: string | null;
+  sendAmount?: number | null;
+  recipientGets?: number | null;
+  fromAsset?: string | null;
+  toAsset?: string | null;
   createdAt: string;
+  updatedAt?: string;
 };
 
 export type TransferStatusFilter =
