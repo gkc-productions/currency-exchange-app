@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "test": "tsx --test $(find tests -maxdepth 1 -name '*.test.ts' ! -name 'auth-password.test.ts' ! -name 'mfa-ui.test.ts' | sort)",
     "smoke:payout": "tsx scripts/smoke-payout.ts",
-    "dns:check": "node scripts/check-dns-sanity.mjs"
+    "dns:check": "node scripts/check-dns-sanity.mjs",
+    "pm2:start": "pm2 start ../../infra/pm2/ecosystem.config.cjs",
+    "pm2:reload": "pm2 reload ../../infra/pm2/ecosystem.config.cjs --update-env",
+    "pm2:status": "pm2 ls",
+    "deploy": "bash ../../infra/scripts/deploy.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
