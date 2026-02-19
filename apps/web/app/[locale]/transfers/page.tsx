@@ -93,6 +93,13 @@ export default function TransfersHistoryPage() {
     }),
     [messages]
   );
+  const statusClasses: Record<string, string> = {
+    READY: "bg-amber-100 text-amber-800",
+    PROCESSING: "bg-sky-100 text-sky-800",
+    COMPLETED: "bg-emerald-100 text-emerald-800",
+    FAILED: "bg-rose-100 text-rose-800",
+    DRAFT: "bg-slate-100 text-slate-700",
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-16 lg:px-8 lg:py-24">
@@ -187,11 +194,12 @@ export default function TransfersHistoryPage() {
                   <th className="pb-3">{messages.providerLabel}</th>
                   <th className="pb-3">{messages.transfersHistoryRecipientLabel}</th>
                   <th className="pb-3">{messages.transfersHistoryDateLabel}</th>
+                  <th className="pb-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((transfer) => (
-                  <tr key={transfer.id} className="hover:bg-slate-50">
+                  <tr key={transfer.id} className="rounded-2xl hover:bg-slate-50/80">
                     <td className="py-3 text-slate-900">
                       <Link
                         href={`/${locale}/transfer/${transfer.id}`}
@@ -201,7 +209,7 @@ export default function TransfersHistoryPage() {
                       </Link>
                     </td>
                     <td className="py-3">
-                      <Badge>
+                      <Badge className={statusClasses[transfer.status] ?? "bg-slate-100 text-slate-700"}>
                         {statusLabels[transfer.status as keyof typeof statusLabels] ??
                           transfer.status}
                       </Badge>
@@ -213,6 +221,11 @@ export default function TransfersHistoryPage() {
                     <td className="py-3">{transfer.recipientName}</td>
                     <td className="py-3">
                       {formatDateTime(transfer.createdAt, locale)}
+                    </td>
+                    <td className="py-3 text-right">
+                      <Button href={`/${locale}/transfer/${transfer.id}`} size="sm" variant="secondary">
+                        View
+                      </Button>
                     </td>
                   </tr>
                 ))}

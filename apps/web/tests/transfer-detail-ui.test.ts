@@ -27,6 +27,7 @@ test("transfer detail receipt panel exposes download and copy reference actions"
 
   assert.equal(source.includes("Download receipt"), true);
   assert.equal(source.includes("Copy reference"), true);
+  assert.equal(source.includes("Share this reference with support"), true);
 });
 
 test("transfer detail page does not import marketing components", () => {
@@ -39,4 +40,5 @@ test("transfer detail page uses shared ui primitives", () => {
   assert.equal(source.includes("@/components/ui/Badge"), true);
   assert.equal(source.includes("@/components/ui/Card"), true);
   assert.equal(source.includes("@/components/ui/Button"), true);
+  assert.equal(source.includes("Support usually replies within one business day."), true);
 });

@@ -1672,6 +1672,9 @@ export default function TransferReceiptPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Receipt preview
                   </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Share this reference with support if you need help.
+                  </p>
                   <div className="mt-2 grid gap-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span>{messages.referenceCodeLabel}</span>

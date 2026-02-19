@@ -5,8 +5,10 @@ import { checkPasswordRules, passwordStrength } from "../src/lib/password-streng
 test("password rules validate all policy checks", () => {
   const rules = checkPasswordRules("Password123!", "user@example.com");
   assert.equal(rules.lengthOk, true);
-  assert.equal(rules.hasLetter, true);
+  assert.equal(rules.hasUpper, true);
+  assert.equal(rules.hasLower, true);
   assert.equal(rules.hasNumber, true);
+  assert.equal(rules.hasSymbol, true);
   assert.equal(rules.notCommon, true);
   assert.equal(rules.notEmailPart, true);
 });
@@ -19,6 +21,6 @@ test("password rules fail for common and email-local-part passwords", () => {
 
 test("password strength labels change by complexity", () => {
   assert.equal(passwordStrength("short").label, "Weak");
-  assert.equal(passwordStrength("Password10").label, "Strong");
+  assert.equal(passwordStrength("Password10").label, "Good");
   assert.equal(passwordStrength("Password10!").label, "Strong");
 });

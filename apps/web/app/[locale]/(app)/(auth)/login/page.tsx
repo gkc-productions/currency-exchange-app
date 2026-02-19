@@ -6,6 +6,22 @@ import { useParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import AuthShell from "@/app/[locale]/(app)/_components/AuthShell";
 
+function mapLoginError(errorCode?: string) {
+  if (!errorCode) {
+    return "Email or password is incorrect.";
+  }
+  if (errorCode.includes("RATE_LIMITED")) {
+    return "Too many attempts. Try again in a few minutes.";
+  }
+  if (errorCode.includes("LOCKED")) {
+    return "Account temporarily locked. Try again later.";
+  }
+  if (errorCode.includes("CSRF_BLOCKED")) {
+    return "Request blocked. Refresh and try again.";
+  }
+  return "Email or password is incorrect.";
+}
+
 export default function LoginPage() {
   const params = useParams();
   const locale = useMemo<"en" | "fr">(() => {
@@ -32,13 +48,13 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Email or password is incorrect.");
+        setError(mapLoginError(result.error));
         return;
       }
 
       setSent(true);
     } catch {
-      setError("Email or password is incorrect.");
+      setError(mapLoginError());
     } finally {
       setIsSubmitting(false);
     }

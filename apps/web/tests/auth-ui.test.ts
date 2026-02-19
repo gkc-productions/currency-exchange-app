@@ -17,8 +17,10 @@ test("signup password rules panel renders expected policy list", () => {
 
   assert.match(html, /Password rules/);
   assert.match(html, /10\+ characters/);
-  assert.match(html, /at least one letter/);
+  assert.match(html, /uppercase letter/);
+  assert.match(html, /lowercase letter/);
   assert.match(html, /at least one number/);
+  assert.match(html, /at least one symbol/);
   assert.match(html, /common passwords/);
 });
 
@@ -57,6 +59,24 @@ test("auth shell locale links are correct", () => {
   assert.match(html, /href="\/fr"/);
   assert.match(html, /href="\/fr\/help"/);
   assert.match(html, /href="\/fr\/security"/);
+  assert.match(html, /Optional 2-step verification/);
+});
+
+test("signup page blocks submit for weak passwords and shows guidance", () => {
+  const filePath = path.join(
+    process.cwd(),
+    "app",
+    "[locale]",
+    "(app)",
+    "(auth)",
+    "signup",
+    "page.tsx"
+  );
+  const source = fs.readFileSync(filePath, "utf8");
+
+  assert.equal(source.includes("isWeakPassword"), true);
+  assert.equal(source.includes("disabled={isSubmitting || isWeakPassword}"), true);
+  assert.equal(source.includes("Follow the checklist above"), true);
 });
 
 test("auth UI components are not imported by marketing components", () => {

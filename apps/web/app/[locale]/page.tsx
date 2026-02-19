@@ -9,6 +9,7 @@ import MarketingHero from "@/components/marketing/MarketingHero";
 import QuoteWidget, { calculateQuotePreview } from "@/components/marketing/QuoteWidget";
 import { formatDateTime, formatMoney, formatPercent } from "@/src/lib/format";
 import { getMessages, type Locale } from "@/src/lib/i18n/messages";
+import { FLOW_STEPS, flowTrustMessage } from "@/src/lib/flow-progress";
 
 const FX_MARGIN_PCT = 1.8;
 const FIXED_FEE_DEFAULT = 2.5;
@@ -369,15 +370,7 @@ export default function Home() {
 
   const shouldSendManualRate = manualOverrideEnabled && manualRateInfo.valid;
 
-  const flowSteps = useMemo(
-    () => [
-      messages.flowStepQuote,
-      messages.flowStepReview,
-      messages.flowStepTransfer,
-      messages.flowStepReceipt,
-    ],
-    [messages]
-  );
+  const flowSteps = FLOW_STEPS;
   const flowStepIndex = transferResult
     ? 3
     : lockedQuoteId
@@ -390,6 +383,8 @@ export default function Home() {
   const suggestionFrom = recommendation?.from ?? fromAsset;
   const suggestionTo = recommendation?.to ?? toAsset;
   const heroQuoteRate = quote?.appliedRate ?? manualRateInfo.value ?? 1;
+  const lockExpiryLabel = quote ? formatDateTime(quote.expiresAt, locale) : null;
+  const flowTrust = flowTrustMessage(flowStepIndex, lockExpiryLabel);
   const heroPreview = useMemo(
     () => calculateQuotePreview(Number(sendAmount), heroQuoteRate),
     [heroQuoteRate, sendAmount]
@@ -1454,13 +1449,7 @@ export default function Home() {
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
-                {messages.trustEncryptionLabel}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
-                {messages.trustSecureConnectionLabel}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
-                {messages.trustRegulatoryIntentLabel}
+                {flowTrust}
               </span>
             </div>
 
@@ -1468,7 +1457,7 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="rounded-3xl border border-slate-200/80 bg-slate-50 px-6 py-5">
                   <p className="text-xs font-medium text-slate-500">
-                    {messages.flowStepsTitle}
+                    1 Quote • 2 Recipient • 3 Review • 4 Status
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-4">
                     {flowSteps.map((label, index) => {
