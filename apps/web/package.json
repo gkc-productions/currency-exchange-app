@@ -10,6 +10,9 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "tsx --test $(find tests -maxdepth 1 -name '*.test.ts' ! -name 'auth-password.test.ts' ! -name 'mfa-ui.test.ts' | sort)",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
     "smoke:payout": "tsx scripts/smoke-payout.ts",
     "dns:check": "node scripts/check-dns-sanity.mjs",
     "pm2:start": "pm2 start ../../infra/pm2/ecosystem.config.cjs",
@@ -30,6 +33,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.17",
