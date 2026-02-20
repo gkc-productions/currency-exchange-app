@@ -18,9 +18,15 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://app.clarisend.co"),
   title: "ClariSend — Send with clarity",
   description:
     "Transparent global payments and remittances with clear fees, smart routing, and modern payout rails.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default async function RootLayout({

@@ -38,11 +38,18 @@ export default function Header({ locale }: HeaderProps) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg border border-emerald-200 bg-emerald-50 flex items-center justify-center text-emerald-700 font-semibold text-sm shadow-sm group-hover:border-emerald-300 transition-colors">
-              CS
-            </div>
-            <span className="text-lg font-semibold text-slate-900 tracking-tight">ClariSend</span>
+          <Link href={`/${locale}`} className="flex items-center">
+            <picture>
+              <source
+                srcSet="/brand/clarisend-logo-dark.png"
+                media="(prefers-color-scheme: dark)"
+              />
+              <img
+                src="/brand/clarisend-logo-light.png"
+                alt="ClariSend"
+                className="h-6 w-auto sm:h-7 lg:h-8"
+              />
+            </picture>
           </Link>
 
           {/* Desktop Navigation */}
