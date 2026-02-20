@@ -46,15 +46,21 @@ export default function Footer({ locale }: FooterProps) {
         {/* Main Footer Content */}
         <div className="py-12 lg:py-16 grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <Link href={`/${locale}`} className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg border border-emerald-200 bg-emerald-50 flex items-center justify-center text-emerald-700 font-semibold text-sm">
-                CS
-              </div>
-              <span className="text-lg font-semibold text-white tracking-tight">ClariSend</span>
+          <div className="col-span-2 md:col-span-1 max-w-xs flex flex-col gap-2">
+            <Link href={`/${locale}`} className="flex items-center mb-4">
+              <img
+                src="/brand/clarisend-logo-light.png"
+                alt="ClariSend"
+                className="block dark:hidden h-7 w-auto"
+              />
+              <img
+                src="/brand/clarisend-logo-dark.png"
+                alt="ClariSend"
+                className="hidden dark:block h-7 w-auto"
+              />
             </Link>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              {t.tagline}
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+              Clarity in every transfer.
             </p>
           </div>
 

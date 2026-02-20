@@ -39,17 +39,16 @@ export default function Header({ locale }: HeaderProps) {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center">
-            <picture>
-              <source
-                srcSet="/brand/clarisend-logo-dark.png"
-                media="(prefers-color-scheme: dark)"
-              />
-              <img
-                src="/brand/clarisend-logo-light.png"
-                alt="ClariSend"
-                className="h-6 w-auto sm:h-7 lg:h-8"
-              />
-            </picture>
+            <img
+              src="/brand/clarisend-logo-light.png"
+              alt="ClariSend"
+              className="block h-7 w-auto dark:hidden"
+            />
+            <img
+              src="/brand/clarisend-logo-dark.png"
+              alt="ClariSend"
+              className="hidden h-7 w-auto dark:block"
+            />
           </Link>
 
           {/* Desktop Navigation */}
