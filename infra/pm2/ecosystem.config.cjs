@@ -16,8 +16,7 @@ module.exports = {
     {
       name: "clarisend-marketing",
       cwd: "/var/www/clarisend/apps/marketing",
-      script: "node_modules/next/dist/bin/next",
-      args: "start --port=3001",
+      script: ".next/standalone/server.js",
       interpreter: "node",
       env: {
         NODE_ENV: "production",
