@@ -39,6 +39,7 @@ type QuoteWidgetProps = {
   onSendAmountChange: (value: string) => void;
   onFromCurrencyChange: (value: string) => void;
   onToCurrencyChange: (value: string) => void;
+  onStartQuote?: (event?: { preventDefault?: () => void }) => void;
 };
 
 export default function QuoteWidget({
@@ -55,6 +56,7 @@ export default function QuoteWidget({
   onSendAmountChange,
   onFromCurrencyChange,
   onToCurrencyChange,
+  onStartQuote,
 }: QuoteWidgetProps) {
   return (
     <Card
@@ -118,7 +120,8 @@ export default function QuoteWidget({
           <StatRow label="Rate" value={rateLabel} />
         </div>
         <Button
-          href={`/${locale}/signup`}
+          href={`/${locale}#send`}
+          onClick={onStartQuote}
           variant="primary"
           className="mt-1 rounded-2xl py-3 text-sm font-semibold"
         >

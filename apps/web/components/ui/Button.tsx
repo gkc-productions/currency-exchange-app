@@ -17,12 +17,12 @@ type LinkButtonProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement> & {
 function baseClasses(variant: ButtonVariant, size: ButtonSize) {
   const variantClass =
     variant === "primary"
-      ? "bg-slate-900 text-white hover:bg-slate-800"
+      ? "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
       : variant === "success"
-        ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-        : variant === "ghost"
-          ? "text-slate-700 hover:bg-slate-100"
-          : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300";
+        ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 dark:hover:bg-emerald-900"
+      : variant === "ghost"
+          ? "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          : "border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:border-neutral-700";
 
   const sizeClass = size === "sm" ? "px-3 py-2 text-xs" : "px-4 py-2.5 text-sm";
 

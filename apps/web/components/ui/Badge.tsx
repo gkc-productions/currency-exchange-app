@@ -11,14 +11,14 @@ export function Badge({
 }: HTMLAttributes<HTMLSpanElement> & { tone?: Tone; children: ReactNode }) {
   const toneClass =
     tone === "success"
-      ? "bg-emerald-100 text-emerald-800"
+      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
       : tone === "warning"
-        ? "bg-amber-100 text-amber-800"
+        ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
         : tone === "info"
-          ? "bg-sky-100 text-sky-800"
+          ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200"
           : tone === "danger"
-            ? "bg-rose-100 text-rose-800"
-            : "bg-slate-100 text-slate-700";
+            ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200"
+            : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
 
   return (
     <span

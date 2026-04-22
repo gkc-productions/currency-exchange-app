@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 import AuthSessionProvider from "@/components/SessionProvider";
 import { getServerAuthSession } from "@/src/lib/auth";
+import Providers from "./providers";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -40,11 +41,13 @@ export default async function RootLayout({
   const session = await getServerAuthSession();
 
   return (
-    <html lang={htmlLang}>
+    <html lang={htmlLang} suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${fraunces.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${fraunces.variable} min-h-screen bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100`}
       >
-        <AuthSessionProvider session={session}>{children}</AuthSessionProvider>
+        <Providers>
+          <AuthSessionProvider session={session}>{children}</AuthSessionProvider>
+        </Providers>
       </body>
     </html>
   );

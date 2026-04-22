@@ -11,7 +11,6 @@ test.describe("Quote start behavior (desktop)", () => {
   });
 
   test("clicking Start a quote activates quote flow", async ({ page }) => {
-    test.fail(true, "Known issue: desktop Start a quote does not activate quote flow.");
     await page.goto("/en#send");
 
     const startQuote = page.getByRole("link", { name: /start a quote/i }).first();

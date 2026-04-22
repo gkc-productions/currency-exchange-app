@@ -1,14 +1,35 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
+import { useAuthSession } from "@/components/SessionProvider";
+import { getMessages } from "@/src/lib/i18n/messages";
 
 type MarketingHeroProps = {
   locale: "en" | "fr";
   title: string;
   subtitle: string;
   children: ReactNode;
+  onStartQuote?: (event?: { preventDefault?: () => void }) => void;
 };
 
-export default function MarketingHero({ locale, title, subtitle, children }: MarketingHeroProps) {
+export default function MarketingHero({
+  locale,
+  title,
+  subtitle,
+  children,
+  onStartQuote,
+}: MarketingHeroProps) {
+  const { data: session, status } = useAuthSession();
+  const messages = getMessages(locale);
+  const authHref = session?.user ? `/${locale}/dashboard` : `/${locale}/login`;
+  const authLabel =
+    status === "loading"
+      ? "..."
+      : session?.user
+        ? messages.navDashboardLabel
+        : messages.navSignInLabel;
+
   return (
     <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_#def7ec_0%,_#eef5ff_48%,_#ffffff_100%)]">
       <div className="pointer-events-none absolute -left-16 top-10 h-64 w-64 rounded-full bg-emerald-200/35 blur-3xl" />
@@ -25,17 +46,18 @@ export default function MarketingHero({ locale, title, subtitle, children }: Mar
           <div className="flex flex-wrap gap-3">
             <Button
               href={`/${locale}#send`}
+              onClick={onStartQuote}
               variant="primary"
               className="px-5 py-2.5 text-sm font-semibold"
             >
               Start a quote
             </Button>
             <Button
-              href={`/${locale}/login`}
+              href={authHref}
               variant="secondary"
               className="px-5 py-2.5 text-sm font-semibold"
             >
-              Sign in
+              {authLabel}
             </Button>
           </div>
         </div>

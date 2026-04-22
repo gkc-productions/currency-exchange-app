@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import AuthShell from "@/app/[locale]/(app)/_components/AuthShell";
+import { useAuthSession } from "@/components/SessionProvider";
 
 function mapLoginError(errorCode?: string) {
   if (!errorCode) {
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
+  const { data: session, status } = useAuthSession();
   const locale = useMemo<"en" | "fr">(() => {
     const value = params?.locale;
     if (Array.isArray(value)) return value[0] === "fr" ? "fr" : "en";
@@ -35,6 +37,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) {
+      return;
+    }
+    const next = searchParams.get("next");
+    router.replace(next && next.startsWith("/") ? next : `/${locale}/dashboard`);
+  }, [locale, router, searchParams, session?.user, status]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

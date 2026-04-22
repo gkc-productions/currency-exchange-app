@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --brand-ink: #0b1220;
@@ -11,6 +12,11 @@
   --brand-gold: #f1b879;
   --background: var(--brand-surface);
   --foreground: var(--brand-ink);
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
 }
 
 @theme inline {

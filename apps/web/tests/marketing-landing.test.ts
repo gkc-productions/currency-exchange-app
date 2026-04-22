@@ -66,7 +66,7 @@ test("quote widget renders computed preview value", () => {
 
   assert.match(html, /Recipient gets/);
   assert.match(html, /GHS 3,500.00/);
-  assert.match(html, /href="\/en\/signup"/);
+  assert.match(html, /href="\/en#send"/);
 });
 
 test("marketing landing components use shared card and button primitives", () => {

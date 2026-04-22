@@ -15,7 +15,6 @@ test.describe("Navbar auth behavior", () => {
     context,
     baseURL,
   }) => {
-    test.fail(true, "Known issue: navbar still shows Sign in after authenticated session.");
     const resolvedBaseURL = baseURL || "http://127.0.0.1:3000";
     const email = `e2e+${Date.now()}@example.com`;
     const password = "Str0ng!Passw0rd!";

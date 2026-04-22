@@ -964,19 +964,33 @@ export default function Home() {
     manualRateInfo.value,
   ]);
 
-  const handleGetStarted = useCallback(() => {
-    if (!quoteActive) {
-      setQuoteActive(true);
-    } else {
-      fetchQuote();
-      fetchRecommendation();
-    }
+  const scrollToQuoteSection = useCallback(() => {
     window.setTimeout(() => {
       document
         .getElementById("quote")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
-  }, [fetchQuote, fetchRecommendation, quoteActive]);
+  }, []);
+
+  const openQuoteFlow = useCallback(() => {
+    setQuoteActive(true);
+    scrollToQuoteSection();
+  }, [scrollToQuoteSection]);
+
+  const handleGetStarted = useCallback((event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
+    if (typeof window !== "undefined" && window.location.hash !== "#send") {
+      const nextUrl = `${window.location.pathname}${window.location.search}#send`;
+      window.history.replaceState(window.history.state, "", nextUrl);
+    }
+    if (!quoteActive) {
+      openQuoteFlow();
+    } else {
+      fetchQuote();
+      fetchRecommendation();
+      scrollToQuoteSection();
+    }
+  }, [fetchQuote, fetchRecommendation, openQuoteFlow, quoteActive, scrollToQuoteSection]);
 
   const handleResetManualRate = useCallback(() => {
     setMarketRate("");
@@ -1219,6 +1233,22 @@ export default function Home() {
   ]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleHashQuote = () => {
+      if (window.location.hash === "#send") {
+        openQuoteFlow();
+      }
+    };
+
+    handleHashQuote();
+    window.addEventListener("hashchange", handleHashQuote);
+    return () => window.removeEventListener("hashchange", handleHashQuote);
+  }, [openQuoteFlow]);
+
+  useEffect(() => {
     if (!quoteActive) {
       return;
     }
@@ -1389,7 +1419,12 @@ export default function Home() {
 
   return (
     <div className="bg-[var(--brand-surface)] text-slate-900">
-      <MarketingHero locale={locale} title={messages.heroTitle} subtitle={messages.heroSubtitle}>
+      <MarketingHero
+        locale={locale}
+        title={messages.heroTitle}
+        subtitle={messages.heroSubtitle}
+        onStartQuote={handleGetStarted}
+      >
         <QuoteWidget
           locale={locale}
           sendAmount={sendAmount}
@@ -1404,6 +1439,7 @@ export default function Home() {
           onSendAmountChange={setSendAmount}
           onFromCurrencyChange={setFromAsset}
           onToCurrencyChange={setToAsset}
+          onStartQuote={handleGetStarted}
         />
       </MarketingHero>
 

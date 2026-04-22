@@ -77,24 +77,25 @@ export default function Footer({ locale }: { locale: Locale }) {
   ];
 
   return (
-    <footer className="border-t border-slate-200/70 bg-slate-50">
+    <footer className="border-t border-neutral-200/70 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-6 py-12 lg:px-8 lg:grid-cols-[1.2fr_2.2fr]">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-lg font-semibold text-emerald-700">
-              C
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-slate-900">ClariSend</p>
-              <p className="text-xs text-slate-500">
-                {messages.tagline}
-              </p>
-            </div>
+        <div className="flex max-w-xs flex-col gap-4">
+          <div className="flex items-center">
+            <img
+              src="/brand/clarisend-logo-light.png"
+              alt="ClariSend"
+              className="block dark:hidden h-7 w-auto"
+            />
+            <img
+              src="/brand/clarisend-logo-dark.png"
+              alt="ClariSend"
+              className="hidden dark:block h-7 w-auto"
+            />
           </div>
-          <p className="max-w-sm text-sm text-slate-600">
-            {messages.footerTagline}
+          <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+            Clarity in every transfer.
           </p>
-          <div className="flex items-center gap-3 text-slate-500">
+          <div className="flex items-center gap-3 text-neutral-500 dark:text-neutral-400">
             {SOCIAL_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -102,20 +103,20 @@ export default function Footer({ locale }: { locale: Locale }) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={link.label}
-                className="rounded-full border border-slate-200 bg-white p-2 transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                className="rounded-full border border-neutral-200 bg-white p-2 transition hover:border-neutral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
               >
                 {link.icon}
               </a>
             ))}
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             © {year} GKC Financial Technologies
           </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {columns.map((column) => (
             <div key={column.title}>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500 dark:text-neutral-400">
                 {column.title}
               </p>
               <div className="mt-3 flex flex-col gap-2">
@@ -123,7 +124,7 @@ export default function Footer({ locale }: { locale: Locale }) {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="text-sm font-medium text-slate-700 transition hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                    className="text-sm font-medium text-neutral-700 transition hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:text-neutral-300 dark:hover:text-white"
                   >
                     {link.label}
                   </Link>

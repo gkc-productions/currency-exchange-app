@@ -82,19 +82,19 @@ export default function LanguageSelect() {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+        className="flex items-center gap-2 rounded-full border border-neutral-200/80 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:border-neutral-700"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={messages.languageToggleLabel}
       >
-        <span className="text-xs text-slate-500">{messages.languageToggleLabel}</span>
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">{messages.languageToggleLabel}</span>
         <span>{locale === "fr" ? messages.languageFrLabel : messages.languageEnLabel}</span>
       </button>
       {open ? (
         <div
           ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-2 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg"
+          className="absolute right-0 mt-2 w-40 rounded-2xl border border-neutral-200 bg-white p-2 shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
         >
           {LANGUAGE_OPTIONS.map((option) => {
             const isActive = option.code === locale;
@@ -106,12 +106,12 @@ export default function LanguageSelect() {
                 onClick={() => handleSwitch(option.code)}
                 className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
                   isActive
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-slate-700 hover:bg-slate-50"
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"
+                    : "text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
                 }`}
               >
                 <span>{option.label}</span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-neutral-400 dark:text-neutral-500">
                   {option.code.toUpperCase()}
                 </span>
               </button>

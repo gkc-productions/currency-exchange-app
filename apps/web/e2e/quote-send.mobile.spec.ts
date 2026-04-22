@@ -13,7 +13,6 @@ test.describe("Quote start behavior (mobile)", () => {
   test("clicking Start a quote shows Quote Breakdown on iPhone viewport", async ({
     page,
   }) => {
-    test.fail(true, "Known issue: mobile Quote Breakdown parity is inconsistent.");
     await page.goto("/en#send");
 
     const startQuote = page.getByRole("link", { name: /start a quote/i }).first();

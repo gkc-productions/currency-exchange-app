@@ -15,7 +15,7 @@ export default async function LocaleLayout({
   const locale: Locale = rawLocale === "fr" ? "fr" : "en";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--brand-surface)] text-slate-900">
+    <div className="flex min-h-screen flex-col bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       <Navbar locale={locale} />
       <StatusBanner locale={locale} />
       <main className="flex-1">{children}</main>

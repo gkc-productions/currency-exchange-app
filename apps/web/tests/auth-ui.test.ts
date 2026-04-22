@@ -92,3 +92,22 @@ test("auth UI components are not imported by marketing components", () => {
     assert.equal(source.includes("(app)/_components/Auth"), false);
   }
 });
+
+test("login page redirects authenticated users to next or dashboard", () => {
+  const filePath = path.join(
+    process.cwd(),
+    "app",
+    "[locale]",
+    "(app)",
+    "(auth)",
+    "login",
+    "page.tsx"
+  );
+  const source = fs.readFileSync(filePath, "utf8");
+
+  assert.equal(source.includes("useAuthSession"), true);
+  assert.equal(
+    source.includes('router.replace(next && next.startsWith("/") ? next : `/${locale}/dashboard`)'),
+    true
+  );
+});
